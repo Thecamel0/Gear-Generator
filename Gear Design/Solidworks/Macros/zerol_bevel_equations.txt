@@ -1,0 +1,15 @@
+"Module" = 5mm
+"PinionTeeth" = 20
+"GearTeeth" = 60
+"PressureAngle" = 20deg
+"PinionPitchDia" = 100mm
+"GearPitchDia" = 300mm
+"PinionOutDia" = 109.49mm
+"GearOutDia" = 303.16mm
+"PinionConeAngle" = 18.43deg
+"GearConeAngle" = 71.57deg
+"FaceWidth" = 47.43mm
+"PinionMountingDist" = 148.42mm
+"GearMountingDist" = 45.26mm
+"PinionBore" = 25mm
+"GearBore" = 45mm

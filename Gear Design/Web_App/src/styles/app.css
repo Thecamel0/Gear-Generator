@@ -1,0 +1,1089 @@
+/* ==========================================================================
+   GEAR MASTER — Custom Gear Design Suite
+   Aesthetic matches professional CAD/CAE software (SolidWorks / Onshape / MATLAB)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* --------------------------------------------------------------------------
+   THEME DESIGN TOKENS
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] {
+  --bg-app:          #f1f5f9;
+  --bg-header:       #ffffff;
+  --bg-panel:        #ffffff;
+  --bg-rail:         #ffffff;
+  --bg-rail-hover:   #f1f5f9;
+  --bg-rail-active:  #e2e8f0;
+  --bg-input:        #ffffff;
+  --bg-card:         #f8fafc;
+  --bg-card-hover:   #f1f5f9;
+
+  --border-subtle:   #e2e8f0;
+  --border-strong:   #cbd5e1;
+  --border-focus:    #2563eb;
+
+  --text-primary:    #0f172a;
+  --text-secondary:  #475569;
+  --text-muted:      #94a3b8;
+  --text-inverse:    #ffffff;
+
+  /* Professional CAD Blue Action Accent */
+  --action-blue:     #1d62d1;
+  --action-blue-hover:#164eb3;
+
+  --badge-bg:        #eff6ff;
+  --badge-text:      #1d4ed8;
+
+  --color-success:   #16a34a;
+  --color-warning:   #d97706;
+  --color-danger:    #dc2626;
+
+  --shadow-sm:       0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md:       0 4px 6px -1px rgba(0, 0, 0, 0.07);
+  --canvas-bg:       #f8fafc;
+  --canvas-grid-1:   #e2e8f0;
+  --canvas-grid-2:   #f1f5f9;
+}
+
+[data-theme="dark"] {
+  --bg-app:          #0b0f19;
+  --bg-header:       #111827;
+  --bg-panel:        #111827;
+  --bg-rail:         #0f172a;
+  --bg-rail-hover:   #1e293b;
+  --bg-rail-active:  #334155;
+  --bg-input:        #1e293b;
+  --bg-card:         #1a2234;
+  --bg-card-hover:   #232d42;
+
+  --border-subtle:   #1f2937;
+  --border-strong:   #374151;
+  --border-focus:    #3b82f6;
+
+  --text-primary:    #f8fafc;
+  --text-secondary:  #94a3b8;
+  --text-muted:      #64748b;
+  --text-inverse:    #ffffff;
+
+  --action-blue:     #2563eb;
+  --action-blue-hover:#1d4ed8;
+
+  --badge-bg:        #1e293b;
+  --badge-text:      #60a5fa;
+
+  --color-success:   #22c55e;
+  --color-warning:   #f59e0b;
+  --color-danger:    #ef4444;
+
+  --shadow-sm:       0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md:       0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --canvas-bg:       #0d111c;
+  --canvas-grid-1:   #1e293b;
+  --canvas-grid-2:   #141c2e;
+}
+
+/* --------------------------------------------------------------------------
+   GLOBAL RESET
+   -------------------------------------------------------------------------- */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   1. TOP APP HEADER
+   -------------------------------------------------------------------------- */
+
+.app-header {
+  height: 46px;
+  min-height: 46px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 30;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-gear-icon {
+  color: var(--action-blue);
+  flex-shrink: 0;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle {
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.settings-btn {
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  background: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   2. APPLICATION BODY LAYOUT (4-Zone Grid)
+   -------------------------------------------------------------------------- */
+
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* --- 2A. LEFT ICON RAIL --- */
+.icon-rail {
+  width: 44px;
+  min-width: 44px;
+  background: var(--bg-rail);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 4px;
+  z-index: 10;
+}
+
+.rail-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.rail-btn:hover {
+  background: var(--bg-rail-hover);
+  color: var(--action-blue);
+}
+
+.rail-btn.active {
+  background: var(--badge-bg);
+  color: var(--action-blue);
+}
+
+.rail-spacer {
+  flex: 1;
+}
+
+/* --- 2B. LEFT PANEL: GEAR CONFIGURATION --- */
+.panel-config {
+  width: 250px;
+  min-width: 250px;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.panel-heading {
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  flex-shrink: 0;
+}
+
+.panel-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+.panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--action-blue);
+}
+
+.section-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+/* Config Rows */
+.config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.row-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.row-input-wrap {
+  width: 82px;
+  flex-shrink: 0;
+}
+
+.input-control {
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-control:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.row-input {
+  text-align: right;
+}
+
+select.input-control {
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 20px;
+}
+
+.select-gear-type {
+  font-weight: 600;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.select-material {
+  font-size: 11px;
+}
+
+.input-group-auto {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 82px;
+}
+
+.btn-auto-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.btn-auto-pill:hover {
+  background: var(--action-blue);
+  color: #ffffff;
+  border-color: var(--action-blue);
+}
+
+/* Accordion cards inside sidebar */
+.accordion-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.accordion-header {
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.accordion-header:hover {
+  background: var(--bg-card-hover);
+}
+
+.accordion-header.open {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.accordion-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.accordion-arrow {
+  font-size: 9px;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.accordion-header.open .accordion-arrow {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Presets Grid */
+.preset-pill-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.preset-pill-grid::-webkit-scrollbar {
+  width: 4px;
+}
+.preset-pill-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.preset-pill-grid::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 2px;
+}
+.preset-pill-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--action-blue);
+}
+
+.preset-pill {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+}
+
+.preset-pill:hover {
+  background: var(--badge-bg);
+  color: var(--action-blue);
+  border-color: var(--action-blue);
+}
+
+/* Action Footer (Generate & Export) */
+.panel-action-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  flex-shrink: 0;
+}
+
+.btn-primary-action {
+  width: 100%;
+  padding: 10px;
+  background: var(--action-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(29, 98, 209, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-primary-action:hover {
+  background: var(--action-blue-hover);
+  box-shadow: 0 4px 8px rgba(29, 98, 209, 0.35);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   3. CENTER COLUMN: EXPANDED 3D VIEWPORT
+   -------------------------------------------------------------------------- */
+
+.viewport-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--canvas-bg);
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Viewport Toolbar */
+.viewport-toolbar {
+  height: 42px;
+  min-height: 42px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  gap: 12px;
+  z-index: 10;
+}
+
+.viewport-headline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gear-badge {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.gear-specs-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewport-controls-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+/* 3D vs 2D Mode Tabs */
+.mode-tab-group {
+  display: flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.mode-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.mode-tab:not(:last-child) {
+  border-right: 1px solid var(--border-strong);
+}
+
+.mode-tab:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.mode-tab.active {
+  background: var(--action-blue);
+  color: #ffffff;
+}
+
+/* Explode Slider */
+.explode-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.explode-slider {
+  -webkit-appearance: none;
+  width: 65px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  outline: none;
+}
+
+.explode-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--action-blue);
+  cursor: pointer;
+}
+
+/* Tool Buttons (Simulate, Wireframe) */
+.tool-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  padding: 4px 9px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.tool-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+.tool-btn.active {
+  background: var(--badge-bg);
+  color: var(--action-blue);
+  border-color: var(--action-blue);
+}
+
+/* Camera button group */
+.camera-btn-group {
+  display: flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.cam-btn {
+  background: var(--bg-panel);
+  border: none;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.cam-btn:not(:last-child) {
+  border-right: 1px solid var(--border-strong);
+}
+
+.cam-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.select-part-mode {
+  width: auto;
+  font-size: 11px;
+  padding: 4px 22px 4px 8px;
+}
+
+/* View Area Canvas */
+.view-area {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--canvas-bg);
+}
+
+.viewport-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Floating CAD Tools (Top Right) */
+.floating-cad-tools {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 6px;
+  z-index: 15;
+}
+
+.float-tool-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.float-tool-btn:hover {
+  background: var(--action-blue);
+  color: #ffffff;
+  border-color: var(--action-blue);
+}
+
+/* Live Engineering HUD Overlay (Top-Left) */
+.viewport-hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.hud-item {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hud-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.hud-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hud-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.hud-badge.safe {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--color-success);
+}
+
+.hud-badge.warn {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--color-warning);
+}
+
+/* Canvas Dimensions Watermark (Blueprint look matching reference image) */
+.canvas-dimensions-watermark {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  pointer-events: none;
+  z-index: 10;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.85;
+}
+
+.watermark-main {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.watermark-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.watermark-dims {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   4. RIGHT COLUMN: COMPACT DESIGN SUMMARY & EXPORT
+   -------------------------------------------------------------------------- */
+
+.panel-export {
+  width: 230px;
+  min-width: 230px;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.design-name-card {
+  background: var(--badge-bg);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 5px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.design-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--action-blue);
+  letter-spacing: 0.6px;
+}
+
+.design-spec-bold {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Summary Table */
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.summary-table tr {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.summary-table tr:last-child {
+  border-bottom: none;
+}
+
+.summary-table td {
+  padding: 4px 0;
+}
+
+.td-key {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+}
+
+.td-val {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.highlight-green {
+  color: var(--color-success) !important;
+}
+
+/* EXPORT TO CAD SECTION */
+.export-header-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+
+/* CAD Quick Cards (Grid like reference image) */
+.cad-quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.cad-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cad-card:hover {
+  border-color: var(--action-blue);
+  background: var(--badge-bg);
+}
+
+.cad-card.active {
+  border-color: var(--action-blue);
+  background: var(--badge-bg);
+  box-shadow: 0 0 0 1px var(--action-blue);
+}
+
+.cad-card-logo {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--action-blue);
+  margin-bottom: 2px;
+}
+
+.sw-logo {
+  color: #e11d48;
+}
+
+.step-logo {
+  color: #059669;
+}
+
+.stl-logo {
+  color: #7c3aed;
+}
+
+.cad-card-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  line-height: 1.1;
+}
+
+.cad-card-ext {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.export-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.export-field-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.select-export-format,
+.input-filename {
+  font-size: 11px;
+}
+
+/* --------------------------------------------------------------------------
+   5. TOAST NOTIFICATIONS
+   -------------------------------------------------------------------------- */
+
+.toast-container {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 14px;
+  color: var(--text-primary);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-md);
+  animation: toast-in 0.2s ease-out forwards;
+}
+
+.toast-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.toast-indicator--info { background: var(--action-blue); }
+.toast-indicator--success { background: var(--color-success); }
+.toast-indicator--warn { background: var(--color-warning); }
+.toast-indicator--download { background: var(--action-blue); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   6. RESPONSIVE BREAKPOINTS
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1150px) {
+  .panel-export { width: 210px; min-width: 210px; }
+  .panel-config { width: 230px; min-width: 230px; }
+}
+
+@media (max-width: 960px) {
+  .icon-rail { display: none; }
+  .panel-config { width: 220px; min-width: 220px; }
+  .panel-export { width: 190px; min-width: 190px; }
+}

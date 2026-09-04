@@ -1,0 +1,36 @@
+Parameter,Symbol,Pinion,Gear,Unit
+Gear Type,,Straight Bevel,Straight Bevel,
+Module,m,3,3,mm
+Number of Teeth,N,16,48,-
+Gear Ratio,i,1:3.0,1:3.0,-
+Pressure Angle,phi,20,20,deg
+Shaft Angle,Sigma,90,90,deg
+Pitch Angle,gamma,18.435,71.565,deg
+Face Angle,gamma_a,20.699,73.829,deg
+Root Angle,gamma_d,15.606,68.736,deg
+Pitch Diameter,d,48.00,144.00,mm
+Outer Tip Diameter,da,53.69,145.90,mm
+Outer Root Diameter,dd,40.88,141.63,mm
+Outer Cone Distance,Ao,75.895,75.895,mm
+Face Width,F,25.00,25.00,mm
+Inner Cone Distance,Ai,50.895,50.895,mm
+Mean Cone Distance,Am,63.395,63.395,mm
+Mean Pitch Diameter,dm,40.09,120.28,mm
+Addendum,a,3.00,3.00,mm
+Dedendum,b,3.75,3.75,mm
+Working Depth,hw,6.00,6.00,mm
+Whole Depth,ht,6.750,6.750,mm
+Clearance,c,0.750,0.750,mm
+Virtual Tooth Count,Nv,16.87,151.79,-
+Virtual Pitch Radius,rv,25.30,227.68,mm
+Contact Ratio,CR,1.702,1.702,-
+Driving Pinions,n_p,3,3,-
+Input Ring Torque,T_ring,20.0,20.0,N*m
+Pinion Torque Each,T_pin,2.16,2.16,N*m
+Tangential Mesh Force,Ft,110.8,110.8,N
+Radial Force,Fr,38.3,12.8,N
+Thrust/Axial Force,Fa,12.8,38.3,N
+Bending Stress,sigma_b,17.71,11.96,MPa
+Bending Safety Factor,SF_b,14.1,20.9,-
+Contact Stress,sigma_H,161.7,161.7,MPa
+Contact Safety Factor,SF_H,9.3,9.3,-

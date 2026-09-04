@@ -1,0 +1,17 @@
+"NormalModule" = 3mm
+"PinionTeeth" = 16
+"GearTeeth" = 48
+"HelixAngle" = 15deg
+"NormalPressureAngle" = 20deg
+"TransversePressureAngle" = 20.647deg
+"TransverseModule" = 3.1058mm
+"CenterDistance" = 99.387mm
+"FaceWidth" = 40.000mm
+"PinionPitchDia" = 49.693mm
+"GearPitchDia" = 149.080mm
+"PinionTipDia" = 55.693mm
+"GearTipDia" = 155.080mm
+"PinionRootDia" = 42.193mm
+"GearRootDia" = 141.580mm
+"PinionBore" = 16.0mm
+"GearBore" = 50.0mm

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Zerol Bevel Gear Studio — Custom Gear Design Suite for Wind Turbine Pitch Control and Research Systems." />
+  <title>Gear Master — Custom Gear Design Suite</title>
+  <link rel="stylesheet" href="./src/styles/app.css" />
+</head>
+<body>
+
+  <!-- ================================================================
+       TOP HEADER (Clean & Formal, No Bloat)
+       ================================================================ -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-block">
+        <svg class="brand-gear-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <div>
+          <div class="brand-title">GEAR MASTER</div>
+          <div class="brand-subtitle">Custom Gear Design Suite</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="theme-toggle" id="btn-theme-toggle" title="Toggle Light / Dark Mode">
+        <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================================================
+       MAIN APPLICATION LAYOUT (Icon Rail + Config + Viewport + Export)
+       ================================================================ -->
+  <div class="app-body">
+
+    <!-- 1. LEFT ICON RAIL -->
+    <nav class="icon-rail">
+      <button class="rail-btn active" title="CAD Exporters / Downloads" id="rail-btn-export">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+    </nav>
+
+    <!-- 2. LEFT COLUMN: GEAR CONFIGURATION -->
+    <aside class="panel-config">
+      <div class="panel-heading">Gear Configuration</div>
+      <div class="panel-scroll">
+
+        <!-- Gear Type Selector (Prepared for Multiple Gear Types) -->
+        <div class="config-field">
+          <label class="field-label">Gear Type</label>
+          <select id="sel-gear-type" class="input-control select-gear-type">
+            <option value="zerol-bevel" selected>Zerol Bevel Gear</option>
+            <option value="spur">Involute Spur Gear</option>
+            <option value="internal_spur">Internal Spur (Ring Gear)</option>
+            <option value="straight-bevel">Straight Bevel Gear</option>
+            <option value="helical">Helical Gear</option>
+            <option value="spiral-bevel">Spiral Bevel Gear (90° Gleason)</option>
+          </select>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Primary Dimensions -->
+        <div class="config-row">
+          <label class="row-label">Module (m):</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-m" class="input-control row-input" value="3.0" step="0.25" min="0.5" max="25" />
+          </div>
+        </div>
+
+        <div class="config-row">
+          <label class="row-label">Pinion Teeth (Np):</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-Np" class="input-control row-input" value="16" step="1" min="6" max="150" />
+          </div>
+        </div>
+
+        <div class="config-row">
+          <label class="row-label">Gear Teeth (Ng):</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-Ng" class="input-control row-input" value="48" step="1" min="10" max="300" />
+          </div>
+        </div>
+
+        <div class="config-row">
+          <label class="row-label">Pressure Angle (&deg;):</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-phi" class="input-control row-input" value="20.0" step="0.5" min="14.5" max="30" />
+          </div>
+        </div>
+
+        <div class="config-row" id="row-helix-angle" style="display: none;">
+          <label class="row-label">Tooth Angle (&beta;&deg;):</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-helix-angle" class="input-control row-input" value="15.0" step="0.5" min="5" max="45" />
+          </div>
+        </div>
+
+        <div class="config-row" id="row-shaft-angle">
+          <label class="row-label">Shaft Angle (&Sigma;):</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-Sigma" class="input-control row-input" value="90" step="1" min="10" max="170" />
+          </div>
+        </div>
+
+        <div class="config-row" id="row-face-factor">
+          <label class="row-label">Face Width Ratio:</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-f-factor" class="input-control row-input" value="0.28" step="0.01" min="0.15" max="0.35" />
+          </div>
+        </div>
+
+        <div class="config-row" id="row-face-mm" style="display: none;">
+          <label class="row-label">Face Width (mm):</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-f-mm" class="input-control row-input" value="25.0" step="1" min="2" max="250" />
+          </div>
+        </div>
+
+        <div class="config-row">
+          <label class="row-label">Multi-Pinions:</label>
+          <div class="row-input-wrap">
+            <input type="number" id="inp-pinions" class="input-control row-input" value="3" step="1" min="1" max="8" />
+          </div>
+        </div>
+
+        <div class="config-row">
+          <label class="row-label">Material:</label>
+          <div class="row-input-wrap">
+            <select id="sel-material" class="input-control row-input select-material">
+              <option value="PLA" selected>PLA (FDM)</option>
+              <option value="ABS">ABS (FDM)</option>
+              <option value="PETG">PETG (FDM)</option>
+              <option value="NYLON">Nylon (SLS)</option>
+              <option value="RESIN">Resin (SLA)</option>
+              <option value="STEEL">Steel 1045 (CNC)</option>
+              <option value="NONE">Nominal CAD</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Advanced Options (Collapsible Card) -->
+        <div class="accordion-card">
+          <div class="accordion-header" data-target="panel-advanced">
+            <span class="accordion-title">Advanced Options</span>
+            <span class="accordion-arrow">&#9660;</span>
+          </div>
+          <div class="accordion-content" id="panel-advanced" style="display: none;">
+            <div class="config-row">
+              <label class="row-label">Cutter Radius (rc):</label>
+              <div class="input-group-auto">
+                <input type="number" id="inp-rc" class="input-control row-input" placeholder="Auto" step="1" min="0" />
+                <button class="btn-auto-pill" id="btn-auto-rc">Auto</button>
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Working Depth (khw):</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-khw" class="input-control row-input" value="2.00" step="0.05" min="1.5" max="2.5" />
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Clearance Factor (c):</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-c-factor" class="input-control row-input" value="0.188" step="0.01" min="0.1" max="0.4" />
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Involute Points:</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-n-inv" class="input-control row-input" value="20" step="2" min="10" max="50" />
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Face Sections:</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-n-sec" class="input-control row-input" value="16" step="2" min="6" max="40" />
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Ring Torque (N&middot;m):</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-torque" class="input-control row-input" value="20.0" step="1" min="1" max="5000" />
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Ring Speed (RPM):</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-rpm" class="input-control row-input" value="100" step="10" min="1" max="5000" />
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Efficiency (&eta;):</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-eta" class="input-control row-input" value="0.97" step="0.01" min="0.7" max="1.0" />
+              </div>
+            </div>
+            <div class="config-row">
+              <label class="row-label">Allow. Stress (MPa):</label>
+              <div class="row-input-wrap">
+                <input type="number" id="inp-sigma-allow" class="input-control row-input" value="40" step="5" min="10" max="1500" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Design Presets (Collapsible Card) -->
+        <div class="accordion-card">
+          <div class="accordion-header" data-target="panel-presets">
+            <span class="accordion-title">Design Presets</span>
+            <span class="accordion-arrow">&#9660;</span>
+          </div>
+          <div class="accordion-content" id="panel-presets" style="display: none;">
+            <div class="preset-pill-grid">
+              <button class="preset-pill" data-preset="standard-16-48">Zerol Standard (16T/48T)</button>
+              <button class="preset-pill" data-preset="compact-18-36">Zerol Compact (18T/36T)</button>
+              <button class="preset-pill" data-preset="spur-standard-16-48">Spur Standard (16T/48T, C=96)</button>
+              <button class="preset-pill" data-preset="spur-high-speed-18-54">Spur High-Speed (18T/54T)</button>
+              <button class="preset-pill" data-preset="spur-heavy-duty-20-60">Spur Heavy-Duty (20T/60T)</button>
+              <button class="preset-pill" data-preset="internal-standard-16-48">Internal Ring (16T/48T, C=48)</button>
+              <button class="preset-pill" data-preset="internal-compact-18-54">Internal Compact (18T/54T)</button>
+              <button class="preset-pill" data-preset="internal-high-ratio-16-64">Internal High-Ratio (16T/64T)</button>
+              <button class="preset-pill" data-preset="straight-standard-16-48">Straight Standard (16T/48T, &Sigma;=90&deg;)</button>
+              <button class="preset-pill" data-preset="straight-compact-18-36">Straight Compact (18T/36T)</button>
+              <button class="preset-pill" data-preset="straight-high-ratio-12-60">Straight High-Ratio (12T/60T)</button>
+              <button class="preset-pill" data-preset="helical-standard-16-48">Helical Standard (16T/48T, &beta;=15&deg;)</button>
+              <button class="preset-pill" data-preset="helical-compact-18-36">Helical Compact (18T/36T, &beta;=20&deg;)</button>
+              <button class="preset-pill" data-preset="helical-high-ratio-12-60">Helical High-Ratio (12T/60T)</button>
+              <button class="preset-pill" data-preset="spiral-standard-16-48">Spiral Standard (16T/48T, &beta;=35&deg;)</button>
+              <button class="preset-pill" data-preset="spiral-compact-18-36">Spiral Compact (18T/36T, &beta;=35&deg;)</button>
+              <button class="preset-pill" data-preset="spiral-high-ratio-12-60">Spiral High-Ratio (12T/60T, &beta;=35&deg;)</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Footer -->
+      <div class="panel-action-footer">
+        <button class="btn-primary-action" id="btn-generate">GENERATE DESIGN</button>
+      </div>
+    </aside>
+
+    <!-- 3. CENTER COLUMN: EXPANDED 3D VIEWPORT -->
+    <main class="viewport-main">
+
+      <!-- Top Toolbar Row -->
+      <div class="viewport-toolbar">
+        <div class="viewport-headline">
+          <span class="gear-badge" id="viewport-gear-type">Zerol Bevel</span>
+          <span class="gear-specs-text" id="viewport-specs">Np=16 &middot; Ng=48 &middot; m=3.0 &middot; &phi;20&deg;</span>
+        </div>
+
+        <div class="viewport-controls-cluster">
+          <!-- 3D vs 2D Tabs -->
+          <div class="mode-tab-group">
+            <button class="mode-tab active" id="tab-3d">3D</button>
+            <button class="mode-tab" id="tab-2d">2D</button>
+          </div>
+
+          <span class="toolbar-sep"></span>
+
+          <!-- Exploded View Slider -->
+          <div class="explode-control" id="group-exploded">
+            <span class="explode-label">Explode:</span>
+            <input type="range" id="slider-exploded" class="explode-slider" min="0" max="1" step="0.01" value="0" />
+          </div>
+
+          <span class="toolbar-sep"></span>
+
+          <!-- Action Buttons -->
+          <button class="tool-btn" id="btn-animate-rot" title="Simulate Mesh Motion">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Simulate</span>
+          </button>
+
+          <span class="toolbar-sep"></span>
+
+          <!-- Camera Views -->
+          <div class="camera-btn-group">
+            <button class="cam-btn" id="cam-iso" title="Isometric">Iso</button>
+            <button class="cam-btn" id="cam-front" title="Front View">Front</button>
+            <button class="cam-btn" id="cam-top" title="Top View">Top</button>
+            <button class="cam-btn" id="cam-mesh" title="Mesh Zoom">Mesh</button>
+          </div>
+
+          <!-- Part Filter -->
+          <select id="sel-part-mode" class="input-control select-part-mode">
+            <option value="assembly">Full Assembly</option>
+            <option value="pinion">Pinion Only</option>
+            <option value="gear">Ring Gear Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- View Area (WebGL Canvas / 2D Canvas) -->
+      <div class="view-area" id="view-area-container">
+        <!-- Three.js Canvas Container -->
+        <div id="canvas-3d-container" class="viewport-canvas"></div>
+
+        <!-- 2D Canvas Container -->
+        <canvas id="canvas-2d" class="viewport-canvas" width="1600" height="900" style="display: none;"></canvas>
+
+        <!-- Floating Quick View Tools (Top-Right Blueprint CAD Tools) -->
+        <div class="floating-cad-tools">
+          <button class="float-tool-btn" id="btn-cad-zoom-in" title="Zoom In">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button class="float-tool-btn" id="btn-cad-zoom-out" title="Zoom Out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button class="float-tool-btn" id="btn-cad-reset" title="Reset View (Target)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+          </button>
+          <button class="float-tool-btn" id="btn-cad-fullscreen" title="Toggle Fullscreen Viewport">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+        </div>
+
+        <!-- Live Engineering HUD Overlay (Top-Left) -->
+        <div class="viewport-hud">
+          <div class="hud-item">
+            <span class="hud-title">CONTACT RATIO</span>
+            <span class="hud-value" id="hud-cr">1.642</span>
+            <span class="hud-badge safe" id="hud-cr-status">GOOD (&ge;1.5)</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-title">SAFETY FACTOR</span>
+            <span class="hud-value" id="hud-sf">49.6 / 46.4</span>
+            <span class="hud-badge safe" id="hud-sf-status">SAFE (&ge;1.5)</span>
+          </div>
+        </div>
+
+        <!-- Dimension Watermark (Top-Left of 3D Canvas, matching reference image) -->
+        <div class="canvas-dimensions-watermark">
+          <div class="watermark-main" id="wm-gear-title">Zerol Bevel Gear</div>
+          <div class="watermark-sub" id="wm-gear-params">Z=16/48 &bull; M=3 &bull; &phi;20&deg;</div>
+          <div class="watermark-dims" id="wm-gear-dims">
+            Pitch Dia: 48.0 / 144.0 mm<br>
+            Cone Dist: 75.89 mm<br>
+            Face Width: 21.25 mm
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 4. RIGHT COLUMN: COMPACT DESIGN SUMMARY & EXPORT -->
+    <aside class="panel-export">
+      <div class="panel-heading">Design Summary &amp; Export</div>
+      <div class="panel-scroll">
+
+        <!-- Header Tag -->
+        <div class="design-name-card">
+          <div class="design-label">CURRENT DESIGN</div>
+          <div class="design-spec-bold" id="summary-title">Zerol Bevel (M3, Z16/48)</div>
+        </div>
+
+        <!-- Metrics Table -->
+        <table class="summary-table">
+          <tbody>
+            <tr><td class="td-key">Pitch Diameter:</td><td class="td-val" id="res-pd">48.0 / 144.0 mm</td></tr>
+            <tr><td class="td-key">Cone Angles:</td><td class="td-val" id="res-angles">18.43&deg; / 71.57&deg;</td></tr>
+            <tr><td class="td-key">Cone Distance:</td><td class="td-val" id="res-ao">75.89 mm</td></tr>
+            <tr><td class="td-key">Face Width:</td><td class="td-val" id="res-f">21.25 mm</td></tr>
+            <tr><td class="td-key">Cutter Radius:</td><td class="td-val" id="res-rc">65.27 mm</td></tr>
+            <tr><td class="td-key">Contact Ratio:</td><td class="td-val highlight-green" id="res-cr">1.642</td></tr>
+            <tr><td class="td-key">Blade Speed:</td><td class="td-val" id="res-speed">300 RPM</td></tr>
+            <tr><td class="td-key">Blade Torque:</td><td class="td-val" id="res-torque">2.16 N&middot;m</td></tr>
+            <tr><td class="td-key">Mesh Force:</td><td class="td-val" id="res-forces">107.8 / 114.7 N</td></tr>
+            <tr><td class="td-key">Safety Factor:</td><td class="td-val highlight-green" id="res-sf">49.6 / 46.4</td></tr>
+          </tbody>
+        </table>
+
+        <div class="section-divider"></div>
+
+        <!-- EXPORT TO CAD SECTION -->
+        <div class="export-header-title">EXPORT TO CAD</div>
+
+        <!-- CAD Software Quick Cards (matching reference image) -->
+        <div class="cad-quick-grid">
+          <div class="cad-card active" data-export-type="zip" id="card-cad-zip" title="Complete CAD Package (STEP + IGES + STL + Macro + Report)">
+            <div class="cad-card-logo">ALL</div>
+            <div class="cad-card-title">PACKAGE</div>
+            <div class="cad-card-ext">.ZIP</div>
+          </div>
+          <div class="cad-card" data-export-type="solidworks" id="card-cad-sw" title="SolidWorks VBA Macro & Equations">
+            <div class="cad-card-logo sw-logo">DS</div>
+            <div class="cad-card-title">SOLIDWORKS</div>
+            <div class="cad-card-ext">.BAS</div>
+          </div>
+          <div class="cad-card" data-export-type="step" id="card-cad-stp" title="ISO 10303-21 STEP Solid Models">
+            <div class="cad-card-logo step-logo">STP</div>
+            <div class="cad-card-title">STEP AP214</div>
+            <div class="cad-card-ext">.STP</div>
+          </div>
+          <div class="cad-card" data-export-type="stl" id="card-cad-stl" title="3D Printable Binary STL">
+            <div class="cad-card-logo stl-logo">3D</div>
+            <div class="cad-card-title">PRINT STL</div>
+            <div class="cad-card-ext">.STL</div>
+          </div>
+        </div>
+
+        <!-- Format Selector & Filename -->
+        <div class="export-form-field">
+          <label class="export-field-label">File Format:</label>
+          <select id="sel-export-format" class="input-control select-export-format">
+            <option value="zip" selected>Complete CAD (.ZIP)</option>
+            <option value="solidworks">SolidWorks Macro (.bas)</option>
+            <option value="step">STEP AP214 (.stp)</option>
+            <option value="iges">IGES 5.3 (.igs)</option>
+            <option value="stl">Binary STL (.stl)</option>
+            <option value="csv">Design Report (.csv)</option>
+            <option value="png">2D Diagram (.png)</option>
+          </select>
+        </div>
+
+        <div class="export-form-field">
+          <label class="export-field-label">Filename:</label>
+          <input type="text" id="inp-filename" class="input-control input-filename" value="Zerol_Bevel_Pitch_Drive" />
+        </div>
+
+      </div>
+
+      <!-- Export Action Footer -->
+      <div class="panel-action-footer">
+        <button class="btn-primary-action" id="btn-export-design">EXPORT DESIGN</button>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Backward Compatibility Hidden Elements -->
+  <div id="material-desc-box" style="display:none;"></div>
+  <span id="hud-config" style="display:none;"></span>
+  <button id="btn-header-zip" style="display:none;"></button>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

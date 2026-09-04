@@ -1,0 +1,32 @@
+// ======================================================================
+// SOLIDWORKS GLOBAL EQUATIONS - SPIRAL BEVEL GEAR DRIVE
+// Wind Turbine Pitch Control System (AGMA 2005-D03 / Gleason Standard)
+// ======================================================================
+
+"m" = 3
+"Np" = 16
+"Ng" = 48
+"phi_n_deg" = 20
+"beta_m_deg" = 35
+"Sigma_deg" = 90
+"dp" = "m" * "Np"
+"dg" = "m" * "Ng"
+"gamma_p_deg" = 18.4349
+"gamma_g_deg" = 71.5651
+"Ao" = 75.8947
+"Am" = 63.3947
+"Ai" = 50.8947
+"F" = 25
+"hw" = 5.1
+"ht" = 5.664
+"c_std" = 0.564
+"a_p" = 2.754
+"a_g" = 2.346
+"b_p" = 2.91
+"b_g" = 3.318
+"da_p" = 53.2253
+"da_g" = 145.484
+"dd_p" = 42.4787
+"dd_g" = 141.902
+"r_cutter" = 39.9979
+"CR_total" = 2.57896

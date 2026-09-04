@@ -1,0 +1,29 @@
+Parameter,Symbol,Value,Unit
+Gear Type,-,Internal Involute Spur Gear,-
+Normal Module,m,3.0000,mm
+Pinion Teeth,Np,16,-
+Ring Gear Teeth,Ng,48,-
+Gear Ratio,i,3.0000,-
+Pressure Angle,phi,20.00,deg
+Face Width,F,25.00,mm
+Number of Pinions,n_pinions,3,-
+Center Distance,C,48.0000,mm
+Pinion Pitch Diameter,dp,48.0000,mm
+Ring Pitch Diameter,dg,144.0000,mm
+Ring Internal Tip Radius,ra_g_int,69.6000,mm
+Ring Internal Root Radius,rd_g_int,76.1640,mm
+Outer Rim Diameter,D_outer,176.3280,mm
+Transverse Contact Ratio,CR,1.8066,-
+Input Ring Torque,T_in,20.00,N*m
+Pinion Torque (each),Tp,2.1556,N*m
+Input Ring Speed,ng,100.00,RPM
+Output Pinion Speed,np,300.00,RPM
+Tangential Force,Ft,92.59,N
+Radial Force,Fr,33.70,N
+Resultant Force,F_res,98.53,N
+Pinion Bending Stress,sigma_b_p,3.26,MPa
+Pinion Bending Safety Factor,SF_b_p,76.63,-
+Ring Bending Stress,sigma_b_g,3.06,MPa
+Ring Bending Safety Factor,SF_b_g,81.80,-
+Hertzian Contact Stress,sigma_H,107.39,MPa
+Contact Safety Factor,SF_contact,13.97,-

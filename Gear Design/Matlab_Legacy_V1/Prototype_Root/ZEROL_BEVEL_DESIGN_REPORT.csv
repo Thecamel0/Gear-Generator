@@ -1,0 +1,30 @@
+Parameter,Value,Unit
+Gear Ratio,4.000000,:1
+Pinion Teeth,20,count
+Gear Teeth,80,count
+Module,4.000000,mm
+Pinion Pitch Diameter,80.000000,mm
+Gear Pitch Diameter,320.000000,mm
+Pinion Outer Diameter,88.000000,mm
+Gear Outer Diameter,328.000000,mm
+Pinion Root Diameter,70.000000,mm
+Gear Root Diameter,310.000000,mm
+Pressure Angle,20.000000,deg
+Spiral Angle,0.000000,deg
+Pinion Pitch Cone Angle,14.036243,deg
+Gear Pitch Cone Angle,75.963757,deg
+Cone Distance,164.924225,mm
+Face Width,30.000000,mm
+Target Contact Ratio,1.400000,-
+Approximate Contact Ratio,1.751092,-
+Input Speed,12.000000,RPM
+Output Speed,3.000000,RPM
+Input Torque,1000.000000,Nm
+Output Torque,3760.000000,Nm
+Efficiency,0.940000,decimal
+Input Power,1.256637,kW
+Output Power,1.181239,kW
+Pitch Line Velocity,0.050265,m/s
+Tangential Force,25000.000000,N
+Approximate Radial Force,9099.255857,N
+Approximate Axial Force,6250.000000,N

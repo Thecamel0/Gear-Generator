@@ -1,0 +1,450 @@
+/**
+ * 3D INTERACTIVE CAD VIEWER (Three.js)
+ * High-performance 3D visualization with PBR shading, OrbitControls,
+ * exploded view, dynamic meshing animation, wireframe, and camera presets.
+ *
+ * Author: Ahmed Majdy Ahmed
+ */
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+export class GearViewer3D {
+  constructor(containerElement) {
+    this.container = containerElement;
+    this.calc = null;
+    this.pinionMesh = null;
+    this.gearMesh = null;
+
+    // View options
+    this.explodedFactor = 0.0;
+    this.isRotating = false;
+    this.rotationSpeedRpm = 10;
+    this.showWireframe = false;
+    this.showPitchCones = false;
+    this.showAxes = true;
+    this.viewMode = 'assembly'; // 'assembly', 'pinion', 'gear'
+
+    this.gearGroup = null;
+    this.pinionGroups = [];
+    this.pitchConesGroup = null;
+    this.axesHelper = null;
+
+    this.gearAngle = 0;
+
+    this.initScene();
+    this.initLights();
+    this.initHelpers();
+    this.animate = this.animate.bind(this);
+    this.handleResize = this.handleResize.bind(this);
+
+    window.addEventListener('resize', this.handleResize);
+    this.animate();
+  }
+
+  initScene() {
+    this.scene = new THREE.Scene();
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    this.scene.background = new THREE.Color(isDark ? 0x0d111c : 0xf8fafc);
+
+    const width = this.container.clientWidth || 800;
+    const height = this.container.clientHeight || 600;
+
+    this.camera = new THREE.PerspectiveCamera(40, width / height, 0.5, 3000);
+    this.camera.position.set(120, 115, 200);
+
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    this.container.innerHTML = '';
+    this.container.appendChild(this.renderer.domElement);
+
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.maxDistance = 1500;
+    this.controls.minDistance = 10;
+    this.controls.target.set(0, 15, 0);
+  }
+
+  initLights() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+    // Ambient light - strong enough to illuminate all sides
+    const ambientLight = new THREE.AmbientLight(0xffffff, isDark ? 0.9 : 1.1);
+    this.scene.add(ambientLight);
+
+    // Top key light
+    const mainLight = new THREE.DirectionalLight(0xffffff, isDark ? 1.4 : 1.6);
+    mainLight.position.set(150, 250, 200);
+    this.scene.add(mainLight);
+
+    // Bottom-up fill light (illuminates the teeth & pinions from below, matching MATLAB's [-1 -1 0.5])
+    const bottomLight = new THREE.DirectionalLight(0xffffff, isDark ? 1.3 : 1.5);
+    bottomLight.position.set(-150, -200, 150);
+    this.scene.add(bottomLight);
+
+    // Front fill light
+    const frontLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    frontLight.position.set(0, 50, 250);
+    this.scene.add(frontLight);
+
+    // Horizontal CAD Blueprint grid helper (matches MATLAB XY ground plane)
+    this.gridHelper = new THREE.GridHelper(400, 40, isDark ? 0x2a3346 : 0xcbd5e1, isDark ? 0x1a2130 : 0xe2e8f0);
+    this.gridHelper.position.y = -25;
+    this.scene.add(this.gridHelper);
+  }
+
+  initHelpers() {
+    this.axesHelper = new THREE.AxesHelper(60);
+    this.axesHelper.visible = this.showAxes;
+    this.scene.add(this.axesHelper);
+
+    this.rootAssemblyGroup = new THREE.Group();
+    // Rotate root assembly by -90° around X so MATLAB Z-axis (gear axis) maps to Three.js Y-axis (UP)!
+    this.rootAssemblyGroup.rotation.x = -Math.PI / 2;
+    this.scene.add(this.rootAssemblyGroup);
+  }
+
+  convertMeshToThreeBufferGeometry(customMesh) {
+    const geometry = new THREE.BufferGeometry();
+    const positions = [];
+    const indices = [];
+
+    const { vertices, faces } = customMesh;
+    for (let i = 0; i < vertices.length; i++) {
+      positions.push(vertices[i][0], vertices[i][1], vertices[i][2]);
+    }
+
+    for (let i = 0; i < faces.length; i++) {
+      indices.push(faces[i][0], faces[i][1], faces[i][2]);
+    }
+
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    return geometry;
+  }
+
+  updateGears(calc, pinionMesh, gearMesh) {
+    this.calc = calc;
+    this.pinionMesh = pinionMesh;
+    this.gearMesh = gearMesh;
+
+    // Clear existing gears
+    while (this.rootAssemblyGroup.children.length > 0) {
+      const obj = this.rootAssemblyGroup.children[0];
+      this.rootAssemblyGroup.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+        else obj.material.dispose();
+      }
+    }
+    this.pinionGroups = [];
+
+    const gearGeo = this.convertMeshToThreeBufferGeometry(gearMesh);
+    const pinionGeo = this.convertMeshToThreeBufferGeometry(pinionMesh);
+
+    // Materials matching MATLAB's Gouraud shading:
+    // Central Ring Gear: Bronze [0.78 0.52 0.28]
+    const gearMaterial = new THREE.MeshStandardMaterial({
+      color: 0xc88548,
+      metalness: 0.45,
+      roughness: 0.45,
+      wireframe: this.showWireframe,
+      side: THREE.DoubleSide
+    });
+
+    // Pinion palette matching MATLAB's exact colors:
+    // [0.45 0.58 0.78; 0.55 0.75 0.55; 0.72 0.48 0.65; 0.78 0.68 0.45]
+    const pinionColors = [
+      0x7394c7, // Pinion 1: Steel Blue
+      0x8cbf8c, // Pinion 2: Sage Green
+      0xb87ba6, // Pinion 3: Dusty Lavender
+      0xc7ad73  // Pinion 4: Warm Gold
+    ];
+
+    // 1. Build Ring Gear
+    this.gearGroup = new THREE.Group();
+    const gearMeshObj = new THREE.Mesh(gearGeo, gearMaterial);
+    this.gearGroup.add(gearMeshObj);
+    this.rootAssemblyGroup.add(this.gearGroup);
+
+    // 2. Build Multi-Pinions
+    const n_pinions = calc.n_pinions || 3;
+    const Ry90 = new THREE.Matrix4().makeRotationY(Math.PI / 2);
+    const Rclock = new THREE.Matrix4().makeRotationZ(Math.PI / calc.Np);
+
+    for (let p = 0; p < n_pinions; p++) {
+      const pColor = pinionColors[p % pinionColors.length];
+      const pinMaterial = new THREE.MeshStandardMaterial({
+        color: pColor,
+        metalness: 0.35,
+        roughness: 0.45,
+        wireframe: this.showWireframe,
+        side: THREE.DoubleSide
+      });
+
+      const pinionMeshObj = new THREE.Mesh(pinionGeo, pinMaterial);
+      const pGroup = new THREE.Group();
+      pGroup.add(pinionMeshObj);
+
+      const angleOffset = (p * 2 * Math.PI) / n_pinions;
+      const phaseAngle = angleOffset * (calc.Ng / calc.Np);
+
+      pGroup.userData = {
+        pinionIndex: p,
+        angleOffset: angleOffset,
+        phaseAngle: phaseAngle,
+        meshObj: pinionMeshObj
+      };
+
+      this.pinionGroups.push(pGroup);
+      this.rootAssemblyGroup.add(pGroup);
+    }
+
+    this.updateExplodedTransforms();
+    this.updateVisibilityMode();
+  }
+
+  setExplodedFactor(val) {
+    this.explodedFactor = Math.max(0, Math.min(1, Number(val) || 0));
+    this.updateExplodedTransforms();
+  }
+
+  updateExplodedTransforms() {
+    if (!this.calc || !this.gearGroup) return;
+
+    const isSpur = this.calc.gear_type === 'spur' || this.calc.gear_type === 'helical';
+    const isInternalSpur = this.calc.gear_type === 'internal_spur';
+    const baseDist = (isSpur || isInternalSpur) ? (this.calc.center_dist || 48.0) : (this.calc.Ao || 100.0);
+    const sep = baseDist * 0.35 * this.explodedFactor;
+
+    // Gear moves axially along -Z in MATLAB frame
+    this.gearGroup.position.set(0, 0, -sep);
+
+    if (isInternalSpur) {
+      // INTERNAL SPUR: Pinions sit INSIDE Ring Gear at parallel radius C = (dg - dp) / 2
+      const C = this.calc.center_dist || 48.0;
+      const Ng = this.calc.Ng;
+      const Np = this.calc.Np;
+
+      for (let i = 0; i < this.pinionGroups.length; i++) {
+        const pGroup = this.pinionGroups[i];
+        const { angleOffset, meshObj } = pGroup.userData;
+
+        // Internal mesh: same sense rotation
+        const rot_phase = angleOffset + angleOffset * (Ng / Np);
+        const currentPinionAngle = this.gearAngle * (Ng / Np) + rot_phase;
+
+        meshObj.matrixAutoUpdate = true;
+        meshObj.rotation.set(0, 0, currentPinionAngle);
+
+        // Pinions elevate along +Z in exploded view
+        pGroup.position.set(
+          Math.cos(angleOffset) * C,
+          Math.sin(angleOffset) * C,
+          +sep
+        );
+      }
+    } else if (isSpur) {
+      // SPUR GEAR: Parallel shafts along Z (Three.js vertical)
+      const C = this.calc.center_dist || (this.calc.dp + this.calc.dg) / 2;
+      const Ng = this.calc.Ng;
+      const Np = this.calc.Np;
+
+      for (let i = 0; i < this.pinionGroups.length; i++) {
+        const pGroup = this.pinionGroups[i];
+        const { angleOffset, meshObj } = pGroup.userData;
+
+        // Rotational phase clocking matching MATLAB:
+        // rot_phase = pi + th_p - th_p * (Ng/Np) + (pi/Np)
+        const rot_phase = Math.PI + angleOffset - angleOffset * (Ng / Np) + (Math.PI / Np);
+        const currentPinionAngle = -this.gearAngle * (Ng / Np) + rot_phase;
+
+        meshObj.matrixAutoUpdate = true;
+        meshObj.rotation.set(0, 0, currentPinionAngle);
+
+        // Radial displacement outward along shaft ray
+        const r_curr = C + sep;
+        pGroup.position.set(
+          Math.cos(angleOffset) * r_curr,
+          Math.sin(angleOffset) * r_curr,
+          0
+        );
+      }
+    } else {
+      // ZEROL BEVEL GEAR: 90° intersecting shafts
+      const Ry90 = new THREE.Matrix4().makeRotationY(Math.PI / 2);
+      const Rclock = new THREE.Matrix4().makeRotationZ(Math.PI / this.calc.Np);
+
+      for (let i = 0; i < this.pinionGroups.length; i++) {
+        const pGroup = this.pinionGroups[i];
+        const { angleOffset, phaseAngle, meshObj } = pGroup.userData;
+
+        const Rz = new THREE.Matrix4().makeRotationZ(angleOffset);
+        const currentPinionAngle = -this.gearAngle * (this.calc.Ng / this.calc.Np) + phaseAngle;
+        const Rphase = new THREE.Matrix4().makeRotationZ(currentPinionAngle);
+
+        const mat = new THREE.Matrix4();
+        mat.multiply(Rz);
+        mat.multiply(Ry90);
+        mat.multiply(Rclock);
+        mat.multiply(Rphase);
+
+        meshObj.matrix.copy(mat);
+        meshObj.matrixAutoUpdate = false;
+
+        // Radial displacement along shaft axis
+        const expX = Math.cos(angleOffset) * sep;
+        const expY = Math.sin(angleOffset) * sep;
+        pGroup.position.set(expX, expY, 0);
+      }
+    }
+
+    // Apply rotation to central gear
+    this.gearGroup.rotation.z = this.gearAngle;
+  }
+
+  setViewMode(mode) {
+    this.viewMode = mode;
+    this.updateVisibilityMode();
+  }
+
+  updateVisibilityMode() {
+    if (!this.gearGroup) return;
+    if (this.viewMode === 'assembly') {
+      this.gearGroup.visible = true;
+      this.pinionGroups.forEach(pg => (pg.visible = true));
+    } else if (this.viewMode === 'pinion') {
+      this.gearGroup.visible = false;
+      this.pinionGroups.forEach((pg, idx) => (pg.visible = idx === 0));
+    } else if (this.viewMode === 'gear') {
+      this.gearGroup.visible = true;
+      this.pinionGroups.forEach(pg => (pg.visible = false));
+    }
+  }
+
+  setWireframe(enabled) {
+    this.showWireframe = !!enabled;
+    if (this.gearGroup) {
+      this.gearGroup.children[0].material.wireframe = this.showWireframe;
+      this.pinionGroups.forEach(pg => {
+        pg.userData.meshObj.material.wireframe = this.showWireframe;
+      });
+    }
+  }
+
+  setAxesVisible(enabled) {
+    this.showAxes = !!enabled;
+    if (this.axesHelper) this.axesHelper.visible = this.showAxes;
+  }
+
+  setRotation(enabled, rpm = 10) {
+    this.isRotating = !!enabled;
+    this.rotationSpeedRpm = Number(rpm) || 10;
+  }
+
+  setCameraPreset(preset) {
+    if (!this.calc) return;
+    const isInternalSpur = this.calc.gear_type === 'internal_spur';
+    const isSpur = this.calc.gear_type === 'spur' || this.calc.gear_type === 'helical';
+    const refDist = isInternalSpur
+      ? (this.calc.D_outer || (this.calc.r_rim ? this.calc.r_rim * 2 : 180))
+      : (isSpur ? ((this.calc.dp + this.calc.dg) * 0.8 || 150) : (this.calc.Ao || 100));
+    const d = Math.max(refDist * 1.6, 120);
+
+    switch (preset) {
+      case 'iso':
+        // Exactly matches MATLAB view(ax1, [-40 30])
+        this.camera.position.set(d * 0.55, d * 0.60, d * 0.85);
+        this.controls.target.set(0, 0, 0);
+        break;
+      case 'top':
+        // Looking directly down onto the gear plane
+        this.camera.position.set(0, d * 1.4, 0);
+        this.controls.target.set(0, 0, 0);
+        break;
+      case 'front':
+        // Front view across the gear plane
+        this.camera.position.set(0, 15, d * 1.2);
+        this.controls.target.set(0, 0, 0);
+        break;
+      case 'mesh-zoom':
+        if (isInternalSpur) {
+          const ptX = this.calc.rp_g || 72;
+          this.camera.position.set(ptX + 25, 45, 30);
+          this.controls.target.set(ptX, 0, 0);
+        } else if (isSpur) {
+          const ptX = (this.calc.dp || 48) / 2;
+          this.camera.position.set(ptX + 25, 35, 25);
+          this.controls.target.set(ptX, 0, 0);
+        } else {
+          this.camera.position.set((this.calc.dp || 48) * 1.1, 40, 30);
+          this.controls.target.set((this.calc.dp || 48) * 0.6, 18, 0);
+        }
+        break;
+      default:
+        this.camera.position.set(-150, 110, 180);
+        this.controls.target.set(0, 0, 0);
+    }
+    this.controls.update();
+  }
+
+  handleResize() {
+    const width = this.container.clientWidth || 800;
+    const height = this.container.clientHeight || 600;
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+  }
+
+  animate() {
+    requestAnimationFrame(this.animate);
+
+    if (this.isRotating && this.calc) {
+      const deltaRad = (this.rotationSpeedRpm * 2 * Math.PI) / (60 * 60);
+      this.gearAngle += deltaRad;
+      this.updateExplodedTransforms();
+    }
+
+    this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  setTheme(theme) {
+    const isDark = theme === 'dark';
+    this.scene.background = new THREE.Color(isDark ? 0x0d111c : 0xf8fafc);
+    if (this.gridHelper) {
+      this.scene.remove(this.gridHelper);
+      if (this.gridHelper.geometry) this.gridHelper.geometry.dispose();
+      if (this.gridHelper.material) this.gridHelper.material.dispose();
+    }
+    this.gridHelper = new THREE.GridHelper(400, 40, isDark ? 0x2a3346 : 0xcbd5e1, isDark ? 0x1a2130 : 0xe2e8f0);
+    this.gridHelper.position.y = 0;
+    this.scene.add(this.gridHelper);
+  }
+
+  zoomIn() {
+    this.camera.position.multiplyScalar(0.82);
+    this.controls.update();
+  }
+
+  zoomOut() {
+    this.camera.position.multiplyScalar(1.22);
+    this.controls.update();
+  }
+
+  resetView() {
+    this.setCameraPreset('iso');
+  }
+
+  dispose() {
+    window.removeEventListener('resize', this.handleResize);
+    this.renderer.dispose();
+  }
+}

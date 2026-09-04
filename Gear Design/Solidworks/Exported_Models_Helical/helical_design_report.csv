@@ -1,0 +1,34 @@
+Parameter,Value,Unit,Notes
+Gear Type,External Helical Gear,-,Parallel shaft wind turbine pitch actuator
+Normal Module (mn),3,mm,Standard metric normal module
+Transverse Module (mt),3.1058,mm,mt = mn / cos(beta)
+Pinion Tooth Count (Np),16,-,Driving blade pitch pinion
+Gear Tooth Count (Ng),48,-,Central pitch actuator bull gear
+Gear Ratio (i),3.00,-,1:3.0 reduction
+Helix Angle (beta),15,deg,Pinion RH / Gear LH
+Normal Pressure Angle (phi_n),20,deg,Standard 20 deg normal cutter
+Transverse Pressure Angle (phi_t),20.647,deg,tan(phi_t) = tan(phi_n)/cos(beta)
+Center Distance (C),99.387,mm,C = (dp + dg) / 2
+Face Width (F),40.000,mm,F >= px for continuous overlap
+Driving Pinions Count,3,-,3 pinions spaced at 120 deg
+Pinion Pitch Diameter (dp),49.693,mm,dp = mt * Np
+Gear Pitch Diameter (dg),149.080,mm,dg = mt * Ng
+Pinion Tip Diameter (da_p),55.693,mm,da_p = dp + 2*mn
+Gear Tip Diameter (da_g),155.080,mm,da_g = dg + 2*mn
+Working Depth (hw),6.000,mm,hw = 2.0 * mn
+Whole Depth (ht),6.750,mm,ht = 2.25 * mn
+Clearance (c),0.750,mm,c = 0.25 * mn
+Transverse Contact Ratio (eps_alpha),1.550,-,Transverse plane profile overlap
+Axial Overlap Ratio (eps_beta),1.098,-,eps_beta = F * sin(beta) / (pi * mn)
+Total Contact Ratio (eps_gamma),2.648,-,eps_gamma = eps_alpha + eps_beta
+Input Ring Torque,20,N*m,Pitch ring torque
+Ring Speed,100,RPM,Pitch ring operational speed
+Output Pinion Speed,300.0,RPM,Pinion shaft speed
+Torque per Pinion,2.222,N*m,Torque divided across 3 pinions
+Tangential Force (Ft),89.44,N,Ft = 2 * T_mesh / dg
+Radial Force (Fr),33.70,N,Fr = Ft * tan(phi_t)
+Axial Thrust Force (Fa),23.96,N,Fa = Ft * tan(beta)
+Resultant Mesh Force (Fres),98.53,N,Fres = sqrt(Ft^2 + Fr^2 + Fa^2)
+Pinion Bending Stress,6.35,MPa,Bending stress at root fillet
+Gear Bending Stress,4.76,MPa,Bending stress at root fillet
+Hertzian Contact Stress,103.30,MPa,Contact stress along tooth flank
