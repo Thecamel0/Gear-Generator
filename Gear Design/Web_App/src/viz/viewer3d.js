@@ -51,7 +51,7 @@ export class GearViewer3D {
     const height = this.container.clientHeight || 600;
 
     this.camera = new THREE.PerspectiveCamera(40, width / height, 0.5, 3000);
-    this.camera.position.set(120, 115, 200);
+    this.camera.position.set(160, 135, 230);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setSize(width, height);
@@ -67,7 +67,7 @@ export class GearViewer3D {
     this.controls.dampingFactor = 0.05;
     this.controls.maxDistance = 1500;
     this.controls.minDistance = 10;
-    this.controls.target.set(0, 15, 0);
+    this.controls.target.set(0, 12, 0);
   }
 
   initLights() {
@@ -115,7 +115,31 @@ export class GearViewer3D {
     const n_faces = faces.length;
     const n_verts = vertices.length;
 
-    // 1. Calculate face normals and classify faces (cap vs lateral)
+    // Bevel gears (Straight, Zerol, Spiral): use true Gouraud smooth normals matching MATLAB
+    if (customMesh.isBevel) {
+      const positions = new Float32Array(n_verts * 3);
+      for (let i = 0; i < n_verts; i++) {
+        positions[i * 3] = vertices[i][0];
+        positions[i * 3 + 1] = vertices[i][1];
+        positions[i * 3 + 2] = vertices[i][2];
+      }
+      const indices = new Uint32Array(n_faces * 3);
+      for (let f = 0; f < n_faces; f++) {
+        indices[f * 3] = faces[f][0];
+        indices[f * 3 + 1] = faces[f][1];
+        indices[f * 3 + 2] = faces[f][2];
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      if (customMesh.normals && customMesh.normals.length === n_verts * 3) {
+        geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(customMesh.normals), 3));
+      } else {
+        geometry.computeVertexNormals();
+      }
+      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+      return geometry;
+    }
+
+    // 1. Calculate face normals and classify faces (cap vs lateral) for cylindrical gears (Spur, Helical)
     const faceNormals = [];
     const isCap = new Uint8Array(n_faces);
 
@@ -432,24 +456,28 @@ export class GearViewer3D {
     const isSpur = this.calc.gear_type === 'spur' || this.calc.gear_type === 'helical';
     const refDist = isInternalSpur
       ? (this.calc.D_outer || (this.calc.r_rim ? this.calc.r_rim * 2 : 180))
-      : (isSpur ? ((this.calc.dp + this.calc.dg) * 0.8 || 150) : (this.calc.Ao || 100));
-    const d = Math.max(refDist * 1.6, 120);
+      : (isSpur
+          ? ((this.calc.dp + this.calc.dg) * 0.8 || 150)
+          : Math.max((this.calc.dg || 144) + (this.calc.dp || 48), (this.calc.Ao * 2 || 150)));
+    const d = Math.max(refDist * 1.35, 160);
+
+    const targetY = (isSpur || isInternalSpur) ? 0 : 12;
 
     switch (preset) {
       case 'iso':
         // Exactly matches MATLAB view(ax1, [-40 30])
-        this.camera.position.set(d * 0.55, d * 0.60, d * 0.85);
-        this.controls.target.set(0, 0, 0);
+        this.camera.position.set(d * 0.60, d * 0.52, d * 0.85);
+        this.controls.target.set(0, targetY, 0);
         break;
       case 'top':
         // Looking directly down onto the gear plane
         this.camera.position.set(0, d * 1.4, 0);
-        this.controls.target.set(0, 0, 0);
+        this.controls.target.set(0, targetY, 0);
         break;
       case 'front':
         // Front view across the gear plane
         this.camera.position.set(0, 15, d * 1.2);
-        this.controls.target.set(0, 0, 0);
+        this.controls.target.set(0, targetY, 0);
         break;
       case 'mesh-zoom':
         if (isInternalSpur) {
