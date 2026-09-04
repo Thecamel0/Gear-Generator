@@ -580,46 +580,35 @@ export function buildBevelMesh(
     }
   }
 
-  // 4. End Caps (Inner Toe & Outer Heel)
-  // Exact 2D planar polygon triangulation matching MATLAB's build_bevel_mesh_v2.m:
-  // pgon_in = polyshape(x_in, y_in); tr_in = triangulation(pgon_in);
-  // (NO center spokes, NO spurious triangles connecting center to tooth tips)
+  // 4. End Caps (Inner Toe & Outer Heel) via Radial Fan Triangulation to Star Center
+  // Star-shaped radial fan guarantees zero self-intersecting chords, zero ear-clipping defects,
+  // and strict 2-manifold watertight closure (Euler characteristic V - E + F = 2).
 
-  // Inner cap (toe end, s = 0)
-  const pts_in = [];
+  // Toe Center Vertex (s = 0)
+  let z_sum_toe = 0;
+  for (let k = 0; k < M; k++) z_sum_toe += verts_3d[k][2];
+  const z_c_toe = z_sum_toe / M;
+  const idx_c_toe = verts_3d.length;
+  verts_3d.push([0, 0, z_c_toe]);
+
   for (let k = 0; k < M; k++) {
-    pts_in.push(new THREE.Vector2(verts_3d[k][0], verts_3d[k][1]));
-  }
-  const raw_in_faces = THREE.ShapeUtils.triangulateShape(pts_in, []);
-  for (let i = 0; i < raw_in_faces.length; i++) {
-    const [i1, i2, i3] = raw_in_faces[i];
-    const v1 = pts_in[i1], v2 = pts_in[i2], v3 = pts_in[i3];
-    const cz = (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
-    // Ensure outward normal points toward cone apex (-Z)
-    if (cz > 0) {
-      faces.push([i1, i3, i2]);
-    } else {
-      faces.push([i1, i2, i3]);
-    }
+    const k_next = (k + 1) % M;
+    // Outward normal points toward apex (-Z), opposite to lateral face traversal k -> k_next
+    faces.push([idx_c_toe, k_next, k]);
   }
 
-  // Outer cap (heel end, s = n_sec - 1)
+  // Heel Center Vertex (s = n_sec - 1)
   const idx_outer_start = (n_sec - 1) * M;
-  const pts_out = [];
+  let z_sum_heel = 0;
+  for (let k = 0; k < M; k++) z_sum_heel += verts_3d[idx_outer_start + k][2];
+  const z_c_heel = z_sum_heel / M;
+  const idx_c_heel = verts_3d.length;
+  verts_3d.push([0, 0, z_c_heel]);
+
   for (let k = 0; k < M; k++) {
-    pts_out.push(new THREE.Vector2(verts_3d[idx_outer_start + k][0], verts_3d[idx_outer_start + k][1]));
-  }
-  const raw_out_faces = THREE.ShapeUtils.triangulateShape(pts_out, []);
-  for (let i = 0; i < raw_out_faces.length; i++) {
-    const [i1, i2, i3] = raw_out_faces[i];
-    const v1 = pts_out[i1], v2 = pts_out[i2], v3 = pts_out[i3];
-    const cz = (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
-    // Ensure outward normal points away from cone apex (+Z)
-    if (cz < 0) {
-      faces.push([idx_outer_start + i1, idx_outer_start + i3, idx_outer_start + i2]);
-    } else {
-      faces.push([idx_outer_start + i1, idx_outer_start + i2, idx_outer_start + i3]);
-    }
+    const k_next = (k + 1) % M;
+    // Outward normal points away from apex (+Z), opposite to lateral face traversal
+    faces.push([idx_c_heel, idx_outer_start + k, idx_outer_start + k_next]);
   }
 
   return {
@@ -955,61 +944,68 @@ export function buildSpurMesh(N, m, phi, a, b, tooth_thick, F = 25, n_sec = 4, r
     }
   }
 
-  // 3. Planar End Caps (Triangulate outer shape with inner hole)
-  const outer_pts = [];
-  for (let k = 0; k < M_outer; k++) {
-    outer_pts.push(new THREE.Vector2(xc[k], yc[k]));
-  }
-  const hole_pts = [];
-  if (has_bore) {
+  // 3. Planar End Caps
+  const bot_faces = [];
+  const top_faces = [];
+  const b_top = (n_sec - 1) * n_slice_verts;
+
+  if (!has_bore) {
+    // Solid Spur Gear: Radial Fan Triangulation to Star Center Vertices
+    // 100% Watertight closed 2-manifold with zero detached duplicate vertices
+    const idx_c_bot = side_verts.length;
+    side_verts.push([0, 0, -F / 2]);
+    const idx_c_top = side_verts.length;
+    side_verts.push([0, 0, F / 2]);
+
+    for (let k = 0; k < M_outer; k++) {
+      const kn = (k + 1) % M_outer;
+      // Bottom cap outward normal points in -Z
+      bot_faces.push([idx_c_bot, kn, k]);
+      // Top cap outward normal points in +Z
+      top_faces.push([idx_c_top, b_top + k, b_top + kn]);
+    }
+  } else {
+    // Gear with Bore: Annular cap directly indexing side_verts without detached duplicate vertices
+    const outer_pts = [];
+    for (let k = 0; k < M_outer; k++) {
+      outer_pts.push(new THREE.Vector2(xc[k], yc[k]));
+    }
+    const hole_pts = [];
     for (let k = 0; k < M_inner; k++) {
-      // Hole clockwise
       const th = 2 * Math.PI - (k * 2 * Math.PI) / M_inner;
       hole_pts.push(new THREE.Vector2(r_bore * Math.cos(th), r_bore * Math.sin(th)));
     }
-  }
+    const raw_cap_tris = THREE.ShapeUtils.triangulateShape(outer_pts, [hole_pts]);
+    const all_cap_pts = outer_pts.concat(hole_pts);
 
-  const raw_cap_tris = THREE.ShapeUtils.triangulateShape(outer_pts, has_bore ? [hole_pts] : []);
-  const all_cap_pts = outer_pts.concat(hole_pts);
-  const n_cap_pts = all_cap_pts.length;
-
-  // Dedicated bottom cap vertices at Z = -F/2
-  const bot_verts = [];
-  for (let i = 0; i < n_cap_pts; i++) {
-    bot_verts.push([all_cap_pts[i].x, all_cap_pts[i].y, -F / 2]);
-  }
-
-  // Dedicated top cap vertices at Z = +F/2
-  const top_verts = [];
-  for (let i = 0; i < n_cap_pts; i++) {
-    top_verts.push([all_cap_pts[i].x, all_cap_pts[i].y, F / 2]);
-  }
-
-  const n_side_verts = side_verts.length;
-  const bot_faces = [];
-  const top_faces = [];
-
-  for (let i = 0; i < raw_cap_tris.length; i++) {
-    const [i1, i2, i3] = raw_cap_tris[i];
-    const p1 = all_cap_pts[i1], p2 = all_cap_pts[i2], p3 = all_cap_pts[i3];
-    const cz = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
-
-    // Bottom cap normal points in -Z
-    if (cz > 0) {
-      bot_faces.push([n_side_verts + i1, n_side_verts + i3, n_side_verts + i2]);
-    } else {
-      bot_faces.push([n_side_verts + i1, n_side_verts + i2, n_side_verts + i3]);
+    function mapCapToSlice(idx, sliceBase) {
+      if (idx < M_outer) return sliceBase + idx;
+      const bore_k = idx - M_outer;
+      return sliceBase + M_outer + bore_k;
     }
 
-    // Top cap normal points in +Z
-    if (cz < 0) {
-      top_faces.push([n_side_verts + n_cap_pts + i1, n_side_verts + n_cap_pts + i3, n_side_verts + n_cap_pts + i2]);
-    } else {
-      top_faces.push([n_side_verts + n_cap_pts + i1, n_side_verts + n_cap_pts + i2, n_side_verts + n_cap_pts + i3]);
+    for (let i = 0; i < raw_cap_tris.length; i++) {
+      const [i1, i2, i3] = raw_cap_tris[i];
+      const p1 = all_cap_pts[i1], p2 = all_cap_pts[i2], p3 = all_cap_pts[i3];
+      const cz = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+
+      const b_i1 = mapCapToSlice(i1, 0), b_i2 = mapCapToSlice(i2, 0), b_i3 = mapCapToSlice(i3, 0);
+      if (cz > 0) {
+        bot_faces.push([b_i1, b_i3, b_i2]);
+      } else {
+        bot_faces.push([b_i1, b_i2, b_i3]);
+      }
+
+      const t_i1 = mapCapToSlice(i1, b_top), t_i2 = mapCapToSlice(i2, b_top), t_i3 = mapCapToSlice(i3, b_top);
+      if (cz < 0) {
+        top_faces.push([t_i1, t_i3, t_i2]);
+      } else {
+        top_faces.push([t_i1, t_i2, t_i3]);
+      }
     }
   }
 
-  const all_verts = side_verts.concat(bot_verts, top_verts);
+  const all_verts = side_verts;
   const all_faces = side_faces.concat(bot_faces, top_faces);
 
   return {
@@ -1282,41 +1278,39 @@ export function buildInternalRingMesh(calc, n_sec = 4, n_pts = 36) {
 
   const raw_cap_tris = THREE.ShapeUtils.triangulateShape(outer_pts, [hole_pts]);
   const all_cap_pts = outer_pts.concat(hole_pts);
-  const n_cap_pts = all_cap_pts.length;
 
-  const bot_verts = [];
-  for (let i = 0; i < n_cap_pts; i++) {
-    bot_verts.push([all_cap_pts[i].x, all_cap_pts[i].y, -F / 2]);
+  function mapRingCapToSlice(idx, sliceBase) {
+    if (idx < M_rim) return sliceBase + M_teeth + idx;
+    const tooth_rev_k = idx - M_rim;
+    const k_tooth = (M_teeth - 1) - tooth_rev_k;
+    return sliceBase + k_tooth;
   }
 
-  const top_verts = [];
-  for (let i = 0; i < n_cap_pts; i++) {
-    top_verts.push([all_cap_pts[i].x, all_cap_pts[i].y, F / 2]);
-  }
-
-  const n_side_verts = side_verts.length;
   const bot_faces = [];
   const top_faces = [];
+  const b_top = (n_sec - 1) * n_slice;
 
   for (let i = 0; i < raw_cap_tris.length; i++) {
     const [i1, i2, i3] = raw_cap_tris[i];
     const p1 = all_cap_pts[i1], p2 = all_cap_pts[i2], p3 = all_cap_pts[i3];
     const cz = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
 
+    const b_i1 = mapRingCapToSlice(i1, 0), b_i2 = mapRingCapToSlice(i2, 0), b_i3 = mapRingCapToSlice(i3, 0);
     if (cz > 0) {
-      bot_faces.push([n_side_verts + i1, n_side_verts + i3, n_side_verts + i2]);
+      bot_faces.push([b_i1, b_i3, b_i2]);
     } else {
-      bot_faces.push([n_side_verts + i1, n_side_verts + i2, n_side_verts + i3]);
+      bot_faces.push([b_i1, b_i2, b_i3]);
     }
 
+    const t_i1 = mapRingCapToSlice(i1, b_top), t_i2 = mapRingCapToSlice(i2, b_top), t_i3 = mapRingCapToSlice(i3, b_top);
     if (cz < 0) {
-      top_faces.push([n_side_verts + n_cap_pts + i1, n_side_verts + n_cap_pts + i3, n_side_verts + n_cap_pts + i2]);
+      top_faces.push([t_i1, t_i3, t_i2]);
     } else {
-      top_faces.push([n_side_verts + n_cap_pts + i1, n_side_verts + n_cap_pts + i2, n_side_verts + n_cap_pts + i3]);
+      top_faces.push([t_i1, t_i2, t_i3]);
     }
   }
 
-  const all_verts = side_verts.concat(bot_verts, top_verts);
+  const all_verts = side_verts;
   const all_faces = side_faces.concat(bot_faces, top_faces);
 
   return {
@@ -1823,129 +1817,71 @@ export function buildHelicalMesh(N, mn, beta_deg, phi_n_deg, a, b, s_thick_t, F 
   // 4. Dedicated Planar End Caps (Triangulate outer shape with inner hole)
   // Bottom Cap (s = 0, Z = -F/2)
   const dt_bot = hand * ((-F / 2) * Math.tan(beta)) / rp;
-  const cos_bot = Math.cos(dt_bot), sin_bot = Math.sin(dt_bot);
-  const outer_pts_bot = [];
-  for (let k = 0; k < M_outer; k++) {
-    const x = xc_base[k] * cos_bot - yc_base[k] * sin_bot;
-    const y = xc_base[k] * sin_bot + yc_base[k] * cos_bot;
-    outer_pts_bot.push(new THREE.Vector2(x, y));
-  }
-  const hole_pts = [];
-  if (has_bore) {
+  // 4. Planar End Caps
+  const bot_faces = [];
+  const top_faces = [];
+  const b_top = (n_sec - 1) * n_slice_verts;
+
+  if (!has_bore) {
+    // Solid Helical Gear: Radial Fan Triangulation to Star Center Vertices
+    // 100% Watertight closed 2-manifold with zero detached duplicate vertices
+    const idx_c_bot = side_verts.length;
+    side_verts.push([0, 0, -F / 2]);
+    const idx_c_top = side_verts.length;
+    side_verts.push([0, 0, F / 2]);
+
+    for (let k = 0; k < M_outer; k++) {
+      const kn = (k + 1) % M_outer;
+      // Bottom cap outward normal points in -Z
+      bot_faces.push([idx_c_bot, kn, k]);
+      // Top cap outward normal points in +Z
+      top_faces.push([idx_c_top, b_top + k, b_top + kn]);
+    }
+  } else {
+    // Gear with Bore: directly map annular cap to side_verts
+    const dt_bot = hand * ((-F / 2) * Math.tan(beta)) / rp;
+    const cos_bot = Math.cos(dt_bot), sin_bot = Math.sin(dt_bot);
+    const outer_pts_bot = [];
+    for (let k = 0; k < M_outer; k++) {
+      const x = xc_base[k] * cos_bot - yc_base[k] * sin_bot;
+      const y = xc_base[k] * sin_bot + yc_base[k] * cos_bot;
+      outer_pts_bot.push(new THREE.Vector2(x, y));
+    }
+    const hole_pts = [];
     for (let k = 0; k < M_inner; k++) {
       const th = 2 * Math.PI - (k * 2 * Math.PI) / M_inner;
       hole_pts.push(new THREE.Vector2(r_bore * Math.cos(th), r_bore * Math.sin(th)));
     }
-  }
+    const raw_cap_tris = THREE.ShapeUtils.triangulateShape(outer_pts_bot, [hole_pts]);
+    const all_cap_pts = outer_pts_bot.concat(hole_pts);
 
-  const raw_cap_tris_bot = THREE.ShapeUtils.triangulateShape(outer_pts_bot, has_bore ? [hole_pts] : []);
-  const all_cap_pts_bot = outer_pts_bot.concat(hole_pts);
-  const n_cap_pts_bot = all_cap_pts_bot.length;
+    function mapCapToSlice(idx, sliceBase) {
+      if (idx < M_outer) return sliceBase + idx;
+      const bore_k = idx - M_outer;
+      return sliceBase + M_outer + bore_k;
+    }
 
-  const bot_verts = [];
-  for (let i = 0; i < n_cap_pts_bot; i++) {
-    bot_verts.push([all_cap_pts_bot[i].x, all_cap_pts_bot[i].y, -F / 2]);
-  }
+    for (let i = 0; i < raw_cap_tris.length; i++) {
+      const [i1, i2, i3] = raw_cap_tris[i];
+      const p1 = all_cap_pts[i1], p2 = all_cap_pts[i2], p3 = all_cap_pts[i3];
+      const cz = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
 
-  // Top Cap (s = n_sec - 1, Z = +F/2)
-  const dt_top = hand * ((F / 2) * Math.tan(beta)) / rp;
-  const cos_top = Math.cos(dt_top), sin_top = Math.sin(dt_top);
-  const outer_pts_top = [];
-  for (let k = 0; k < M_outer; k++) {
-    const x = xc_base[k] * cos_top - yc_base[k] * sin_top;
-    const y = xc_base[k] * sin_top + yc_base[k] * cos_top;
-    outer_pts_top.push(new THREE.Vector2(x, y));
-  }
+      const b_i1 = mapCapToSlice(i1, 0), b_i2 = mapCapToSlice(i2, 0), b_i3 = mapCapToSlice(i3, 0);
+      if (cz > 0) bot_faces.push([b_i1, b_i3, b_i2]);
+      else bot_faces.push([b_i1, b_i2, b_i3]);
 
-  const raw_cap_tris_top = THREE.ShapeUtils.triangulateShape(outer_pts_top, has_bore ? [hole_pts] : []);
-  const all_cap_pts_top = outer_pts_top.concat(hole_pts);
-  const n_cap_pts_top = all_cap_pts_top.length;
-
-  const top_verts = [];
-  for (let i = 0; i < n_cap_pts_top; i++) {
-    top_verts.push([all_cap_pts_top[i].x, all_cap_pts_top[i].y, F / 2]);
-  }
-
-  const n_side_verts = side_verts.length;
-  const bot_faces = [];
-  for (let i = 0; i < raw_cap_tris_bot.length; i++) {
-    const [i1, i2, i3] = raw_cap_tris_bot[i];
-    const p1 = all_cap_pts_bot[i1], p2 = all_cap_pts_bot[i2], p3 = all_cap_pts_bot[i3];
-    const cz = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
-    if (cz > 0) {
-      bot_faces.push([n_side_verts + i1, n_side_verts + i3, n_side_verts + i2]);
-    } else {
-      bot_faces.push([n_side_verts + i1, n_side_verts + i2, n_side_verts + i3]);
+      const t_i1 = mapCapToSlice(i1, b_top), t_i2 = mapCapToSlice(i2, b_top), t_i3 = mapCapToSlice(i3, b_top);
+      if (cz < 0) top_faces.push([t_i1, t_i3, t_i2]);
+      else top_faces.push([t_i1, t_i2, t_i3]);
     }
   }
 
-  const n_bot_offset = n_side_verts + n_cap_pts_bot;
-  const top_faces = [];
-  for (let i = 0; i < raw_cap_tris_top.length; i++) {
-    const [i1, i2, i3] = raw_cap_tris_top[i];
-    const p1 = all_cap_pts_top[i1], p2 = all_cap_pts_top[i2], p3 = all_cap_pts_top[i3];
-    const cz = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
-    if (cz < 0) {
-      top_faces.push([n_bot_offset + i1, n_bot_offset + i3, n_bot_offset + i2]);
-    } else {
-      top_faces.push([n_bot_offset + i1, n_bot_offset + i2, n_bot_offset + i3]);
-    }
-  }
-
-  const all_verts = side_verts.concat(bot_verts).concat(top_verts);
-  const all_faces = side_faces.concat(bot_faces).concat(top_faces);
-
-  // Dedicated Normals (Lateral + Flat Cap Normals [0, 0, -1] and [0, 0, 1])
-  const n_all = all_verts.length;
-  const normals = new Float32Array(n_all * 3);
-
-  // Lateral smooth normals
-  const lat_counts = new Float32Array(n_side_verts);
-  for (let f = 0; f < side_faces.length; f++) {
-    const [i1, i2, i3] = side_faces[f];
-    const v1 = all_verts[i1], v2 = all_verts[i2], v3 = all_verts[i3];
-    const ax = v2[0] - v1[0], ay = v2[1] - v1[1], az = v2[2] - v1[2];
-    const bx = v3[0] - v1[0], by = v3[1] - v1[1], bz = v3[2] - v1[2];
-    let nx = ay * bz - az * by;
-    let ny = az * bx - ax * bz;
-    let nz = ax * by - ay * bx;
-    const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-    nx /= len; ny /= len; nz /= len;
-
-    for (const idx of [i1, i2, i3]) {
-      normals[idx * 3] += nx;
-      normals[idx * 3 + 1] += ny;
-      normals[idx * 3 + 2] += nz;
-      lat_counts[idx]++;
-    }
-  }
-  for (let i = 0; i < n_side_verts; i++) {
-    const len = Math.sqrt(normals[i * 3] ** 2 + normals[i * 3 + 1] ** 2 + normals[i * 3 + 2] ** 2) || 1;
-    normals[i * 3] /= len;
-    normals[i * 3 + 1] /= len;
-    normals[i * 3 + 2] /= len;
-  }
-
-  // Dedicated bottom normals [0, 0, -1]
-  for (let i = 0; i < n_cap_pts_bot; i++) {
-    const idx = n_side_verts + i;
-    normals[idx * 3] = 0;
-    normals[idx * 3 + 1] = 0;
-    normals[idx * 3 + 2] = -1;
-  }
-
-  // Dedicated top normals [0, 0, 1]
-  for (let i = 0; i < n_cap_pts_top; i++) {
-    const idx = n_bot_offset + i;
-    normals[idx * 3] = 0;
-    normals[idx * 3 + 1] = 0;
-    normals[idx * 3 + 2] = 1;
-  }
+  const all_verts = side_verts;
+  const all_faces = side_faces.concat(bot_faces, top_faces);
 
   return {
     vertices: all_verts,
     faces: all_faces,
-    normals: normals,
     F,
     hand
   };

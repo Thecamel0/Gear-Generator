@@ -423,11 +423,17 @@
         <div class="export-form-field">
           <label class="export-field-label">File Format:</label>
           <select id="sel-export-format" class="input-control select-export-format">
-            <option value="zip" selected>Complete CAD (.ZIP)</option>
-            <option value="solidworks">SolidWorks Macro (.bas)</option>
-            <option value="step">STEP AP214 (.stp)</option>
-            <option value="iges">IGES 5.3 (.igs)</option>
-            <option value="stl">Binary STL (.stl)</option>
+            <option value="zip" selected>Complete CAD Package (.ZIP)</option>
+            <option value="step">STEP AP214 Package (.zip)</option>
+            <option value="step-assembly">STEP Assembly in Mesh (.stp)</option>
+            <option value="step-pinion">STEP Pinion Only (.stp)</option>
+            <option value="step-gear">STEP Gear Only (.stp)</option>
+            <option value="stl">Binary STL Package (.zip)</option>
+            <option value="stl-assembly">STL Assembly in Mesh (.stl)</option>
+            <option value="stl-pinion">STL Pinion Only (.stl)</option>
+            <option value="stl-gear">STL Gear Only (.stl)</option>
+            <option value="solidworks">SolidWorks Automation (.zip)</option>
+            <option value="iges">IGES 5.3 Package (.zip)</option>
             <option value="csv">Design Report (.csv)</option>
             <option value="png">2D Diagram (.png)</option>
           </select>

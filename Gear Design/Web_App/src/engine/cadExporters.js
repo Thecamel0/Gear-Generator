@@ -206,7 +206,52 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
     out += `#${eid++}=VERTEX_POINT('',#${pt_base + i});\n`;
   }
 
-  // ADVANCED_FACEs with EDGE_LOOPs
+  // BUILD UNIQUE TOPOLOGICAL EDGE MAP (Guarantees shared boundary edges in STEP BREP)
+  const edgeMap = new Map();
+  const edgeList = [];
+
+  for (let f = 0; f < n_faces; f++) {
+    const vi = faces[f];
+    for (let e = 0; e < 3; e++) {
+      const v_s = vi[e];
+      const v_e = vi[(e + 1) % 3];
+      const vMin = Math.min(v_s, v_e);
+      const vMax = Math.max(v_s, v_e);
+      const key = `${vMin}_${vMax}`;
+      if (!edgeMap.has(key)) {
+        const edgeObj = { vMin, vMax, key, ec_id: 0 };
+        edgeMap.set(key, edgeObj);
+        edgeList.push(edgeObj);
+      }
+    }
+  }
+
+  // Emit unique EDGE_CURVE, LINE, VECTOR, and DIRECTION entities
+  for (let i = 0; i < edgeList.length; i++) {
+    const edge = edgeList[i];
+    const p1 = vertices[edge.vMin];
+    const p2 = vertices[edge.vMax];
+    const dx = p2[0] - p1[0];
+    const dy = p2[1] - p1[1];
+    const dz = p2[2] - p1[2];
+    const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6;
+    const ux = dx / len, uy = dy / len, uz = dz / len;
+
+    const e_dir = eid++;
+    out += `#${e_dir}=DIRECTION('',(${ux.toFixed(9)},${uy.toFixed(9)},${uz.toFixed(9)}));\n`;
+
+    const e_vec = eid++;
+    out += `#${e_vec}=VECTOR('',#${e_dir},${len.toFixed(6)});\n`;
+
+    const e_line = eid++;
+    out += `#${e_line}=LINE('',#${pt_base + edge.vMin},#${e_vec});\n`;
+
+    const e_ec = eid++;
+    out += `#${e_ec}=EDGE_CURVE('',#${vp_base + edge.vMin},#${vp_base + edge.vMax},#${e_line},.T.);\n`;
+    edge.ec_id = e_ec;
+  }
+
+  // ADVANCED_FACEs with shared ORIENTED_EDGEs (.T. forward, .F. reversed)
   const face_eids = [];
 
   for (let f = 0; f < n_faces; f++) {
@@ -215,54 +260,32 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
     const p2 = vertices[vi[1]];
     const p3 = vertices[vi[2]];
 
-    const vp = [vp_base + vi[0], vp_base + vi[1], vp_base + vi[2]];
-    const pp = [pt_base + vi[0], pt_base + vi[1], pt_base + vi[2]];
-
-    const edge_diffs = [
-      [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]],
-      [p3[0] - p2[0], p3[1] - p2[1], p3[2] - p2[2]],
-      [p1[0] - p3[0], p1[1] - p3[1], p1[2] - p3[2]]
-    ];
-
-    const ed = [];
-    const ev = [];
-    const el = [];
-    const ec = [];
-    const oe = [];
-
+    const oe_ids = [];
     for (let e = 0; e < 3; e++) {
-      const d = edge_diffs[e];
-      const len = Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]) || 1;
-      const ux = d[0] / len, uy = d[1] / len, uz = d[2] / len;
+      const v_s = vi[e];
+      const v_e = vi[(e + 1) % 3];
+      const vMin = Math.min(v_s, v_e);
+      const vMax = Math.max(v_s, v_e);
+      const edge = edgeMap.get(`${vMin}_${vMax}`);
+      const isForward = (v_s === edge.vMin);
 
-      ed[e] = eid++;
-      out += `#${ed[e]}=DIRECTION('',(${ux.toFixed(9)},${uy.toFixed(9)},${uz.toFixed(9)}));\n`;
-
-      ev[e] = eid++;
-      out += `#${ev[e]}=VECTOR('',#${ed[e]},${len.toFixed(6)});\n`;
-
-      el[e] = eid++;
-      out += `#${el[e]}=LINE('',#${pp[e]},#${ev[e]});\n`;
-
-      const vp_s = vp[e];
-      const vp_e = vp[(e + 1) % 3];
-      ec[e] = eid++;
-      out += `#${ec[e]}=EDGE_CURVE('',#${vp_s},#${vp_e},#${el[e]},.T.);\n`;
-
-      oe[e] = eid++;
-      out += `#${oe[e]}=ORIENTED_EDGE('',*,*,#${ec[e]},.T.);\n`;
+      const e_oe = eid++;
+      out += `#${e_oe}=ORIENTED_EDGE('',*,*,#${edge.ec_id},${isForward ? '.T.' : '.F.'});\n`;
+      oe_ids.push(e_oe);
     }
 
     const e_el = eid++;
-    out += `#${e_el}=EDGE_LOOP('',(#${oe[0]},#${oe[1]},#${oe[2]}));\n`;
+    out += `#${e_el}=EDGE_LOOP('',(#${oe_ids[0]},#${oe_ids[1]},#${oe_ids[2]}));\n`;
 
     const e_fob = eid++;
     out += `#${e_fob}=FACE_OUTER_BOUND('',#${e_el},.T.);\n`;
 
-    // Normal calculation
-    const ax = edge_diffs[0][0], ay = edge_diffs[0][1], az = edge_diffs[0][2];
-    const bx = edge_diffs[1][0], by = edge_diffs[1][1], bz = edge_diffs[1][2];
-    let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+    // Normal calculation via face triangle edges
+    const ax = p2[0] - p1[0], ay = p2[1] - p1[1], az = p2[2] - p1[2];
+    const bx = p3[0] - p2[0], by = p3[0] - p2[0], bz = p3[2] - p2[2];
+    let nx = ay * (p3[2] - p1[2]) - az * (p3[1] - p1[1]);
+    let ny = az * (p3[0] - p1[0]) - ax * (p3[2] - p1[2]);
+    let nz = ax * (p3[1] - p1[1]) - ay * (p3[0] - p1[0]);
     const n_len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
     nx /= n_len; ny /= n_len; nz /= n_len;
 
@@ -1076,6 +1099,146 @@ export function exportDesignReportCSV(calc) {
 }
 
 /**
+ * Computes in-mesh transformed copies of pinion and gear meshes.
+ */
+export function getTransformedAssemblyMeshes(calc, pinionMesh, gearMesh) {
+  const isInternalSpur = calc.gear_type === 'internal_spur';
+  const isSpur = calc.gear_type === 'spur' || calc.gear_type === 'helical';
+  const isBevel = !isInternalSpur && !isSpur;
+
+  const gearCopy = {
+    vertices: gearMesh.vertices.map(v => [v[0], v[1], v[2]]),
+    faces: gearMesh.faces.map(f => [f[0], f[1], f[2]])
+  };
+
+  const pinionTrans = {
+    vertices: [],
+    faces: pinionMesh.faces.map(f => [f[0], f[1], f[2]])
+  };
+
+  if (isBevel) {
+    // 90 deg shaft angle: Rotate around Y by +90 deg, clocked by pi / Np
+    const th_clock = Math.PI / calc.Np;
+    const cos_c = Math.cos(th_clock), sin_c = Math.sin(th_clock);
+    for (let i = 0; i < pinionMesh.vertices.length; i++) {
+      const [x, y, z] = pinionMesh.vertices[i];
+      const xc = x * cos_c - y * sin_c;
+      const yc = x * sin_c + y * cos_c;
+      const zc = z;
+      // Y-rotation: X' = Z, Y' = Y, Z' = -X
+      pinionTrans.vertices.push([zc, yc, -xc]);
+    }
+  } else if (isSpur) {
+    const C = calc.center_dist || (calc.dp + calc.dg) / 2;
+    const rot_phase = Math.PI + (Math.PI / calc.Np);
+    const cos_p = Math.cos(rot_phase), sin_p = Math.sin(rot_phase);
+    for (let i = 0; i < pinionMesh.vertices.length; i++) {
+      const [x, y, z] = pinionMesh.vertices[i];
+      const xp = x * cos_p - y * sin_p + C;
+      const yp = x * sin_p + y * cos_p;
+      pinionTrans.vertices.push([xp, yp, z]);
+    }
+  } else if (isInternalSpur) {
+    const C = calc.center_dist || (calc.dg - calc.dp) / 2;
+    const rot_phase = Math.PI / calc.Np;
+    const cos_p = Math.cos(rot_phase), sin_p = Math.sin(rot_phase);
+    for (let i = 0; i < pinionMesh.vertices.length; i++) {
+      const [x, y, z] = pinionMesh.vertices[i];
+      const xp = x * cos_p - y * sin_p + C;
+      const yp = x * sin_p + y * cos_p;
+      pinionTrans.vertices.push([xp, yp, z]);
+    }
+  }
+
+  return { pinionTrans, gearCopy };
+}
+
+/**
+ * Combines two meshes into a unified mesh representation.
+ */
+export function combineMeshes(mesh1, mesh2) {
+  const v_offset = mesh1.vertices.length;
+  const vertices = mesh1.vertices.map(v => [...v]).concat(mesh2.vertices.map(v => [...v]));
+  const faces = mesh1.faces.map(f => [...f]).concat(mesh2.faces.map(f => [f[0] + v_offset, f[1] + v_offset, f[2] + v_offset]));
+  return { vertices, faces, n_verts: vertices.length, n_faces: faces.length };
+}
+
+/**
+ * Exports in-mesh pinion and gear combined as a binary STL.
+ */
+export function exportAssemblySTLBinary(calc, pinionMesh, gearMesh, headerText = 'Gear Set Assembly') {
+  const { pinionTrans, gearCopy } = getTransformedAssemblyMeshes(calc, pinionMesh, gearMesh);
+  const combined = combineMeshes(gearCopy, pinionTrans);
+  return exportSTLBinary(combined, headerText);
+}
+
+/**
+ * Exports in-mesh pinion and gear combined as a STEP AP214 model.
+ */
+export function exportAssemblySTEP(calc, pinionMesh, gearMesh, baseName = 'Gear_Assembly') {
+  const { pinionTrans, gearCopy } = getTransformedAssemblyMeshes(calc, pinionMesh, gearMesh);
+  const combined = combineMeshes(gearCopy, pinionTrans);
+  return exportSTEP(combined, `${baseName}_assembly`, `${calc.gear_type || 'Gear'} Assembly in Mesh`);
+}
+
+/**
+ * Packages STEP AP214 pinion, gear, and assembly into a single ZIP archive.
+ */
+export async function exportSTEPZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set') {
+  const zip = new JSZip();
+  const pSTP = exportSTEP(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
+  const gSTP = exportSTEP(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
+  const aSTP = exportAssemblySTEP(calc, pinionMesh, gearMesh, baseName);
+  zip.file(`${baseName}_pinion.stp`, pSTP);
+  zip.file(`${baseName}_gear.stp`, gSTP);
+  zip.file(`${baseName}_assembly.stp`, aSTP);
+  return await zip.generateAsync({ type: 'blob' });
+}
+
+/**
+ * Packages binary STL pinion, gear, and assembly into a single ZIP archive.
+ */
+export async function exportSTLZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set') {
+  const zip = new JSZip();
+  const pSTL = exportSTLBinary(pinionMesh, `${baseName} Pinion`);
+  const gSTL = exportSTLBinary(gearMesh, `${baseName} Gear`);
+  const aSTL = exportAssemblySTLBinary(calc, pinionMesh, gearMesh, `${baseName} Assembly`);
+  zip.file(`${baseName}_pinion.stl`, pSTL);
+  zip.file(`${baseName}_gear.stl`, gSTL);
+  zip.file(`${baseName}_assembly.stl`, aSTL);
+  return await zip.generateAsync({ type: 'blob' });
+}
+
+/**
+ * Packages IGES 5.3 pinion and gear into a single ZIP archive.
+ */
+export async function exportIGESZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set') {
+  const zip = new JSZip();
+  const pIGS = exportIGES(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
+  const gIGS = exportIGES(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
+  zip.file(`${baseName}_pinion.igs`, pIGS);
+  zip.file(`${baseName}_gear.igs`, gIGS);
+  return await zip.generateAsync({ type: 'blob' });
+}
+
+/**
+ * Packages SolidWorks VBA macro and equations into a single ZIP archive.
+ */
+export async function exportSolidWorksZip(calc, baseName = 'Gear_Set') {
+  const zip = new JSZip();
+  const isSpiral = calc.gear_type === 'spiral-bevel';
+  const isHelical = calc.gear_type === 'helical';
+  const isInternal = calc.gear_type === 'internal_spur';
+  const isSpur = calc.gear_type === 'spur';
+  const isStraight = calc.gear_type === 'straight-bevel';
+  const macroName = isSpiral ? 'create_spiral_bevel_gears.bas' : isHelical ? 'create_helical_gears.bas' : isInternal ? 'create_internal_spur_gears.bas' : isSpur ? 'create_spur_gears.bas' : isStraight ? 'create_straight_bevel_gears.bas' : 'create_zerol_bevel_gears.bas';
+  const eqName = isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
+  zip.file(macroName, exportSolidWorksMacro(calc));
+  zip.file(eqName, exportSolidWorksEquations(calc));
+  return await zip.generateAsync({ type: 'blob' });
+}
+
+/**
  * Packages all CAD models (.stl, .stp, .igs), SolidWorks macros, equations, and reports into a single ZIP archive.
  */
 export async function createCompleteCADZip(calc, pinionMesh, gearMesh) {
@@ -1087,20 +1250,25 @@ export async function createCompleteCADZip(calc, pinionMesh, gearMesh) {
   const isSpiral = calc.gear_type === 'spiral-bevel';
   const pPrefix = isSpiral ? 'spiral_bevel_pinion' : isHelical ? 'helical_pinion' : isInternal ? 'internal_pinion' : isSpur ? 'spur_pinion' : isStraight ? 'straight_bevel_pinion' : 'zerol_pinion_v2';
   const gPrefix = isSpiral ? 'spiral_bevel_gear' : isInternal ? 'internal_ring_gear' : isHelical ? 'helical_gear' : isSpur ? 'spur_gear' : isStraight ? 'straight_bevel_gear' : 'zerol_gear_v2';
+  const aPrefix = isSpiral ? 'spiral_bevel_assembly' : isInternal ? 'internal_spur_assembly' : isHelical ? 'helical_assembly' : isSpur ? 'spur_assembly' : isStraight ? 'straight_bevel_assembly' : 'zerol_assembly_v2';
   const pDesc = isSpiral ? 'Spiral Bevel Pinion' : isHelical ? 'Helical Pinion' : isInternal ? 'Internal Pinion' : isSpur ? 'Spur Pinion' : isStraight ? 'Straight Bevel Pinion' : 'Zerol Pinion';
   const gDesc = isSpiral ? 'Spiral Bevel Gear' : isInternal ? 'Internal Ring Gear' : isHelical ? 'Helical Gear' : isSpur ? 'Spur Gear' : isStraight ? 'Straight Bevel Gear' : 'Zerol Gear';
 
   // 1. STL Files
   const pinionSTL = exportSTLBinary(pinionMesh, `${pDesc} STL`);
   const gearSTL = exportSTLBinary(gearMesh, `${gDesc} STL`);
+  const assemblySTL = exportAssemblySTLBinary(calc, pinionMesh, gearMesh, `${calc.gear_type || 'Gear'} Assembly STL`);
   zip.file(`STL/${pPrefix}.stl`, pinionSTL);
   zip.file(`STL/${gPrefix}.stl`, gearSTL);
+  zip.file(`STL/${aPrefix}.stl`, assemblySTL);
 
   // 2. STEP AP214 Files
   const pinionSTP = exportSTEP(pinionMesh, pPrefix, `${pDesc} m${calc.m || calc.mn} Np${calc.Np}`);
   const gearSTP = exportSTEP(gearMesh, gPrefix, `${gDesc} m${calc.m || calc.mn} Ng${calc.Ng}`);
+  const assemblySTP = exportAssemblySTEP(calc, pinionMesh, gearMesh, aPrefix);
   zip.file(`STEP/${pPrefix}.stp`, pinionSTP);
   zip.file(`STEP/${gPrefix}.stp`, gearSTP);
+  zip.file(`STEP/${aPrefix}.stp`, assemblySTP);
 
   // 3. IGES 5.3 Files
   const pinionIGS = exportIGES(pinionMesh, pPrefix, `${pDesc} m${calc.m || calc.mn} Np${calc.Np}`);

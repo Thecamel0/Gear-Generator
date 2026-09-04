@@ -131,51 +131,30 @@ function mesh = build_bevel_mesh_v2(N, m, phi, a, b, gamma, Ao, F, ...
     v1 = v1(:);  v2 = v2(:);  v3 = v3(:);  v4 = v4(:);
     lat_faces = [v1 v2 v3; v1 v3 v4];
 
-    % --- Build end caps (exact 2D planar polygon triangulation, NO center spokes) ---
-    % Inner cap (toe end)
-    inner_verts = tooth_verts(1:M, :);
-    x_in = inner_verts(:, 1);
-    y_in = inner_verts(:, 2);
-    pgon_in = polyshape(x_in, y_in, 'Simplify', false);
-    tr_in = triangulation(pgon_in);
-    pts_in = tr_in.Points;
-    n_pts_in = size(pts_in, 1);
-    map_in = zeros(n_pts_in, 1);
-    for i = 1:n_pts_in
-        [~, map_in(i)] = min((x_in - pts_in(i,1)).^2 + (y_in - pts_in(i,2)).^2);
-    end
-    raw_in_faces = map_in(tr_in.ConnectivityList);
-    % Ensure outward normal points toward the cone apex (inward along cone)
-    v1_in = [x_in(raw_in_faces(:,1)), y_in(raw_in_faces(:,1))];
-    v2_in = [x_in(raw_in_faces(:,2)), y_in(raw_in_faces(:,2))];
-    v3_in = [x_in(raw_in_faces(:,3)), y_in(raw_in_faces(:,3))];
-    cz_in = (v2_in(:,1)-v1_in(:,1)).*(v3_in(:,2)-v1_in(:,2)) - (v2_in(:,2)-v1_in(:,2)).*(v3_in(:,1)-v1_in(:,1));
-    flip_in = cz_in > 0;
-    raw_in_faces(flip_in, [2 3]) = raw_in_faces(flip_in, [3 2]);
-    inner_cap_faces = raw_in_faces;
+    % --- Build end caps (radial star-fan triangulation to center vertices) ---
+    % Guarantees zero ear-clipping diagonal slicing chords and strict 2-manifold Euler = 2
 
-    % Outer cap (heel end)
+    % Inner cap (toe end, section s = 1)
+    z_c_toe = mean(tooth_verts(1:M, 3));
+    idx_c_toe = size(tooth_verts, 1) + 1;
+    tooth_verts(idx_c_toe, :) = [0, 0, z_c_toe];
+
+    % Toe cap triangles: outward normal points toward apex (-Z)
+    % Lateral face at s=1 has edge K -> mod(K, M) + 1; cap traverses in reverse
+    K_arr = (1:M)';
+    K_next_arr = mod(K_arr, M) + 1;
+    inner_cap_faces = [repmat(idx_c_toe, M, 1), K_next_arr, K_arr];
+
+    % Outer cap (heel end, section s = n_sec)
     idx_tooth_outer = (n_sec - 1) * M;
-    outer_verts = tooth_verts(idx_tooth_outer + (1:M), :);
-    x_out = outer_verts(:, 1);
-    y_out = outer_verts(:, 2);
-    pgon_out = polyshape(x_out, y_out, 'Simplify', false);
-    tr_out = triangulation(pgon_out);
-    pts_out = tr_out.Points;
-    n_pts_out = size(pts_out, 1);
-    map_out = zeros(n_pts_out, 1);
-    for i = 1:n_pts_out
-        [~, map_out(i)] = min((x_out - pts_out(i,1)).^2 + (y_out - pts_out(i,2)).^2);
-    end
-    raw_out_faces = map_out(tr_out.ConnectivityList);
-    % Ensure outward normal points away from cone apex
-    v1_out = [x_out(raw_out_faces(:,1)), y_out(raw_out_faces(:,1))];
-    v2_out = [x_out(raw_out_faces(:,2)), y_out(raw_out_faces(:,2))];
-    v3_out = [x_out(raw_out_faces(:,3)), y_out(raw_out_faces(:,3))];
-    cz_out = (v2_out(:,1)-v1_out(:,1)).*(v3_out(:,2)-v1_out(:,2)) - (v2_out(:,2)-v1_out(:,2)).*(v3_out(:,1)-v1_out(:,1));
-    flip_out = cz_out < 0;
-    raw_out_faces(flip_out, [2 3]) = raw_out_faces(flip_out, [3 2]);
-    outer_cap_faces = idx_tooth_outer + raw_out_faces;
+    z_c_heel = mean(tooth_verts(idx_tooth_outer + (1:M), 3));
+    idx_c_heel = size(tooth_verts, 1) + 1;
+    tooth_verts(idx_c_heel, :) = [0, 0, z_c_heel];
+
+    % Heel cap triangles: outward normal points away from apex (+Z)
+    heel_K = idx_tooth_outer + K_arr;
+    heel_K_next = idx_tooth_outer + K_next_arr;
+    outer_cap_faces = [repmat(idx_c_heel, M, 1), heel_K, heel_K_next];
 
     vertices = tooth_verts;
 
