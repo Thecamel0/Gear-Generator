@@ -22,7 +22,7 @@ export function downloadFile(content, filename, mimeType = 'application/octet-st
   setTimeout(() => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, 200);
+  }, 60000);
 }
 
 /**
@@ -86,7 +86,7 @@ export function exportSTLBinary(mesh, header = 'Zerol Bevel Gear Binary STL') {
     offset += 50;
   }
 
-  return new Blob([buffer], { type: 'application/sla' });
+  return new Uint8Array(buffer);
 }
 
 /**
@@ -233,9 +233,9 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
       const v_e = vi[(e + 1) % 3];
       const vMin = Math.min(v_s, v_e);
       const vMax = Math.max(v_s, v_e);
-      const key = `${vMin}_${vMax}`;
+      const key = vMin * 100000000 + vMax;
       if (!edgeMap.has(key)) {
-        const edgeObj = { vMin, vMax, key, ec_id: 0 };
+        const edgeObj = { vMin, vMax, ec_id: 0 };
         edgeMap.set(key, edgeObj);
         edgeList.push(edgeObj);
       }
@@ -282,7 +282,7 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
       const v_e = vi[(e + 1) % 3];
       const vMin = Math.min(v_s, v_e);
       const vMax = Math.max(v_s, v_e);
-      const edge = edgeMap.get(`${vMin}_${vMax}`);
+      const edge = edgeMap.get(vMin * 100000000 + vMax);
       const isForward = (v_s === edge.vMin);
 
       const e_oe = eid++;
@@ -437,8 +437,7 @@ export function exportIGES(mesh, partName = 'Zerol_Bevel_Gear', headerText = 'Ze
   // Terminate Section (T)
   const t_str = `S${padLeft(s_lines.length, 7)}G${padLeft(g_lines.length, 7)}D${padLeft(de_lines.length, 7)}P${padLeft(p_lines.length, 7)}`;
   const t_line = padRight(t_str, 72) + 'T' + padLeft(1, 7);
-
-  return [...s_lines, ...g_lines, ...de_lines, ...p_lines, t_line].join('\n') + '\n';
+  return s_lines.concat(g_lines, de_lines, p_lines, [t_line]).join('\n') + '\n';
 }
 
 /**
@@ -1201,41 +1200,83 @@ export function exportAssemblySTEP(calc, pinionMesh, gearMesh, baseName = 'Gear_
 /**
  * Packages STEP AP214 pinion, gear, and assembly into a single ZIP archive.
  */
-export async function exportSTEPZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set') {
+export async function exportSTEPZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set', onProgress = null) {
   const zip = new JSZip();
+  if (onProgress) onProgress('Generating Pinion STEP model...');
+  await new Promise(r => setTimeout(r, 10));
   const pSTP = exportSTEP(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
-  const gSTP = exportSTEP(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
-  const aSTP = exportAssemblySTEP(calc, pinionMesh, gearMesh, baseName);
   zip.file(`${baseName}_pinion.stp`, pSTP);
+
+  if (onProgress) onProgress('Generating Gear STEP model...');
+  await new Promise(r => setTimeout(r, 10));
+  const gSTP = exportSTEP(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
   zip.file(`${baseName}_gear.stp`, gSTP);
+
+  if (onProgress) onProgress('Generating Assembly STEP model...');
+  await new Promise(r => setTimeout(r, 10));
+  const aSTP = exportAssemblySTEP(calc, pinionMesh, gearMesh, baseName);
   zip.file(`${baseName}_assembly.stp`, aSTP);
-  return await zip.generateAsync({ type: 'blob' });
+
+  if (onProgress) onProgress('Compressing STEP ZIP archive...');
+  await new Promise(r => setTimeout(r, 10));
+  return await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 1 }
+  });
 }
 
 /**
  * Packages binary STL pinion, gear, and assembly into a single ZIP archive.
  */
-export async function exportSTLZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set') {
+export async function exportSTLZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set', onProgress = null) {
   const zip = new JSZip();
+  if (onProgress) onProgress('Generating Pinion STL...');
+  await new Promise(r => setTimeout(r, 10));
   const pSTL = exportSTLBinary(pinionMesh, `${baseName} Pinion`);
-  const gSTL = exportSTLBinary(gearMesh, `${baseName} Gear`);
-  const aSTL = exportAssemblySTLBinary(calc, pinionMesh, gearMesh, `${baseName} Assembly`);
   zip.file(`${baseName}_pinion.stl`, pSTL);
+
+  if (onProgress) onProgress('Generating Gear STL...');
+  await new Promise(r => setTimeout(r, 10));
+  const gSTL = exportSTLBinary(gearMesh, `${baseName} Gear`);
   zip.file(`${baseName}_gear.stl`, gSTL);
+
+  if (onProgress) onProgress('Generating Assembly STL...');
+  await new Promise(r => setTimeout(r, 10));
+  const aSTL = exportAssemblySTLBinary(calc, pinionMesh, gearMesh, `${baseName} Assembly`);
   zip.file(`${baseName}_assembly.stl`, aSTL);
-  return await zip.generateAsync({ type: 'blob' });
+
+  if (onProgress) onProgress('Compressing STL ZIP archive...');
+  await new Promise(r => setTimeout(r, 10));
+  return await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 1 }
+  });
 }
 
 /**
  * Packages IGES 5.3 pinion and gear into a single ZIP archive.
  */
-export async function exportIGESZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set') {
+export async function exportIGESZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set', onProgress = null) {
   const zip = new JSZip();
+  if (onProgress) onProgress('Generating Pinion IGES...');
+  await new Promise(r => setTimeout(r, 10));
   const pIGS = exportIGES(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
-  const gIGS = exportIGES(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
   zip.file(`${baseName}_pinion.igs`, pIGS);
+
+  if (onProgress) onProgress('Generating Gear IGES...');
+  await new Promise(r => setTimeout(r, 10));
+  const gIGS = exportIGES(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
   zip.file(`${baseName}_gear.igs`, gIGS);
-  return await zip.generateAsync({ type: 'blob' });
+
+  if (onProgress) onProgress('Compressing IGES ZIP archive...');
+  await new Promise(r => setTimeout(r, 10));
+  return await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 1 }
+  });
 }
 
 /**
@@ -1252,13 +1293,17 @@ export async function exportSolidWorksZip(calc, baseName = 'Gear_Set') {
   const eqName = isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
   zip.file(macroName, exportSolidWorksMacro(calc));
   zip.file(eqName, exportSolidWorksEquations(calc));
-  return await zip.generateAsync({ type: 'blob' });
+  return await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 1 }
+  });
 }
 
 /**
  * Packages all CAD models (.stl, .stp, .igs), SolidWorks macros, equations, and reports into a single ZIP archive.
  */
-export async function createCompleteCADZip(calc, pinionMesh, gearMesh) {
+export async function createCompleteCADZip(calc, pinionMesh, gearMesh, onProgress = null) {
   const zip = new JSZip();
   const isHelical = calc.gear_type === 'helical';
   const isSpur = calc.gear_type === 'spur';
@@ -1272,6 +1317,8 @@ export async function createCompleteCADZip(calc, pinionMesh, gearMesh) {
   const gDesc = isSpiral ? 'Spiral Bevel Gear' : isInternal ? 'Internal Ring Gear' : isHelical ? 'Helical Gear' : isSpur ? 'Spur Gear' : isStraight ? 'Straight Bevel Gear' : 'Zerol Gear';
 
   // 1. STL Files
+  if (onProgress) onProgress('1/5: Exporting binary STL models...');
+  await new Promise(r => setTimeout(r, 10));
   const pinionSTL = exportSTLBinary(pinionMesh, `${pDesc} STL`);
   const gearSTL = exportSTLBinary(gearMesh, `${gDesc} STL`);
   const assemblySTL = exportAssemblySTLBinary(calc, pinionMesh, gearMesh, `${calc.gear_type || 'Gear'} Assembly STL`);
@@ -1280,29 +1327,45 @@ export async function createCompleteCADZip(calc, pinionMesh, gearMesh) {
   zip.file(`STL/${aPrefix}.stl`, assemblySTL);
 
   // 2. STEP AP214 Files
+  if (onProgress) onProgress('2/5: Generating STEP Pinion & Gear...');
+  await new Promise(r => setTimeout(r, 10));
   const pinionSTP = exportSTEP(pinionMesh, pPrefix, `${pDesc} m${calc.m || calc.mn} Np${calc.Np}`);
-  const gearSTP = exportSTEP(gearMesh, gPrefix, `${gDesc} m${calc.m || calc.mn} Ng${calc.Ng}`);
-  const assemblySTP = exportAssemblySTEP(calc, pinionMesh, gearMesh, aPrefix);
   zip.file(`STEP/${pPrefix}.stp`, pinionSTP);
+
+  await new Promise(r => setTimeout(r, 10));
+  const gearSTP = exportSTEP(gearMesh, gPrefix, `${gDesc} m${calc.m || calc.mn} Ng${calc.Ng}`);
   zip.file(`STEP/${gPrefix}.stp`, gearSTP);
+
+  if (onProgress) onProgress('3/5: Generating STEP Assembly in Mesh...');
+  await new Promise(r => setTimeout(r, 10));
+  const assemblySTP = exportAssemblySTEP(calc, pinionMesh, gearMesh, aPrefix);
   zip.file(`STEP/${aPrefix}.stp`, assemblySTP);
 
   // 3. IGES 5.3 Files
+  if (onProgress) onProgress('4/5: Generating IGES surface models...');
+  await new Promise(r => setTimeout(r, 10));
   const pinionIGS = exportIGES(pinionMesh, pPrefix, `${pDesc} m${calc.m || calc.mn} Np${calc.Np}`);
   const gearIGS = exportIGES(gearMesh, gPrefix, `${gDesc} m${calc.m || calc.mn} Ng${calc.Ng}`);
   zip.file(`IGES/${pPrefix}.igs`, pinionIGS);
   zip.file(`IGES/${gPrefix}.igs`, gearIGS);
 
-  // 4. SolidWorks Automation
+  // 4. SolidWorks Automation & Reports
+  if (onProgress) onProgress('5/5: Adding SolidWorks Macros & Reports...');
+  await new Promise(r => setTimeout(r, 10));
   const macroName = isSpiral ? 'create_spiral_bevel_gears.bas' : isHelical ? 'create_helical_gears.bas' : isInternal ? 'create_internal_spur_gears.bas' : isSpur ? 'create_spur_gears.bas' : isStraight ? 'create_straight_bevel_gears.bas' : 'create_zerol_bevel_gears.bas';
   const eqName = isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
   zip.file(`Solidworks/${macroName}`, exportSolidWorksMacro(calc));
   zip.file(`Solidworks/${eqName}`, exportSolidWorksEquations(calc));
 
-  // 5. Documentation & Reports
   const repName = isSpiral ? 'SPIRAL_BEVEL_DESIGN_REPORT.csv' : isHelical ? 'HELICAL_DESIGN_REPORT.csv' : isInternal ? 'INTERNAL_SPUR_DESIGN_REPORT.csv' : isSpur ? 'SPUR_GEAR_DESIGN_REPORT.csv' : isStraight ? 'STRAIGHT_BEVEL_DESIGN_REPORT.csv' : 'ZEROL_BEVEL_DESIGN_REPORT.csv';
   zip.file(`Reports/${repName}`, exportDesignReportCSV(calc));
 
-  return await zip.generateAsync({ type: 'blob' });
+  if (onProgress) onProgress('Compressing complete CAD ZIP package...');
+  await new Promise(r => setTimeout(r, 10));
+  return await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 1 }
+  });
 }
 

@@ -483,91 +483,123 @@ function getGearTypeName() {
 }
 
 async function handleExport() {
+  const btnExport = document.getElementById('btn-export-design');
+  if (btnExport && btnExport.disabled) return;
+
+  const originalText = btnExport ? btnExport.textContent : '';
+  if (btnExport) {
+    btnExport.disabled = true;
+    btnExport.textContent = 'GENERATING...';
+    btnExport.classList.add('loading');
+  }
+
+  // Yield to browser event loop so button state and toast render on screen
+  await new Promise(r => setTimeout(r, 60));
+
   const format = document.getElementById('sel-export-format').value;
   const baseName = getBaseFilename();
   const typeName = getGearTypeName();
 
-  switch (format) {
-    case 'zip':
-      handleZipExport(baseName);
-      break;
+  try {
+    switch (format) {
+      case 'zip':
+        await handleZipExport(baseName);
+        break;
 
-    // STEP AP214 Options
-    case 'step':
-      handleStepZipExport(baseName);
-      break;
-    case 'step-pinion': {
-      showToast('Generating STEP Pinion model...', 'download');
-      const p = exportSTEP(currentPinionMesh, `${baseName}_pinion`, `${typeName} Pinion m${currentCalc.m || currentCalc.mn} Np${currentCalc.Np}`);
-      downloadFile(p, `${baseName}_pinion.stp`, 'application/step');
-      showToast('Downloaded Pinion STEP (.stp)', 'success');
-      break;
-    }
-    case 'step-gear': {
-      showToast('Generating STEP Gear model...', 'download');
-      const g = exportSTEP(currentGearMesh, `${baseName}_gear`, `${typeName} Gear m${currentCalc.m || currentCalc.mn} Ng${currentCalc.Ng}`);
-      downloadFile(g, `${baseName}_gear.stp`, 'application/step');
-      showToast('Downloaded Gear STEP (.stp)', 'success');
-      break;
-    }
-    case 'step-assembly': {
-      showToast('Generating STEP Assembly in Mesh...', 'download');
-      const a = exportAssemblySTEP(currentCalc, currentPinionMesh, currentGearMesh, baseName);
-      downloadFile(a, `${baseName}_assembly.stp`, 'application/step');
-      showToast('Downloaded Assembly STEP (.stp)', 'success');
-      break;
-    }
+      // STEP AP214 Options
+      case 'step':
+        await handleStepZipExport(baseName);
+        break;
+      case 'step-pinion': {
+        showToast('Generating STEP Pinion model...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const p = exportSTEP(currentPinionMesh, `${baseName}_pinion`, `${typeName} Pinion m${currentCalc.m || currentCalc.mn} Np${currentCalc.Np}`);
+        downloadFile(p, `${baseName}_pinion.stp`, 'application/step');
+        showToast('Downloaded Pinion STEP (.stp)', 'success');
+        break;
+      }
+      case 'step-gear': {
+        showToast('Generating STEP Gear model...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const g = exportSTEP(currentGearMesh, `${baseName}_gear`, `${typeName} Gear m${currentCalc.m || currentCalc.mn} Ng${currentCalc.Ng}`);
+        downloadFile(g, `${baseName}_gear.stp`, 'application/step');
+        showToast('Downloaded Gear STEP (.stp)', 'success');
+        break;
+      }
+      case 'step-assembly': {
+        showToast('Generating STEP Assembly in Mesh...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const a = exportAssemblySTEP(currentCalc, currentPinionMesh, currentGearMesh, baseName);
+        downloadFile(a, `${baseName}_assembly.stp`, 'application/step');
+        showToast('Downloaded Assembly STEP (.stp)', 'success');
+        break;
+      }
 
-    // Binary STL Options
-    case 'stl':
-      handleStlZipExport(baseName);
-      break;
-    case 'stl-pinion': {
-      showToast('Generating Binary STL Pinion...', 'download');
-      const p = exportSTLBinary(currentPinionMesh, `${typeName} Pinion`);
-      downloadFile(p, `${baseName}_pinion.stl`, 'application/sla');
-      showToast('Downloaded Pinion STL (.stl)', 'success');
-      break;
-    }
-    case 'stl-gear': {
-      showToast('Generating Binary STL Gear...', 'download');
-      const g = exportSTLBinary(currentGearMesh, `${typeName} Gear`);
-      downloadFile(g, `${baseName}_gear.stl`, 'application/sla');
-      showToast('Downloaded Gear STL (.stl)', 'success');
-      break;
-    }
-    case 'stl-assembly': {
-      showToast('Generating STL Assembly in Mesh...', 'download');
-      const a = exportAssemblySTLBinary(currentCalc, currentPinionMesh, currentGearMesh, `${typeName} Assembly`);
-      downloadFile(a, `${baseName}_assembly.stl`, 'application/sla');
-      showToast('Downloaded Assembly STL (.stl)', 'success');
-      break;
-    }
+      // Binary STL Options
+      case 'stl':
+        await handleStlZipExport(baseName);
+        break;
+      case 'stl-pinion': {
+        showToast('Generating Binary STL Pinion...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const p = exportSTLBinary(currentPinionMesh, `${typeName} Pinion`);
+        downloadFile(p, `${baseName}_pinion.stl`, 'application/sla');
+        showToast('Downloaded Pinion STL (.stl)', 'success');
+        break;
+      }
+      case 'stl-gear': {
+        showToast('Generating Binary STL Gear...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const g = exportSTLBinary(currentGearMesh, `${typeName} Gear`);
+        downloadFile(g, `${baseName}_gear.stl`, 'application/sla');
+        showToast('Downloaded Gear STL (.stl)', 'success');
+        break;
+      }
+      case 'stl-assembly': {
+        showToast('Generating STL Assembly in Mesh...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const a = exportAssemblySTLBinary(currentCalc, currentPinionMesh, currentGearMesh, `${typeName} Assembly`);
+        downloadFile(a, `${baseName}_assembly.stl`, 'application/sla');
+        showToast('Downloaded Assembly STL (.stl)', 'success');
+        break;
+      }
 
-    // SolidWorks & IGES Packages
-    case 'solidworks':
-      handleSolidWorksZipExport(baseName);
-      break;
-    case 'iges':
-      handleIgesZipExport(baseName);
-      break;
+      // SolidWorks & IGES Packages
+      case 'solidworks':
+        await handleSolidWorksZipExport(baseName);
+        break;
+      case 'iges':
+        await handleIgesZipExport(baseName);
+        break;
 
-    // Reports & Diagrams
-    case 'csv':
-      handleCsvExport(baseName);
-      break;
-    case 'png':
-      handlePngExport(baseName);
-      break;
-    default:
-      handleZipExport(baseName);
+      // Reports & Diagrams
+      case 'csv':
+        handleCsvExport(baseName);
+        break;
+      case 'png':
+        handlePngExport(baseName);
+        break;
+      default:
+        await handleZipExport(baseName);
+    }
+  } catch (err) {
+    console.error('Export error:', err);
+    showToast('Export error: ' + err.message, 'warn');
+  } finally {
+    if (btnExport) {
+      btnExport.disabled = false;
+      btnExport.textContent = originalText;
+      btnExport.classList.remove('loading');
+    }
   }
 }
 
 async function handleZipExport(baseName) {
   showToast('Bundling complete CAD package into ZIP...', 'download');
   try {
-    const zipBlob = await createCompleteCADZip(currentCalc, currentPinionMesh, currentGearMesh);
+    const zipBlob = await createCompleteCADZip(currentCalc, currentPinionMesh, currentGearMesh, (msg) => {
+      showToast(msg, 'download');
+    });
     downloadFile(zipBlob, `${baseName}.zip`, 'application/zip');
     showToast(`Downloaded ${baseName}.zip`, 'success');
   } catch (err) {
@@ -579,7 +611,9 @@ async function handleZipExport(baseName) {
 async function handleStepZipExport(baseName) {
   showToast('Bundling STEP models (Pinion, Gear & Assembly)...', 'download');
   try {
-    const zipBlob = await exportSTEPZip(currentCalc, currentPinionMesh, currentGearMesh, baseName);
+    const zipBlob = await exportSTEPZip(currentCalc, currentPinionMesh, currentGearMesh, baseName, (msg) => {
+      showToast(msg, 'download');
+    });
     downloadFile(zipBlob, `${baseName}_STEP.zip`, 'application/zip');
     showToast(`Downloaded ${baseName}_STEP.zip`, 'success');
   } catch (err) {
@@ -591,7 +625,9 @@ async function handleStepZipExport(baseName) {
 async function handleStlZipExport(baseName) {
   showToast('Bundling STL models (Pinion, Gear & Assembly)...', 'download');
   try {
-    const zipBlob = await exportSTLZip(currentCalc, currentPinionMesh, currentGearMesh, baseName);
+    const zipBlob = await exportSTLZip(currentCalc, currentPinionMesh, currentGearMesh, baseName, (msg) => {
+      showToast(msg, 'download');
+    });
     downloadFile(zipBlob, `${baseName}_STL.zip`, 'application/zip');
     showToast(`Downloaded ${baseName}_STL.zip`, 'success');
   } catch (err) {
@@ -603,7 +639,9 @@ async function handleStlZipExport(baseName) {
 async function handleIgesZipExport(baseName) {
   showToast('Bundling IGES models...', 'download');
   try {
-    const zipBlob = await exportIGESZip(currentCalc, currentPinionMesh, currentGearMesh, baseName);
+    const zipBlob = await exportIGESZip(currentCalc, currentPinionMesh, currentGearMesh, baseName, (msg) => {
+      showToast(msg, 'download');
+    });
     downloadFile(zipBlob, `${baseName}_IGES.zip`, 'application/zip');
     showToast(`Downloaded ${baseName}_IGES.zip`, 'success');
   } catch (err) {
