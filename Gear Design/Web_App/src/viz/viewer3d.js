@@ -111,21 +111,98 @@ export class GearViewer3D {
 
   convertMeshToThreeBufferGeometry(customMesh) {
     const geometry = new THREE.BufferGeometry();
-    const positions = [];
-    const indices = [];
-
     const { vertices, faces } = customMesh;
-    for (let i = 0; i < vertices.length; i++) {
-      positions.push(vertices[i][0], vertices[i][1], vertices[i][2]);
+    const n_faces = faces.length;
+    const n_verts = vertices.length;
+
+    // 1. Calculate face normals and classify faces (cap vs lateral)
+    const faceNormals = [];
+    const isCap = new Uint8Array(n_faces);
+
+    for (let f = 0; f < n_faces; f++) {
+      const [i1, i2, i3] = faces[f];
+      const v1 = vertices[i1], v2 = vertices[i2], v3 = vertices[i3];
+      const ax = v2[0] - v1[0], ay = v2[1] - v1[1], az = v2[2] - v1[2];
+      const bx = v3[0] - v1[0], by = v3[1] - v1[1], bz = v3[2] - v1[2];
+      let nx = ay * bz - az * by;
+      let ny = az * bx - ax * bz;
+      let nz = ax * by - ay * bx;
+      const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+      nx /= len; ny /= len; nz /= len;
+      faceNormals.push([nx, ny, nz]);
+
+      // A face is an end cap if |nz| > 0.65
+      if (Math.abs(nz) > 0.65) {
+        isCap[f] = 1;
+      }
     }
 
-    for (let i = 0; i < faces.length; i++) {
-      indices.push(faces[i][0], faces[i][1], faces[i][2]);
+    // 2. Accumulate lateral normals ONLY among lateral faces
+    const latNormals = new Float32Array(n_verts * 3);
+    const latCounts = new Uint16Array(n_verts);
+
+    for (let f = 0; f < n_faces; f++) {
+      if (isCap[f]) continue;
+      const [i1, i2, i3] = faces[f];
+      const [nx, ny, nz] = faceNormals[f];
+      for (const idx of [i1, i2, i3]) {
+        latNormals[idx * 3] += nx;
+        latNormals[idx * 3 + 1] += ny;
+        latNormals[idx * 3 + 2] += nz;
+        latCounts[idx]++;
+      }
+    }
+
+    for (let i = 0; i < n_verts; i++) {
+      if (latCounts[i] > 0) {
+        const nx = latNormals[i * 3];
+        const ny = latNormals[i * 3 + 1];
+        const nz = latNormals[i * 3 + 2];
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+        latNormals[i * 3] /= len;
+        latNormals[i * 3 + 1] /= len;
+        latNormals[i * 3 + 2] /= len;
+      }
+    }
+
+    // 3. Build vertex attributes with split cap normals
+    // Base vertices for lateral faces
+    const positions = [];
+    const normals = [];
+    const indices = [];
+
+    for (let i = 0; i < n_verts; i++) {
+      positions.push(vertices[i][0], vertices[i][1], vertices[i][2]);
+      normals.push(latNormals[i * 3], latNormals[i * 3 + 1], latNormals[i * 3 + 2]);
+    }
+
+    for (let f = 0; f < n_faces; f++) {
+      if (!isCap[f]) {
+        indices.push(faces[f][0], faces[f][1], faces[f][2]);
+      }
+    }
+
+    // Dedicated cap vertices with pure planar normals [0, 0, 1] or [0, 0, -1]
+    // Guarantees 100% silky smooth, perfectly flat lighting across all gear caps
+    for (let f = 0; f < n_faces; f++) {
+      if (isCap[f]) {
+        const [i1, i2, i3] = faces[f];
+        const nz = faceNormals[f][2];
+        const capNormZ = nz >= 0 ? 1.0 : -1.0;
+
+        for (const idx of [i1, i2, i3]) {
+          const v = vertices[idx];
+          const newIdx = positions.length / 3;
+          positions.push(v[0], v[1], v[2]);
+          normals.push(0, 0, capNormZ);
+          indices.push(newIdx);
+        }
+      }
     }
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
     geometry.setIndex(indices);
-    geometry.computeVertexNormals();
     return geometry;
   }
 

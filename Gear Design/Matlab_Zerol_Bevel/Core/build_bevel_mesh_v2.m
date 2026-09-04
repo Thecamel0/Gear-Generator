@@ -116,6 +116,12 @@ function mesh = build_bevel_mesh_v2(N, m, phi, a, b, gamma, Ao, F, ...
             end
         end
 
+        % Planar end cuts: at toe (s = 1) and heel (s = n_sec), w_s = 0,
+        % guaranteeing 100% flat planar end faces perpendicular to the gear axis.
+        z_cone = A_s * cos(gamma);
+        w_s = sin(pi * (s - 1) / (n_sec - 1));
+        verts_s(:,3) = z_cone + w_s * (verts_s(:,3) - z_cone);
+
         tooth_verts(idx, :) = verts_s;
     end
 
@@ -132,10 +138,10 @@ function mesh = build_bevel_mesh_v2(N, m, phi, a, b, gamma, Ao, F, ...
     lat_faces = [v1 v2 v3; v1 v3 v4];
 
     % --- Build end caps (radial star-fan triangulation to center vertices) ---
-    % Guarantees zero ear-clipping diagonal slicing chords and strict 2-manifold Euler = 2
+    % Guarantees zero ear-clipping diagonal slicing chords, perfectly flat end planes, and Euler = 2
 
     % Inner cap (toe end, section s = 1)
-    z_c_toe = mean(tooth_verts(1:M, 3));
+    z_c_toe = tooth_verts(1, 3);
     idx_c_toe = size(tooth_verts, 1) + 1;
     tooth_verts(idx_c_toe, :) = [0, 0, z_c_toe];
 
@@ -147,7 +153,7 @@ function mesh = build_bevel_mesh_v2(N, m, phi, a, b, gamma, Ao, F, ...
 
     % Outer cap (heel end, section s = n_sec)
     idx_tooth_outer = (n_sec - 1) * M;
-    z_c_heel = mean(tooth_verts(idx_tooth_outer + (1:M), 3));
+    z_c_heel = tooth_verts(idx_tooth_outer + 1, 3);
     idx_c_heel = size(tooth_verts, 1) + 1;
     tooth_verts(idx_c_heel, :) = [0, 0, z_c_heel];
 

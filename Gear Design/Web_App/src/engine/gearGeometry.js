@@ -531,12 +531,16 @@ export function buildBevelMesh(
 
       const delta_r = scaled_radius - r_pitch_local;
       let r_3d = r_cone + delta_r * Math.cos(gamma);
-      let z_3d = z_cone - delta_r * Math.sin(gamma);
+
+      // Planar end cuts: at toe (s = 0) and heel (s = n_sec - 1), w_s = 0,
+      // guaranteeing 100% mathematically flat planar end faces perpendicular to the gear axis.
+      const w_s = (n_sec > 1) ? Math.sin((Math.PI * s) / (n_sec - 1)) : 0;
+      let z_3d = z_cone - w_s * delta_r * Math.sin(gamma);
 
       // Apply Lengthwise crowning
       if (delta_L > 0) {
         r_3d -= delta_L * Math.cos(gamma);
-        z_3d += delta_L * Math.sin(gamma);
+        z_3d += w_s * delta_L * Math.sin(gamma);
       }
 
       // Apply Profile crowning
@@ -546,14 +550,14 @@ export function buildBevelMesh(
         h_frac = Math.max(0, Math.min(1, h_frac));
         const delta_P = C_P * Math.pow(2 * h_frac - 1, 2);
         r_3d -= delta_P * Math.cos(gamma);
-        z_3d += delta_P * Math.sin(gamma);
+        z_3d += w_s * delta_P * Math.sin(gamma);
       }
 
       // Apply Tip relief
       if (C_tip > 0 && r_3d > r_relief_start) {
         const frac = Math.min(1, Math.max(0, (r_3d - r_relief_start) / (r_a_cone - r_relief_start + 1e-6)));
         r_3d -= C_tip * frac * Math.cos(gamma);
-        z_3d += C_tip * frac * Math.sin(gamma);
+        z_3d += w_s * C_tip * frac * Math.sin(gamma);
       }
 
       // Shrinkage scaling
@@ -581,13 +585,10 @@ export function buildBevelMesh(
   }
 
   // 4. End Caps (Inner Toe & Outer Heel) via Radial Fan Triangulation to Star Center
-  // Star-shaped radial fan guarantees zero self-intersecting chords, zero ear-clipping defects,
-  // and strict 2-manifold watertight closure (Euler characteristic V - E + F = 2).
+  // Both caps are 100% mathematically flat planes perpendicular to the gear axis.
 
   // Toe Center Vertex (s = 0)
-  let z_sum_toe = 0;
-  for (let k = 0; k < M; k++) z_sum_toe += verts_3d[k][2];
-  const z_c_toe = z_sum_toe / M;
+  const z_c_toe = verts_3d[0][2];
   const idx_c_toe = verts_3d.length;
   verts_3d.push([0, 0, z_c_toe]);
 
@@ -599,9 +600,7 @@ export function buildBevelMesh(
 
   // Heel Center Vertex (s = n_sec - 1)
   const idx_outer_start = (n_sec - 1) * M;
-  let z_sum_heel = 0;
-  for (let k = 0; k < M; k++) z_sum_heel += verts_3d[idx_outer_start + k][2];
-  const z_c_heel = z_sum_heel / M;
+  const z_c_heel = verts_3d[idx_outer_start][2];
   const idx_c_heel = verts_3d.length;
   verts_3d.push([0, 0, z_c_heel]);
 
