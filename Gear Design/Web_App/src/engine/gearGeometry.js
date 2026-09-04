@@ -508,8 +508,8 @@ export function buildBevelMesh(
 
   const s_thick = tooth_thick || ((Math.PI * m) / 2);
 
-  // 1. Reference 2D closed polygon coordinates with ZERO duplicate vertices
-  const { xc, yc } = generateSpurProfile2D(N, m, phi_eff, a, b, s_thick, 30);
+  // 1. Reference 2D closed polygon coordinates matching MATLAB resolution (16 inv pts)
+  const { xc, yc } = generateSpurProfile2D(N, m, phi_eff, a, b, s_thick, 16);
   const M = xc.length;
   const ref_radii = new Float64Array(M);
   const ref_angles = new Float64Array(M);

@@ -431,7 +431,7 @@ function recalculateAndRender() {
     updateResultsUI(currentCalc);
 
     if (viewer3D) viewer3D.updateGears(currentCalc, currentPinionMesh, currentGearMesh);
-    if (plot2D) plot2D.updatePlot(currentCalc);
+    if (plot2D && activeTab === '2d') plot2D.updatePlot(currentCalc);
   } catch (err) {
     console.error('Recalculation error:', err);
     showToast('Recalculation error: ' + err.message, 'error');

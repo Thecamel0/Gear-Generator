@@ -55,7 +55,7 @@ export class GearPlot2D {
    * Generates high-resolution closed 2D polygon of all N teeth
    * Exactly replicates MATLAB generate_2d_gear_polygon.m
    */
-  generate2DGearPolygon(N, m, phi, a, b, tooth_thick, n_pts = 250) {
+  generate2DGearPolygon(N, m, phi, a, b, tooth_thick, n_pts = 80) {
     const r_p = (m * N) / 2;
     const r_b = r_p * Math.cos(phi);
     const r_a = r_p + a;

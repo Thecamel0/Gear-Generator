@@ -9,22 +9,33 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+// Preallocated reusable matrices to eliminate per-frame allocations during animation
+const _Ry90 = new THREE.Matrix4().makeRotationY(Math.PI / 2);
+const _Rclock = new THREE.Matrix4();
+const _Rz = new THREE.Matrix4();
+const _Rphase = new THREE.Matrix4();
+const _mat = new THREE.Matrix4();
+
 export class GearViewer3D {
   constructor(containerElement) {
     this.container = containerElement;
+    this.scene = null;
+    this.camera = null;
+    this.renderer = null;
+    this.controls = null;
+
     this.calc = null;
     this.pinionMesh = null;
     this.gearMesh = null;
 
-    // View options
-    this.explodedFactor = 0.0;
     this.isRotating = false;
     this.rotationSpeedRpm = 10;
     this.showWireframe = false;
-    this.showPitchCones = false;
-    this.showAxes = true;
-    this.viewMode = 'assembly'; // 'assembly', 'pinion', 'gear'
+    this.showAxes = false;
+    this.viewMode = 'assembly';
+    this.explodedFactor = 0.0;
 
+    this.rootAssemblyGroup = null;
     this.gearGroup = null;
     this.pinionGroups = [];
     this.pitchConesGroup = null;
@@ -53,11 +64,11 @@ export class GearViewer3D {
     this.camera = new THREE.PerspectiveCamera(40, width / height, 0.5, 3000);
     this.camera.position.set(160, 135, 230);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    // Disable shadow maps to save GPU render targets (no meshes cast shadows)
+    this.renderer.shadowMap.enabled = false;
 
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
@@ -131,7 +142,8 @@ export class GearViewer3D {
       }
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       if (customMesh.normals && customMesh.normals.length === n_verts * 3) {
-        geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(customMesh.normals), 3));
+        // Use typed array directly without allocating duplicate copy
+        geometry.setAttribute('normal', new THREE.BufferAttribute(customMesh.normals, 3));
       } else {
         geometry.computeVertexNormals();
       }
@@ -230,22 +242,40 @@ export class GearViewer3D {
     return geometry;
   }
 
+  disposeGears() {
+    if (!this.rootAssemblyGroup) return;
+
+    // Deep traverse and dispose all GPU geometries, attributes, and shader programs
+    this.rootAssemblyGroup.traverse((child) => {
+      if (child.isMesh) {
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => m.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      }
+    });
+
+    while (this.rootAssemblyGroup.children.length > 0) {
+      this.rootAssemblyGroup.remove(this.rootAssemblyGroup.children[0]);
+    }
+
+    this.gearGroup = null;
+    this.pinionGroups = [];
+  }
+
   updateGears(calc, pinionMesh, gearMesh) {
     this.calc = calc;
     this.pinionMesh = pinionMesh;
     this.gearMesh = gearMesh;
 
-    // Clear existing gears
-    while (this.rootAssemblyGroup.children.length > 0) {
-      const obj = this.rootAssemblyGroup.children[0];
-      this.rootAssemblyGroup.remove(obj);
-      if (obj.geometry) obj.geometry.dispose();
-      if (obj.material) {
-        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-        else obj.material.dispose();
-      }
-    }
-    this.pinionGroups = [];
+    // Deep dispose previous geometries and materials to prevent memory accumulation
+    this.disposeGears();
 
     const gearGeo = this.convertMeshToThreeBufferGeometry(gearMesh);
     const pinionGeo = this.convertMeshToThreeBufferGeometry(pinionMesh);
@@ -379,25 +409,25 @@ export class GearViewer3D {
         );
       }
     } else {
-      // ZEROL BEVEL GEAR: 90° intersecting shafts
-      const Ry90 = new THREE.Matrix4().makeRotationY(Math.PI / 2);
-      const Rclock = new THREE.Matrix4().makeRotationZ(Math.PI / this.calc.Np);
+      // ZEROL / SPIRAL / STRAIGHT BEVEL GEAR: 90° intersecting shafts
+      _Ry90.makeRotationY(Math.PI / 2);
+      _Rclock.makeRotationZ(Math.PI / this.calc.Np);
 
       for (let i = 0; i < this.pinionGroups.length; i++) {
         const pGroup = this.pinionGroups[i];
         const { angleOffset, phaseAngle, meshObj } = pGroup.userData;
 
-        const Rz = new THREE.Matrix4().makeRotationZ(angleOffset);
+        _Rz.makeRotationZ(angleOffset);
         const currentPinionAngle = -this.gearAngle * (this.calc.Ng / this.calc.Np) + phaseAngle;
-        const Rphase = new THREE.Matrix4().makeRotationZ(currentPinionAngle);
+        _Rphase.makeRotationZ(currentPinionAngle);
 
-        const mat = new THREE.Matrix4();
-        mat.multiply(Rz);
-        mat.multiply(Ry90);
-        mat.multiply(Rclock);
-        mat.multiply(Rphase);
+        _mat.identity();
+        _mat.multiply(_Rz);
+        _mat.multiply(_Ry90);
+        _mat.multiply(_Rclock);
+        _mat.multiply(_Rphase);
 
-        meshObj.matrix.copy(mat);
+        meshObj.matrix.copy(_mat);
         meshObj.matrixAutoUpdate = false;
 
         // Radial displacement along shaft axis
@@ -550,6 +580,15 @@ export class GearViewer3D {
 
   dispose() {
     window.removeEventListener('resize', this.handleResize);
+    this.disposeGears();
+    if (this.gridHelper) {
+      if (this.gridHelper.geometry) this.gridHelper.geometry.dispose();
+      if (this.gridHelper.material) this.gridHelper.material.dispose();
+    }
+    if (this.axesHelper) {
+      if (this.axesHelper.geometry) this.axesHelper.geometry.dispose();
+      if (this.axesHelper.material) this.axesHelper.material.dispose();
+    }
     this.renderer.dispose();
   }
 }

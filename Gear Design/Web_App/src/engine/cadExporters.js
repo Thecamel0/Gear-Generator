@@ -94,7 +94,8 @@ export function exportSTLBinary(mesh, header = 'Zerol Bevel Gear Binary STL') {
  */
 export function exportSTLAscii(mesh, solidName = 'Zerol_Bevel_Gear') {
   const { vertices, faces } = mesh;
-  let out = `solid ${solidName}\n`;
+  const chunks = [`solid ${solidName}\n`];
+  let buf = '';
 
   for (let i = 0; i < faces.length; i++) {
     const f = faces[i];
@@ -110,16 +111,22 @@ export function exportSTLAscii(mesh, solidName = 'Zerol_Bevel_Gear') {
     const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
     nx /= len; ny /= len; nz /= len;
 
-    out += `  facet normal ${nx.toExponential(6)} ${ny.toExponential(6)} ${nz.toExponential(6)}\n`;
-    out += `    outer loop\n`;
-    out += `      vertex ${v1[0].toFixed(6)} ${v1[1].toFixed(6)} ${v1[2].toFixed(6)}\n`;
-    out += `      vertex ${v2[0].toFixed(6)} ${v2[1].toFixed(6)} ${v2[2].toFixed(6)}\n`;
-    out += `      vertex ${v3[0].toFixed(6)} ${v3[1].toFixed(6)} ${v3[2].toFixed(6)}\n`;
-    out += `    endloop\n`;
-    out += `  endfacet\n`;
+    buf += `  facet normal ${nx.toExponential(6)} ${ny.toExponential(6)} ${nz.toExponential(6)}\n` +
+      `    outer loop\n` +
+      `      vertex ${v1[0].toFixed(6)} ${v1[1].toFixed(6)} ${v1[2].toFixed(6)}\n` +
+      `      vertex ${v2[0].toFixed(6)} ${v2[1].toFixed(6)} ${v2[2].toFixed(6)}\n` +
+      `      vertex ${v3[0].toFixed(6)} ${v3[1].toFixed(6)} ${v3[2].toFixed(6)}\n` +
+      `    endloop\n` +
+      `  endfacet\n`;
+
+    if (buf.length > 65536) {
+      chunks.push(buf);
+      buf = '';
+    }
   }
-  out += `endsolid ${solidName}\n`;
-  return out;
+  buf += `endsolid ${solidName}\n`;
+  chunks.push(buf);
+  return chunks.join('');
 }
 
 /**
@@ -132,78 +139,87 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
   const n_faces = faces.length;
   const dateStr = new Date().toISOString().replace(/\.\d+Z$/, '');
 
-  let out = '';
-  out += 'ISO-10303-21;\n';
-  out += 'HEADER;\n';
-  out += `FILE_DESCRIPTION(('${headerText}'),'2;1');\n`;
-  out += `FILE_NAME('${partName}.stp','${dateStr}',('Ahmed Majdy Ahmed'),('Wind Turbine Pitch Control'),'JavaScript STEP Exporter V2','Zerol Studio V2','');\n`;
-  out += `FILE_SCHEMA(('AUTOMOTIVE_DESIGN'));\n`;
-  out += 'ENDSEC;\n';
-  out += 'DATA;\n';
+  const chunks = [];
+  let buf = '';
+  const append = (str) => {
+    buf += str;
+    if (buf.length > 65536) {
+      chunks.push(buf);
+      buf = '';
+    }
+  };
+
+  append('ISO-10303-21;\n');
+  append('HEADER;\n');
+  append(`FILE_DESCRIPTION(('${headerText}'),'2;1');\n`);
+  append(`FILE_NAME('${partName}.stp','${dateStr}',('Ahmed Majdy Ahmed'),('Wind Turbine Pitch Control'),'JavaScript STEP Exporter V2','Zerol Studio V2','');\n`);
+  append(`FILE_SCHEMA(('AUTOMOTIVE_DESIGN'));\n`);
+  append('ENDSEC;\n');
+  append('DATA;\n');
 
   let eid = 1;
   const e_app = eid++;
-  out += `#${e_app}=APPLICATION_CONTEXT('core data for automotive mechanical design processes');\n`;
+  append(`#${e_app}=APPLICATION_CONTEXT('core data for automotive mechanical design processes');\n`);
 
   const e_apd = eid++;
-  out += `#${e_apd}=APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#${e_app});\n`;
+  append(`#${e_apd}=APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#${e_app});\n`);
 
   const e_prc = eid++;
-  out += `#${e_prc}=PRODUCT_RELATED_PRODUCT_CATEGORY('part',(#${eid}));\n`;
+  append(`#${e_prc}=PRODUCT_RELATED_PRODUCT_CATEGORY('part',(#${eid}));\n`);
 
   const e_prod = eid++;
-  out += `#${e_prod}=PRODUCT('${partName}','${headerText}','',(#${eid}));\n`;
+  append(`#${e_prod}=PRODUCT('${partName}','${headerText}','',(#${eid}));\n`);
 
   const e_pctx = eid++;
-  out += `#${e_pctx}=PRODUCT_CONTEXT('',#${e_app},'mechanical');\n`;
+  append(`#${e_pctx}=PRODUCT_CONTEXT('',#${e_app},'mechanical');\n`);
 
   const e_pdf = eid++;
-  out += `#${e_pdf}=PRODUCT_DEFINITION_FORMATION('','',#${e_prod});\n`;
+  append(`#${e_pdf}=PRODUCT_DEFINITION_FORMATION('','',#${e_prod});\n`);
 
   const e_pdc = eid++;
-  out += `#${e_pdc}=PRODUCT_DEFINITION_CONTEXT('detailed design',#${e_app},'design');\n`;
+  append(`#${e_pdc}=PRODUCT_DEFINITION_CONTEXT('detailed design',#${e_app},'design');\n`);
 
   const e_pd = eid++;
-  out += `#${e_pd}=PRODUCT_DEFINITION('design','',#${e_pdf},#${e_pdc});\n`;
+  append(`#${e_pd}=PRODUCT_DEFINITION('design','',#${e_pdf},#${e_pdc});\n`);
 
   const e_pds = eid++;
-  out += `#${e_pds}=PRODUCT_DEFINITION_SHAPE('','',#${e_pd});\n`;
+  append(`#${e_pds}=PRODUCT_DEFINITION_SHAPE('','',#${e_pd});\n`);
 
   const e_lu = eid++;
-  out += `#${e_lu}=(LENGTH_UNIT()NAMED_UNIT(*)SI_UNIT(.MILLI.,.METRE.));\n`;
+  append(`#${e_lu}=(LENGTH_UNIT()NAMED_UNIT(*)SI_UNIT(.MILLI.,.METRE.));\n`);
 
   const e_au = eid++;
-  out += `#${e_au}=(NAMED_UNIT(*)PLANE_ANGLE_UNIT()SI_UNIT($,.RADIAN.));\n`;
+  append(`#${e_au}=(NAMED_UNIT(*)PLANE_ANGLE_UNIT()SI_UNIT($,.RADIAN.));\n`);
 
   const e_su = eid++;
-  out += `#${e_su}=(NAMED_UNIT(*)SI_UNIT($,.STERADIAN.)SOLID_ANGLE_UNIT());\n`;
+  append(`#${e_su}=(NAMED_UNIT(*)SI_UNIT($,.STERADIAN.)SOLID_ANGLE_UNIT());\n`);
 
   const e_unc = eid++;
-  out += `#${e_unc}=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-06),#${e_lu},'distance_accuracy_value','maximum tolerance');\n`;
+  append(`#${e_unc}=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-06),#${e_lu},'distance_accuracy_value','maximum tolerance');\n`);
 
   const e_ctx = eid++;
-  out += `#${e_ctx}=(GEOMETRIC_REPRESENTATION_CONTEXT(3)GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#${e_unc}))GLOBAL_UNIT_ASSIGNED_CONTEXT((#${e_lu},#${e_au},#${e_su}))REPRESENTATION_CONTEXT('Context3D','3D Context'));\n`;
+  append(`#${e_ctx}=(GEOMETRIC_REPRESENTATION_CONTEXT(3)GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#${e_unc}))GLOBAL_UNIT_ASSIGNED_CONTEXT((#${e_lu},#${e_au},#${e_su}))REPRESENTATION_CONTEXT('Context3D','3D Context'));\n`);
 
   const e_org = eid++;
-  out += `#${e_org}=CARTESIAN_POINT('Origin',(0.,0.,0.));\n`;
+  append(`#${e_org}=CARTESIAN_POINT('Origin',(0.,0.,0.));\n`);
   const e_dz = eid++;
-  out += `#${e_dz}=DIRECTION('axis',(0.,0.,1.));\n`;
+  append(`#${e_dz}=DIRECTION('axis',(0.,0.,1.));\n`);
   const e_dx = eid++;
-  out += `#${e_dx}=DIRECTION('refdir',(1.,0.,0.));\n`;
+  append(`#${e_dx}=DIRECTION('refdir',(1.,0.,0.));\n`);
   const e_ax = eid++;
-  out += `#${e_ax}=AXIS2_PLACEMENT_3D('placement',#${e_org},#${e_dz},#${e_dx});\n`;
+  append(`#${e_ax}=AXIS2_PLACEMENT_3D('placement',#${e_org},#${e_dz},#${e_dx});\n`);
 
   // CARTESIAN_POINTs
   const pt_base = eid;
   for (let i = 0; i < n_verts; i++) {
     const v = vertices[i];
-    out += `#${eid++}=CARTESIAN_POINT('',(${v[0].toFixed(6)},${v[1].toFixed(6)},${v[2].toFixed(6)}));\n`;
+    append(`#${eid++}=CARTESIAN_POINT('',(${v[0].toFixed(6)},${v[1].toFixed(6)},${v[2].toFixed(6)}));\n`);
   }
 
   // VERTEX_POINTs
   const vp_base = eid;
   for (let i = 0; i < n_verts; i++) {
-    out += `#${eid++}=VERTEX_POINT('',#${pt_base + i});\n`;
+    append(`#${eid++}=VERTEX_POINT('',#${pt_base + i});\n`);
   }
 
   // BUILD UNIQUE TOPOLOGICAL EDGE MAP (Guarantees shared boundary edges in STEP BREP)
@@ -238,16 +254,16 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
     const ux = dx / len, uy = dy / len, uz = dz / len;
 
     const e_dir = eid++;
-    out += `#${e_dir}=DIRECTION('',(${ux.toFixed(9)},${uy.toFixed(9)},${uz.toFixed(9)}));\n`;
+    append(`#${e_dir}=DIRECTION('',(${ux.toFixed(9)},${uy.toFixed(9)},${uz.toFixed(9)}));\n`);
 
     const e_vec = eid++;
-    out += `#${e_vec}=VECTOR('',#${e_dir},${len.toFixed(6)});\n`;
+    append(`#${e_vec}=VECTOR('',#${e_dir},${len.toFixed(6)});\n`);
 
     const e_line = eid++;
-    out += `#${e_line}=LINE('',#${pt_base + edge.vMin},#${e_vec});\n`;
+    append(`#${e_line}=LINE('',#${pt_base + edge.vMin},#${e_vec});\n`);
 
     const e_ec = eid++;
-    out += `#${e_ec}=EDGE_CURVE('',#${vp_base + edge.vMin},#${vp_base + edge.vMax},#${e_line},.T.);\n`;
+    append(`#${e_ec}=EDGE_CURVE('',#${vp_base + edge.vMin},#${vp_base + edge.vMax},#${e_line},.T.);\n`);
     edge.ec_id = e_ec;
   }
 
@@ -270,15 +286,15 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
       const isForward = (v_s === edge.vMin);
 
       const e_oe = eid++;
-      out += `#${e_oe}=ORIENTED_EDGE('',*,*,#${edge.ec_id},${isForward ? '.T.' : '.F.'});\n`;
+      append(`#${e_oe}=ORIENTED_EDGE('',*,*,#${edge.ec_id},${isForward ? '.T.' : '.F.'});\n`);
       oe_ids.push(e_oe);
     }
 
     const e_el = eid++;
-    out += `#${e_el}=EDGE_LOOP('',(#${oe_ids[0]},#${oe_ids[1]},#${oe_ids[2]}));\n`;
+    append(`#${e_el}=EDGE_LOOP('',(#${oe_ids[0]},#${oe_ids[1]},#${oe_ids[2]}));\n`);
 
     const e_fob = eid++;
-    out += `#${e_fob}=FACE_OUTER_BOUND('',#${e_el},.T.);\n`;
+    append(`#${e_fob}=FACE_OUTER_BOUND('',#${e_el},.T.);\n`);
 
     // Normal calculation via face triangle edges
     const ax = p2[0] - p1[0], ay = p2[1] - p1[1], az = p2[2] - p1[2];
@@ -299,40 +315,41 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
     rx /= r_len; ry /= r_len; rz /= r_len;
 
     const e_fp = eid++;
-    out += `#${e_fp}=CARTESIAN_POINT('',(${p1[0].toFixed(6)},${p1[1].toFixed(6)},${p1[2].toFixed(6)}));\n`;
+    append(`#${e_fp}=CARTESIAN_POINT('',(${p1[0].toFixed(6)},${p1[1].toFixed(6)},${p1[2].toFixed(6)}));\n`);
 
     const e_fn = eid++;
-    out += `#${e_fn}=DIRECTION('',(${nx.toFixed(9)},${ny.toFixed(9)},${nz.toFixed(9)}));\n`;
+    append(`#${e_fn}=DIRECTION('',(${nx.toFixed(9)},${ny.toFixed(9)},${nz.toFixed(9)}));\n`);
 
     const e_fr = eid++;
-    out += `#${e_fr}=DIRECTION('',(${rx.toFixed(9)},${ry.toFixed(9)},${rz.toFixed(9)}));\n`;
+    append(`#${e_fr}=DIRECTION('',(${rx.toFixed(9)},${ry.toFixed(9)},${rz.toFixed(9)}));\n`);
 
     const e_fax = eid++;
-    out += `#${e_fax}=AXIS2_PLACEMENT_3D('',#${e_fp},#${e_fn},#${e_fr});\n`;
+    append(`#${e_fax}=AXIS2_PLACEMENT_3D('',#${e_fp},#${e_fn},#${e_fr});\n`);
 
     const e_plane = eid++;
-    out += `#${e_plane}=PLANE('',#${e_fax});\n`;
+    append(`#${e_plane}=PLANE('',#${e_fax});\n`);
 
     const e_face = eid++;
-    out += `#${e_face}=ADVANCED_FACE('',(#${e_fob}),#${e_plane},.T.);\n`;
+    append(`#${e_face}=ADVANCED_FACE('',(#${e_fob}),#${e_plane},.T.);\n`);
     face_eids.push(e_face);
   }
 
   // CLOSED_SHELL -> MANIFOLD_SOLID_BREP
   const e_shell = eid++;
-  out += `#${e_shell}=CLOSED_SHELL('shell',(${face_eids.map(id => '#' + id).join(',')}));\n`;
+  append(`#${e_shell}=CLOSED_SHELL('shell',(${face_eids.map(id => '#' + id).join(',')}));\n`);
 
   const e_brep = eid++;
-  out += `#${e_brep}=MANIFOLD_SOLID_BREP('${partName}',#${e_shell});\n`;
+  append(`#${e_brep}=MANIFOLD_SOLID_BREP('${partName}',#${e_shell});\n`);
 
   const e_sr = eid++;
-  out += `#${e_sr}=ADVANCED_BREP_SHAPE_REPRESENTATION('${partName}',(#${e_brep},#${e_ax}),#${e_ctx});\n`;
+  append(`#${e_sr}=ADVANCED_BREP_SHAPE_REPRESENTATION('${partName}',(#${e_brep},#${e_ax}),#${e_ctx});\n`);
 
-  out += `#${eid++}=SHAPE_DEFINITION_REPRESENTATION(#${e_pds},#${e_sr});\n`;
-  out += 'ENDSEC;\n';
-  out += 'END-ISO-10303-21;\n';
+  append(`#${eid++}=SHAPE_DEFINITION_REPRESENTATION(#${e_pds},#${e_sr});\n`);
+  append('ENDSEC;\n');
+  append('END-ISO-10303-21;\n');
 
-  return out;
+  if (buf.length > 0) chunks.push(buf);
+  return chunks.join('');
 }
 
 /**
