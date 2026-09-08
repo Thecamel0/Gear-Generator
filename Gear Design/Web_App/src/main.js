@@ -26,6 +26,7 @@ import {
   exportSTEP,
   exportIGES,
   exportSolidWorksMacro,
+  exportCATIAMacro,
   exportSolidWorksEquations,
   exportDesignReportCSV,
   createCompleteCADZip,
@@ -564,10 +565,17 @@ async function handleExport() {
         break;
       }
 
-      // SolidWorks & IGES Packages
+      // SolidWorks, CATIA & IGES Packages
       case 'solidworks':
         await handleSolidWorksZipExport(baseName);
         break;
+      case 'catia': {
+        showToast('Generating CATIA V5 Automation Script...', 'download');
+        const script = exportCATIAMacro(currentCalc);
+        downloadFile(script, `${baseName}_catia_healer.catvbs`, 'application/octet-stream');
+        showToast('Downloaded CATIA Automation Script (.catvbs)', 'success');
+        break;
+      }
       case 'iges':
         await handleIgesZipExport(baseName);
         break;

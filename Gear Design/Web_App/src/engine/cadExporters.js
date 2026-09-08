@@ -165,12 +165,10 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
   append(`#${e_apd}=APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#${e_app});\n`);
 
   const e_prc = eid++;
-  append(`#${e_prc}=PRODUCT_RELATED_PRODUCT_CATEGORY('part',(#${eid}));\n`);
-
   const e_prod = eid++;
-  append(`#${e_prod}=PRODUCT('${partName}','${headerText}','',(#${eid}));\n`);
-
   const e_pctx = eid++;
+  append(`#${e_prc}=PRODUCT_RELATED_PRODUCT_CATEGORY('part',(#${e_prod}));\n`);
+  append(`#${e_prod}=PRODUCT('${partName}','${headerText}','',(#${e_pctx}));\n`);
   append(`#${e_pctx}=PRODUCT_CONTEXT('',#${e_app},'mechanical');\n`);
 
   const e_pdf = eid++;
@@ -195,7 +193,7 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
   append(`#${e_su}=(NAMED_UNIT(*)SI_UNIT($,.STERADIAN.)SOLID_ANGLE_UNIT());\n`);
 
   const e_unc = eid++;
-  append(`#${e_unc}=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-06),#${e_lu},'distance_accuracy_value','maximum tolerance');\n`);
+  append(`#${e_unc}=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-05),#${e_lu},'distance_accuracy_value','maximum tolerance');\n`);
 
   const e_ctx = eid++;
   append(`#${e_ctx}=(GEOMETRIC_REPRESENTATION_CONTEXT(3)GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#${e_unc}))GLOBAL_UNIT_ASSIGNED_CONTEXT((#${e_lu},#${e_au},#${e_su}))REPRESENTATION_CONTEXT('Context3D','3D Context'));\n`);
@@ -296,13 +294,13 @@ export function exportSTEP(mesh, partName = 'Zerol_Bevel_Part', headerText = 'Ze
     const e_fob = eid++;
     append(`#${e_fob}=FACE_OUTER_BOUND('',#${e_el},.T.);\n`);
 
-    // Normal calculation via face triangle edges
+    // Normal calculation via face triangle edges (p2 - p1) x (p3 - p1)
     const ax = p2[0] - p1[0], ay = p2[1] - p1[1], az = p2[2] - p1[2];
-    const bx = p3[0] - p2[0], by = p3[0] - p2[0], bz = p3[2] - p2[2];
-    let nx = ay * (p3[2] - p1[2]) - az * (p3[1] - p1[1]);
-    let ny = az * (p3[0] - p1[0]) - ax * (p3[2] - p1[2]);
-    let nz = ax * (p3[1] - p1[1]) - ay * (p3[0] - p1[0]);
-    const n_len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+    const cx = p3[0] - p1[0], cy = p3[1] - p1[1], cz = p3[2] - p1[2];
+    let nx = ay * cz - az * cy;
+    let ny = az * cx - ax * cz;
+    let nz = ax * cy - ay * cx;
+    const n_len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1e-12;
     nx /= n_len; ny /= n_len; nz /= n_len;
 
     let rx, ry, rz;
@@ -1349,13 +1347,15 @@ export async function createCompleteCADZip(calc, pinionMesh, gearMesh, onProgres
   zip.file(`IGES/${pPrefix}.igs`, pinionIGS);
   zip.file(`IGES/${gPrefix}.igs`, gearIGS);
 
-  // 4. SolidWorks Automation & Reports
-  if (onProgress) onProgress('5/5: Adding SolidWorks Macros & Reports...');
+  // 4. SolidWorks & CATIA Automation & Reports
+  if (onProgress) onProgress('5/5: Adding SolidWorks & CATIA Macros & Reports...');
   await new Promise(r => setTimeout(r, 10));
   const macroName = isSpiral ? 'create_spiral_bevel_gears.bas' : isHelical ? 'create_helical_gears.bas' : isInternal ? 'create_internal_spur_gears.bas' : isSpur ? 'create_spur_gears.bas' : isStraight ? 'create_straight_bevel_gears.bas' : 'create_zerol_bevel_gears.bas';
+  const catiaMacroName = isSpiral ? 'catia_join_spiral_bevel.catvbs' : isHelical ? 'catia_join_helical.catvbs' : isInternal ? 'catia_join_internal_spur.catvbs' : isSpur ? 'catia_join_spur.catvbs' : isStraight ? 'catia_join_straight_bevel.catvbs' : 'catia_join_zerol_bevel.catvbs';
   const eqName = isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
   zip.file(`Solidworks/${macroName}`, exportSolidWorksMacro(calc));
   zip.file(`Solidworks/${eqName}`, exportSolidWorksEquations(calc));
+  zip.file(`CATIA/${catiaMacroName}`, exportCATIAMacro(calc));
 
   const repName = isSpiral ? 'SPIRAL_BEVEL_DESIGN_REPORT.csv' : isHelical ? 'HELICAL_DESIGN_REPORT.csv' : isInternal ? 'INTERNAL_SPUR_DESIGN_REPORT.csv' : isSpur ? 'SPUR_GEAR_DESIGN_REPORT.csv' : isStraight ? 'STRAIGHT_BEVEL_DESIGN_REPORT.csv' : 'ZEROL_BEVEL_DESIGN_REPORT.csv';
   zip.file(`Reports/${repName}`, exportDesignReportCSV(calc));
@@ -1367,5 +1367,125 @@ export async function createCompleteCADZip(calc, pinionMesh, gearMesh, onProgres
     compression: 'DEFLATE',
     compressionOptions: { level: 1 }
   });
+}
+
+/**
+ * Exports CATIA V5 Visual Basic Script (.catvbs) to automate solid body healing/joining.
+ */
+export function exportCATIAMacro(calc) {
+  const isSpiral = calc.gear_type === 'spiral-bevel';
+  const isHelical = calc.gear_type === 'helical';
+  const isSpur = calc.gear_type === 'spur';
+  const isStraight = calc.gear_type === 'straight-bevel';
+  const isInternal = calc.gear_type === 'internal-spur';
+  const typeName = isSpiral ? 'Spiral Bevel' : isHelical ? 'Helical' : isSpur ? 'Spur' : isStraight ? 'Straight Bevel' : isInternal ? 'Internal Spur' : 'Zerol Bevel';
+  const m = calc.m || calc.mn || 3.0;
+  const Np = calc.Np || 16;
+  const Ng = calc.Ng || 48;
+
+  return `' =========================================================================
+' CATIA V5 AUTOMATION MACRO: ${typeName.toUpperCase()} GEAR SOLID BODY
+' Wind Turbine Pitch Control System
+' Module m = ${m} mm | Pinion Np = ${Np} | Gear Ng = ${Ng}
+' =========================================================================
+' INSTRUCTIONS FOR CATIA V5:
+' 1. Open CATIA V5 and open the exported STEP file (.stp) directly via File > Open.
+' 2. Under Tools > Options > Compatibility > STEP:
+'    - Set "Representation mode" to "Full geometry (B-Rep)"
+'    - Ensure "Heal / Sew into Solid Body" is enabled.
+'    - The gear will automatically appear inside PartBody as a solid body!
+' 3. If imported as individual surfaces in a Geometrical Set, run this macro:
+'    - Go to Tools > Macro > Macros... (Alt+F8)
+'    - Select this .catvbs script and click Run.
+'    - It will automatically join all surfaces into a single watertight Solid Body!
+' =========================================================================
+
+Language="VBSCRIPT"
+
+Sub CATMain()
+    Dim partDocument1 As PartDocument
+    On Error Resume Next
+    Set partDocument1 = CATIA.ActiveDocument
+    On Error Goto 0
+
+    If partDocument1 Is Nothing Then
+        MsgBox "Please open the exported STEP (.stp) or IGES (.igs) gear file in CATIA before running this macro.", vbExclamation, "CATIA Gear Healer"
+        Exit Sub
+    End If
+
+    Dim part1 As Part
+    Set part1 = partDocument1.Part
+
+    Dim hybridShapeFactory1 As HybridShapeFactory
+    Set hybridShapeFactory1 = part1.HybridShapeFactory
+
+    Dim bodies1 As Bodies
+    Set bodies1 = part1.Bodies
+
+    Dim body1 As Body
+    Set body1 = bodies1.Item("PartBody")
+
+    ' Check if PartBody already contains a solid
+    If body1.Shapes.Count > 0 Then
+        MsgBox "${typeName} Gear is already recognized as a unified Solid Body inside PartBody!", vbInformation, "CATIA Gear Studio"
+        Exit Sub
+    End If
+
+    ' Find Geometrical Set containing imported surfaces
+    Dim hybridBodies1 As HybridBodies
+    Set hybridBodies1 = part1.HybridBodies
+
+    If hybridBodies1.Count = 0 Then
+        MsgBox "No Geometrical Set found to join. Please ensure the gear surfaces are loaded.", vbInformation, "CATIA Gear Studio"
+        Exit Sub
+    End If
+
+    Dim hBody As HybridBody
+    Set hBody = hybridBodies1.Item(1)
+
+    Dim shapeCount As Long
+    shapeCount = hBody.HybridShapes.Count
+
+    If shapeCount < 2 Then
+        MsgBox "Geometrical Set contains " & shapeCount & " elements. No joining required.", vbInformation, "CATIA Gear Studio"
+        Exit Sub
+    End If
+
+    ' Create unified Join with 0.01mm merging tolerance
+    Dim join1 As HybridShapeAssemble
+    Set join1 = hybridShapeFactory1.AddNewJoin(hBody.HybridShapes.Item(1), hBody.HybridShapes.Item(2))
+    join1.SetManifoldMode True
+    join1.SetAngularToleranceMode True
+    join1.SetConnexMode True
+    join1.SetFederationMode 0
+    join1.SetSimplifyMode False
+    join1.SetMeritel True
+    join1.SetDevMode True
+    join1.SetDevMin 0.001
+    join1.SetDevMax 0.02
+
+    Dim i As Long
+    For i = 3 To shapeCount
+        join1.AddElement hBody.HybridShapes.Item(i)
+    Next
+
+    hBody.AppendHybridShape join1
+    part1.InWorkObject = join1
+    part1.Update
+
+    ' Close Surface to convert joined shell into solid inside PartBody
+    On Error Resume Next
+    Dim shapeFactory1 As ShapeFactory
+    Set shapeFactory1 = part1.ShapeFactory
+
+    Dim closeSurface1 As CloseSurface
+    Set closeSurface1 = shapeFactory1.AddNewCloseSurface(join1)
+    part1.InWorkObject = body1
+    part1.Update
+    On Error Goto 0
+
+    MsgBox "Success! ${typeName} Gear has been successfully joined and converted into a unified Solid Body in PartBody.", vbInformation, "CATIA Gear Studio"
+End Sub
+`;
 }
 

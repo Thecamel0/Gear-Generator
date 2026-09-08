@@ -508,8 +508,8 @@ export function buildBevelMesh(
 
   const s_thick = tooth_thick || ((Math.PI * m) / 2);
 
-  // 1. Reference 2D closed polygon coordinates matching MATLAB resolution (16 inv pts)
-  const { xc, yc } = generateSpurProfile2D(N, m, phi_eff, a, b, s_thick, 16);
+  // 1. Reference 2D closed polygon coordinates with smooth involute resolution
+  const { xc, yc } = generateSpurProfile2D(N, m, phi_eff, a, b, s_thick, Math.max(n_inv || 16, 36));
   const M = xc.length;
   const ref_radii = new Float64Array(M);
   const ref_angles = new Float64Array(M);
@@ -567,18 +567,28 @@ export function buildBevelMesh(
       const scaled_angle = ref_angles[k] + delta_theta;
 
       const delta_r = scaled_radius - r_pitch_local;
-      // Exact conical coordinate projection matching MATLAB
+      // Exact conical coordinate projection with strictly planar heel and toe caps
       let r_3d = r_cone + delta_r * Math.cos(gamma);
-      let z_3d = z_cone - delta_r * Math.sin(gamma);
+      let z_3d;
+      if (s === n_sec - 1) {
+        // Heel end cap: strictly planar back face perpendicular to shaft axis (Z = const)
+        z_3d = Ao * Math.cos(gamma);
+      } else if (s === 0) {
+        // Toe end cap: strictly planar front face perpendicular to shaft axis (Z = const)
+        z_3d = Ai * Math.cos(gamma);
+      } else {
+        // Intermediate sections along pitch cone
+        z_3d = z_cone - delta_r * Math.sin(gamma);
+      }
 
-      // Apply Lengthwise crowning
-      if (delta_L > 0) {
+      // Apply Lengthwise crowning (intermediate sections only to preserve planar caps)
+      if (delta_L > 0 && s > 0 && s < n_sec - 1) {
         r_3d -= delta_L * Math.cos(gamma);
         z_3d += delta_L * Math.sin(gamma);
       }
 
       // Apply Profile crowning
-      if (C_P > 0 && h_range > 0) {
+      if (C_P > 0 && h_range > 0 && s > 0 && s < n_sec - 1) {
         const delta_from_pitch = r_3d - r_cone;
         let h_frac = (delta_from_pitch + b * sf) / h_range;
         h_frac = Math.max(0, Math.min(1, h_frac));
@@ -588,7 +598,7 @@ export function buildBevelMesh(
       }
 
       // Apply Tip relief
-      if (C_tip > 0 && r_3d > r_relief_start) {
+      if (C_tip > 0 && r_3d > r_relief_start && s > 0 && s < n_sec - 1) {
         const frac = Math.min(1, Math.max(0, (r_3d - r_relief_start) / (r_a_cone - r_relief_start + 1e-6)));
         r_3d -= C_tip * frac * Math.cos(gamma);
         z_3d += C_tip * frac * Math.sin(gamma);
@@ -758,17 +768,37 @@ export function generateSpurProfile2D(N, m, phi, a, b, tooth_thick, n_pts = 60) 
   }
 
   // Replicate for all N teeth around 360 degrees
-  const M = xc_tooth.length;
-  const xc = [];
-  const yc = [];
+  const M_raw = xc_tooth.length;
+  const xc_raw = [];
+  const yc_raw = [];
 
   for (let t = 0; t < N; t++) {
     const angle = (t * 2 * Math.PI) / N;
     const c = Math.cos(angle);
     const s = Math.sin(angle);
-    for (let j = 0; j < M; j++) {
-      xc.push(xc_tooth[j] * c - yc_tooth[j] * s);
-      yc.push(xc_tooth[j] * s + yc_tooth[j] * c);
+    for (let j = 0; j < M_raw; j++) {
+      xc_raw.push(xc_tooth[j] * c - yc_tooth[j] * s);
+      yc_raw.push(xc_tooth[j] * s + yc_tooth[j] * c);
+    }
+  }
+
+  // Filter collinear and duplicate vertices to guarantee 0 degenerate triangles in CAD triangulation
+  const xc = [];
+  const yc = [];
+  const nRaw = xc_raw.length;
+  for (let i = 0; i < nRaw; i++) {
+    const ip = (i - 1 + nRaw) % nRaw;
+    const inxt = (i + 1) % nRaw;
+    const ax = xc_raw[i] - xc_raw[ip];
+    const ay = yc_raw[i] - yc_raw[ip];
+    const bx = xc_raw[inxt] - xc_raw[i];
+    const by = yc_raw[inxt] - yc_raw[i];
+    const cross = Math.abs(ax * by - ay * bx);
+    const segLenSq = ax * ax + ay * ay;
+    // Skip if point is duplicate (segLenSq < 1e-10) or collinear with both neighbors (cross < 1e-7)
+    if (segLenSq > 1e-10 && cross > 1e-7) {
+      xc.push(xc_raw[i]);
+      yc.push(yc_raw[i]);
     }
   }
 
@@ -995,19 +1025,22 @@ export function buildSpurMesh(N, m, phi, a, b, tooth_thick, F = 25, n_sec = 4, r
   const b_top = (n_sec - 1) * n_slice_verts;
 
   if (!has_bore) {
-    // Solid Spur Gear: Radial Fan Triangulation to Star Center Vertices
-    // 100% Watertight closed 2-manifold with zero detached duplicate vertices
-    const idx_c_bot = side_verts.length;
-    side_verts.push([0, 0, -F / 2]);
-    const idx_c_top = side_verts.length;
-    side_verts.push([0, 0, F / 2]);
-
+    // Solid Spur Gear: Clean planar triangulation without center star vertex
+    // Eliminates radial spoke/texture lines in SolidWorks and CATIA
+    const outer_pts = [];
     for (let k = 0; k < M_outer; k++) {
-      const kn = (k + 1) % M_outer;
+      outer_pts.push(new THREE.Vector2(xc[k], yc[k]));
+    }
+    const capTris = THREE.ShapeUtils.triangulateShape(outer_pts, []);
+    for (const tri of capTris) {
+      const [i1, i2, i3] = tri;
+      const v1 = side_verts[i1], v2 = side_verts[i2], v3 = side_verts[i3];
+      const nz = (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]);
       // Bottom cap outward normal points in -Z
-      bot_faces.push([idx_c_bot, kn, k]);
+      bot_faces.push(nz > 0 ? [i1, i3, i2] : [i1, i2, i3]);
       // Top cap outward normal points in +Z
-      top_faces.push([idx_c_top, b_top + k, b_top + kn]);
+      const idx1 = b_top + i1, idx2 = b_top + i2, idx3 = b_top + i3;
+      top_faces.push(nz < 0 ? [idx1, idx3, idx2] : [idx1, idx2, idx3]);
     }
   } else {
     // Gear with Bore: Annular cap directly indexing side_verts without detached duplicate vertices
@@ -1248,6 +1281,25 @@ export function generateInternalSpurProfile2D(calc, n_pts = 36) {
     }
   }
 
+  // Filter collinear and duplicate vertices
+  const clean_xc = [];
+  const clean_yc = [];
+  const nRaw = xc_ring.length;
+  for (let i = 0; i < nRaw; i++) {
+    const ip = (i - 1 + nRaw) % nRaw;
+    const inxt = (i + 1) % nRaw;
+    const ax = xc_ring[i] - xc_ring[ip];
+    const ay = yc_ring[i] - yc_ring[ip];
+    const bx = xc_ring[inxt] - xc_ring[i];
+    const by = yc_ring[inxt] - yc_ring[i];
+    const cross = Math.abs(ax * by - ay * bx);
+    const segLenSq = ax * ax + ay * ay;
+    if (segLenSq > 1e-10 && cross > 1e-7) {
+      clean_xc.push(xc_ring[i]);
+      clean_yc.push(yc_ring[i]);
+    }
+  }
+
   // Outer rim circle
   const n_rim = Math.max(64, Ng * 3);
   const x_rim = [];
@@ -1258,7 +1310,7 @@ export function generateInternalSpurProfile2D(calc, n_pts = 36) {
     y_rim.push(r_rim * Math.sin(th));
   }
 
-  return { xc_ring, yc_ring, x_rim, y_rim };
+  return { xc_ring: clean_xc, yc_ring: clean_yc, x_rim, y_rim };
 }
 
 export function buildInternalRingMesh(calc, n_sec = 4, n_pts = 36) {
@@ -1868,19 +1920,26 @@ export function buildHelicalMesh(N, mn, beta_deg, phi_n_deg, a, b, s_thick_t, F 
   const b_top = (n_sec - 1) * n_slice_verts;
 
   if (!has_bore) {
-    // Solid Helical Gear: Radial Fan Triangulation to Star Center Vertices
-    // 100% Watertight closed 2-manifold with zero detached duplicate vertices
-    const idx_c_bot = side_verts.length;
-    side_verts.push([0, 0, -F / 2]);
-    const idx_c_top = side_verts.length;
-    side_verts.push([0, 0, F / 2]);
-
+    // Solid Helical Gear: Clean planar triangulation without center star vertex
+    // Eliminates radial spoke/texture lines in SolidWorks and CATIA
+    const dt_bot = hand * ((-F / 2) * Math.tan(beta)) / rp;
+    const cos_bot = Math.cos(dt_bot), sin_bot = Math.sin(dt_bot);
+    const outer_pts_bot = [];
     for (let k = 0; k < M_outer; k++) {
-      const kn = (k + 1) % M_outer;
+      const x = xc_base[k] * cos_bot - yc_base[k] * sin_bot;
+      const y = xc_base[k] * sin_bot + yc_base[k] * cos_bot;
+      outer_pts_bot.push(new THREE.Vector2(x, y));
+    }
+    const capTris = THREE.ShapeUtils.triangulateShape(outer_pts_bot, []);
+    for (const tri of capTris) {
+      const [i1, i2, i3] = tri;
+      const v1 = side_verts[i1], v2 = side_verts[i2], v3 = side_verts[i3];
+      const nz = (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]);
       // Bottom cap outward normal points in -Z
-      bot_faces.push([idx_c_bot, kn, k]);
+      bot_faces.push(nz > 0 ? [i1, i3, i2] : [i1, i2, i3]);
       // Top cap outward normal points in +Z
-      top_faces.push([idx_c_top, b_top + k, b_top + kn]);
+      const idx1 = b_top + i1, idx2 = b_top + i2, idx3 = b_top + i3;
+      top_faces.push(nz < 0 ? [idx1, idx3, idx2] : [idx1, idx2, idx3]);
     }
   } else {
     // Gear with Bore: directly map annular cap to side_verts
