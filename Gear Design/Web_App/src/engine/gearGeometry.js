@@ -364,8 +364,8 @@ export function generateInvoluteProfile(N, m, phi, a, b, n_inv, n_top, n_root, t
   // Left flank
   if (root_below_base) {
     const nr = Math.max(3, Math.round(n_inv * 0.2));
-    for (let i = 0; i < nr; i++) {
-      const rr = r_d + (i / (nr - 1 || 1)) * (r_b - r_d);
+    for (let i = 0; i < nr - 1; i++) {
+      const rr = r_d + (i / (nr - 1)) * (r_b - r_d);
       tooth_r.push(rr);
       tooth_t.push(-(tau + inv_phi));
     }
@@ -402,8 +402,8 @@ export function generateInvoluteProfile(N, m, phi, a, b, n_inv, n_top, n_root, t
 
   if (root_below_base) {
     const nr = Math.max(3, Math.round(n_inv * 0.2));
-    for (let i = 0; i < nr; i++) {
-      const rr = r_b - (i / (nr - 1 || 1)) * (r_b - r_d);
+    for (let i = 1; i < nr; i++) {
+      const rr = r_b - (i / (nr - 1)) * (r_b - r_d);
       tooth_r.push(rr);
       tooth_t.push(tau + inv_phi);
     }
@@ -467,7 +467,8 @@ export function computeSmoothNormals(verts, faces) {
 
 /**
  * Builds 3D Bevel Mesh (Straight, Zerol, and Spiral Bevel) with true conical
- * projection, circular cutter arc offset, and watertight triangulation caps matching MATLAB.
+ * Gleason face-milling projection matching MATLAB's build_bevel_mesh_v2.m.
+ * Generates true conical tooth surfaces and closed watertight end caps.
  */
 export function buildBevelMesh(
   N,
@@ -565,22 +566,18 @@ export function buildBevelMesh(
     const r_relief_start = r_cone + a * sf * tip_start * Math.cos(gamma);
     const r_a_cone = r_cone + a * sf * Math.cos(gamma);
 
-    // Smooth sine taper: at toe (s = 0) and heel (s = n_sec - 1), w_s = 0,
-    // guaranteeing 100% mathematically flat planar end faces perpendicular to the gear axis.
-    const w_s = (n_sec > 1) ? Math.sin((Math.PI * s) / (n_sec - 1)) : 0;
-
     for (let k = 0; k < M; k++) {
       const scaled_radius = ref_radii[k] * sf;
       const scaled_angle = ref_angles[k] + delta_theta;
 
       const delta_r = scaled_radius - r_pitch_local;
       let r_3d = r_cone + delta_r * Math.cos(gamma);
-      let z_3d = z_cone - w_s * delta_r * Math.sin(gamma);
+      let z_3d = z_cone - delta_r * Math.sin(gamma);
 
-      // Apply Lengthwise crowning
+      // Apply Lengthwise crowning along cone normal
       if (delta_L > 0) {
         r_3d -= delta_L * Math.cos(gamma);
-        z_3d += w_s * delta_L * Math.sin(gamma);
+        z_3d += delta_L * Math.sin(gamma);
       }
 
       // Apply Profile crowning
@@ -590,14 +587,14 @@ export function buildBevelMesh(
         h_frac = Math.max(0, Math.min(1, h_frac));
         const delta_P = C_P * Math.pow(2 * h_frac - 1, 2);
         r_3d -= delta_P * Math.cos(gamma);
-        z_3d += w_s * delta_P * Math.sin(gamma);
+        z_3d += delta_P * Math.sin(gamma);
       }
 
       // Apply Tip relief
       if (C_tip > 0 && r_3d > r_relief_start) {
         const frac = Math.min(1, Math.max(0, (r_3d - r_relief_start) / (r_a_cone - r_relief_start + 1e-6)));
         r_3d -= C_tip * frac * Math.cos(gamma);
-        z_3d += w_s * C_tip * frac * Math.sin(gamma);
+        z_3d += C_tip * frac * Math.sin(gamma);
       }
 
       // Shrinkage scaling
@@ -624,31 +621,47 @@ export function buildBevelMesh(
     }
   }
 
-  // 4. End Caps (Inner Toe & Outer Heel) via Radial Fan Triangulation to Star Center
-  // Both caps are 100% mathematically flat planes perpendicular to the gear axis.
+  // 4. End Caps (Inner Toe & Outer Heel)
+  // Exact 2D planar polygon triangulation matching MATLAB's build_bevel_mesh_v2.m:
+  // pgon_in = polyshape(x_in, y_in); tr_in = triangulation(pgon_in);
+  // Forms the natural conical basin and flat back face without artificial pancake discs.
   const cap_faces = [];
 
-  // Toe Center Vertex (s = 0)
-  const z_c_toe = verts_3d[0][2];
-  const idx_c_toe = verts_3d.length;
-  verts_3d.push([0, 0, z_c_toe]);
-
+  // Inner cap (toe end, s = 0)
+  const pts_in = [];
   for (let k = 0; k < M; k++) {
-    const k_next = (k + 1) % M;
-    // Outward normal points toward apex (-Z), opposite to lateral face traversal k -> k_next
-    cap_faces.push([idx_c_toe, k_next, k]);
+    pts_in.push(new THREE.Vector2(verts_3d[k][0], verts_3d[k][1]));
+  }
+  const raw_in_faces = THREE.ShapeUtils.triangulateShape(pts_in, []);
+  for (let i = 0; i < raw_in_faces.length; i++) {
+    const [i1, i2, i3] = raw_in_faces[i];
+    const v1 = pts_in[i1], v2 = pts_in[i2], v3 = pts_in[i3];
+    const cz = (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
+    // Ensure outward normal points toward cone apex (-Z)
+    if (cz > 0) {
+      cap_faces.push([i1, i3, i2]);
+    } else {
+      cap_faces.push([i1, i2, i3]);
+    }
   }
 
-  // Heel Center Vertex (s = n_sec - 1)
+  // Outer cap (heel end, s = n_sec - 1)
   const idx_outer_start = (n_sec - 1) * M;
-  const z_c_heel = verts_3d[idx_outer_start][2];
-  const idx_c_heel = verts_3d.length;
-  verts_3d.push([0, 0, z_c_heel]);
-
+  const pts_out = [];
   for (let k = 0; k < M; k++) {
-    const k_next = (k + 1) % M;
-    // Outward normal points away from apex (+Z), opposite to lateral face traversal
-    cap_faces.push([idx_c_heel, idx_outer_start + k, idx_outer_start + k_next]);
+    pts_out.push(new THREE.Vector2(verts_3d[idx_outer_start + k][0], verts_3d[idx_outer_start + k][1]));
+  }
+  const raw_out_faces = THREE.ShapeUtils.triangulateShape(pts_out, []);
+  for (let i = 0; i < raw_out_faces.length; i++) {
+    const [i1, i2, i3] = raw_out_faces[i];
+    const v1 = pts_out[i1], v2 = pts_out[i2], v3 = pts_out[i3];
+    const cz = (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
+    // Ensure outward normal points away from cone apex (+Z)
+    if (cz < 0) {
+      cap_faces.push([idx_outer_start + i1, idx_outer_start + i3, idx_outer_start + i2]);
+    } else {
+      cap_faces.push([idx_outer_start + i1, idx_outer_start + i2, idx_outer_start + i3]);
+    }
   }
 
   const all_faces = lat_faces.concat(cap_faces);

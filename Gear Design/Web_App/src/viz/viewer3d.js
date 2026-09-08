@@ -62,7 +62,7 @@ export class GearViewer3D {
     const height = this.container.clientHeight || 600;
 
     this.camera = new THREE.PerspectiveCamera(40, width / height, 0.5, 3000);
-    this.camera.position.set(160, 135, 230);
+    this.camera.position.set(-160, 120, 190);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setSize(width, height);
@@ -126,9 +126,32 @@ export class GearViewer3D {
     const n_faces = faces.length;
     const n_verts = vertices.length;
 
+    // For bevel gears (Zerol, Spiral, Straight Bevel):
+    // Construct single indexed buffer geometry and compute Gouraud smooth normals across the entire mesh,
+    // exactly replicating MATLAB's FaceLighting = 'gouraud' without artificial planar cap normals.
+    if (customMesh.isBevel) {
+      const positions = new Float32Array(n_verts * 3);
+      for (let i = 0; i < n_verts; i++) {
+        positions[i * 3] = vertices[i][0];
+        positions[i * 3 + 1] = vertices[i][1];
+        positions[i * 3 + 2] = vertices[i][2];
+      }
+      const indices = new Uint32Array(n_faces * 3);
+      for (let f = 0; f < n_faces; f++) {
+        indices[f * 3] = faces[f][0];
+        indices[f * 3 + 1] = faces[f][1];
+        indices[f * 3 + 2] = faces[f][2];
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    // Cylindrical gears (Spur, Internal Spur, Helical):
     // 1. Calculate face normals and classify faces (cap vs lateral)
-    const isBevel = !!customMesh.isBevel;
-    const n_lat_faces = isBevel ? (customMesh.n_lat_faces || 0) : 0;
+    const isBevel = false;
+    const n_lat_faces = 0;
     const faceNormals = [];
     const isCap = new Uint8Array(n_faces);
 
@@ -144,12 +167,7 @@ export class GearViewer3D {
       nx /= len; ny /= len; nz /= len;
       faceNormals.push([nx, ny, nz]);
 
-      // For bevel gears, exact boundary is known (f >= n_lat_faces); for cylindrical gears (spur, helical), |nz| > 0.65
-      if (isBevel) {
-        if (f >= n_lat_faces) isCap[f] = 1;
-      } else {
-        if (Math.abs(nz) > 0.65) isCap[f] = 1;
-      }
+      if (Math.abs(nz) > 0.65) isCap[f] = 1;
     }
 
     // 2. Accumulate lateral normals ONLY among lateral faces
@@ -181,7 +199,6 @@ export class GearViewer3D {
     }
 
     // 3. Build vertex attributes with split cap normals
-    // Base vertices for lateral faces
     const positions = [];
     const normals = [];
     const indices = [];
@@ -198,7 +215,6 @@ export class GearViewer3D {
     }
 
     // Dedicated cap vertices with pure planar normals [0, 0, 1] or [0, 0, -1]
-    // Guarantees 100% silky smooth, perfectly flat lighting across all gear caps
     for (let f = 0; f < n_faces; f++) {
       if (isCap[f]) {
         const [i1, i2, i3] = faces[f];
@@ -331,6 +347,29 @@ export class GearViewer3D {
 
     const isSpur = this.calc.gear_type === 'spur' || this.calc.gear_type === 'helical';
     const isInternalSpur = this.calc.gear_type === 'internal_spur';
+    const isBevel = !isSpur && !isInternalSpur;
+
+    // Single-Pair Exploded View matching MATLAB's ax2: Exploded View (Single Pair)
+    if (isBevel && this.viewMode === 'single-pair') {
+      const sep = (this.calc.Ao || 75.89) * 0.30;
+      this.gearGroup.position.set(0, 0, -sep);
+      this.gearGroup.rotation.z = 0;
+
+      _Ry90.makeRotationY(Math.PI / 2);
+      for (let i = 0; i < this.pinionGroups.length; i++) {
+        const pGroup = this.pinionGroups[i];
+        if (i === 0) {
+          pGroup.visible = true;
+          pGroup.userData.meshObj.matrix.copy(_Ry90);
+          pGroup.userData.meshObj.matrixAutoUpdate = false;
+          pGroup.position.set(sep, 0, 0);
+        } else {
+          pGroup.visible = false;
+        }
+      }
+      return;
+    }
+
     const baseDist = (isSpur || isInternalSpur) ? (this.calc.center_dist || 48.0) : (this.calc.Ao || 100.0);
     const sep = baseDist * 0.35 * this.explodedFactor;
 
@@ -423,6 +462,7 @@ export class GearViewer3D {
   setViewMode(mode) {
     this.viewMode = mode;
     this.updateVisibilityMode();
+    this.updateExplodedTransforms();
   }
 
   updateVisibilityMode() {
@@ -430,6 +470,9 @@ export class GearViewer3D {
     if (this.viewMode === 'assembly') {
       this.gearGroup.visible = true;
       this.pinionGroups.forEach(pg => (pg.visible = true));
+    } else if (this.viewMode === 'single-pair') {
+      this.gearGroup.visible = true;
+      this.pinionGroups.forEach((pg, idx) => (pg.visible = idx === 0));
     } else if (this.viewMode === 'pinion') {
       this.gearGroup.visible = false;
       this.pinionGroups.forEach((pg, idx) => (pg.visible = idx === 0));
@@ -474,8 +517,8 @@ export class GearViewer3D {
 
     switch (preset) {
       case 'iso':
-        // Exactly matches MATLAB view(ax1, [-40 30])
-        this.camera.position.set(d * 0.60, d * 0.52, d * 0.85);
+        // Exactly matches MATLAB view(ax1, [-40 25])
+        this.camera.position.set(-d * 0.58, d * 0.42, d * 0.69);
         this.controls.target.set(0, targetY, 0);
         break;
       case 'top':
@@ -503,8 +546,8 @@ export class GearViewer3D {
         }
         break;
       default:
-        this.camera.position.set(-150, 110, 180);
-        this.controls.target.set(0, 0, 0);
+        this.camera.position.set(-160, 120, 190);
+        this.controls.target.set(0, 12, 0);
     }
     this.controls.update();
   }
