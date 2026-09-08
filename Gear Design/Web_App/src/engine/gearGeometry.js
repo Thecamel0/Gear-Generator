@@ -508,15 +508,18 @@ export function buildBevelMesh(
 
   const s_thick = tooth_thick || ((Math.PI * m) / 2);
 
-  // 1. Reference 2D closed polygon coordinates with smooth involute resolution
-  const { xc, yc } = generateSpurProfile2D(N, m, phi_eff, a, b, s_thick, Math.max(n_inv || 16, 36));
-  const M = xc.length;
-  const ref_radii = new Float64Array(M);
-  const ref_angles = new Float64Array(M);
-  for (let k = 0; k < M; k++) {
-    ref_radii[k] = Math.hypot(xc[k], yc[k]);
-    ref_angles[k] = Math.atan2(yc[k], xc[k]);
-  }
+  // 1. Reference 2D profile at outer cone
+  const { angles: ref_angles, radii: ref_radii, M } = generateInvoluteProfile(
+    N,
+    m,
+    phi_eff,
+    a,
+    b,
+    n_inv,
+    n_top,
+    n_root,
+    s_thick
+  );
 
   const verts_3d = [];
 
@@ -562,46 +565,39 @@ export function buildBevelMesh(
     const r_relief_start = r_cone + a * sf * tip_start * Math.cos(gamma);
     const r_a_cone = r_cone + a * sf * Math.cos(gamma);
 
+    // Smooth sine taper: at toe (s = 0) and heel (s = n_sec - 1), w_s = 0,
+    // guaranteeing 100% mathematically flat planar end faces perpendicular to the gear axis.
+    const w_s = (n_sec > 1) ? Math.sin((Math.PI * s) / (n_sec - 1)) : 0;
+
     for (let k = 0; k < M; k++) {
       const scaled_radius = ref_radii[k] * sf;
       const scaled_angle = ref_angles[k] + delta_theta;
 
       const delta_r = scaled_radius - r_pitch_local;
-      // Exact conical coordinate projection with strictly planar heel and toe caps
       let r_3d = r_cone + delta_r * Math.cos(gamma);
-      let z_3d;
-      if (s === n_sec - 1) {
-        // Heel end cap: strictly planar back face perpendicular to shaft axis (Z = const)
-        z_3d = Ao * Math.cos(gamma);
-      } else if (s === 0) {
-        // Toe end cap: strictly planar front face perpendicular to shaft axis (Z = const)
-        z_3d = Ai * Math.cos(gamma);
-      } else {
-        // Intermediate sections along pitch cone
-        z_3d = z_cone - delta_r * Math.sin(gamma);
-      }
+      let z_3d = z_cone - w_s * delta_r * Math.sin(gamma);
 
-      // Apply Lengthwise crowning (intermediate sections only to preserve planar caps)
-      if (delta_L > 0 && s > 0 && s < n_sec - 1) {
+      // Apply Lengthwise crowning
+      if (delta_L > 0) {
         r_3d -= delta_L * Math.cos(gamma);
-        z_3d += delta_L * Math.sin(gamma);
+        z_3d += w_s * delta_L * Math.sin(gamma);
       }
 
       // Apply Profile crowning
-      if (C_P > 0 && h_range > 0 && s > 0 && s < n_sec - 1) {
+      if (C_P > 0 && h_range > 0) {
         const delta_from_pitch = r_3d - r_cone;
         let h_frac = (delta_from_pitch + b * sf) / h_range;
         h_frac = Math.max(0, Math.min(1, h_frac));
         const delta_P = C_P * Math.pow(2 * h_frac - 1, 2);
         r_3d -= delta_P * Math.cos(gamma);
-        z_3d += delta_P * Math.sin(gamma);
+        z_3d += w_s * delta_P * Math.sin(gamma);
       }
 
       // Apply Tip relief
-      if (C_tip > 0 && r_3d > r_relief_start && s > 0 && s < n_sec - 1) {
+      if (C_tip > 0 && r_3d > r_relief_start) {
         const frac = Math.min(1, Math.max(0, (r_3d - r_relief_start) / (r_a_cone - r_relief_start + 1e-6)));
         r_3d -= C_tip * frac * Math.cos(gamma);
-        z_3d += C_tip * frac * Math.sin(gamma);
+        z_3d += w_s * C_tip * frac * Math.sin(gamma);
       }
 
       // Shrinkage scaling
@@ -628,49 +624,44 @@ export function buildBevelMesh(
     }
   }
 
-  const faces = [...lat_faces];
+  // 4. End Caps (Inner Toe & Outer Heel) via Radial Fan Triangulation to Star Center
+  // Both caps are 100% mathematically flat planes perpendicular to the gear axis.
+  const cap_faces = [];
 
-  // 4. End Caps matching MATLAB triangulation(polyshape) without center star vertex
-  // Inner Toe Cap (s = 0): normal points toward cone apex (-Z)
-  const contour_toe = [];
+  // Toe Center Vertex (s = 0)
+  const z_c_toe = verts_3d[0][2];
+  const idx_c_toe = verts_3d.length;
+  verts_3d.push([0, 0, z_c_toe]);
+
   for (let k = 0; k < M; k++) {
-    contour_toe.push(new THREE.Vector2(verts_3d[k][0], verts_3d[k][1]));
-  }
-  const tris_toe = THREE.ShapeUtils.triangulateShape(contour_toe, []);
-  for (const tri of tris_toe) {
-    const [i1, i2, i3] = tri;
-    const v1 = verts_3d[i1], v2 = verts_3d[i2], v3 = verts_3d[i3];
-    const nz = (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]);
-    if (nz > 0) faces.push([i1, i3, i2]);
-    else faces.push([i1, i2, i3]);
+    const k_next = (k + 1) % M;
+    // Outward normal points toward apex (-Z), opposite to lateral face traversal k -> k_next
+    cap_faces.push([idx_c_toe, k_next, k]);
   }
 
-  // Outer Heel Cap (s = n_sec - 1): normal points away from cone apex (+Z)
-  const offset_heel = (n_sec - 1) * M;
-  const contour_heel = [];
+  // Heel Center Vertex (s = n_sec - 1)
+  const idx_outer_start = (n_sec - 1) * M;
+  const z_c_heel = verts_3d[idx_outer_start][2];
+  const idx_c_heel = verts_3d.length;
+  verts_3d.push([0, 0, z_c_heel]);
+
   for (let k = 0; k < M; k++) {
-    contour_heel.push(new THREE.Vector2(verts_3d[offset_heel + k][0], verts_3d[offset_heel + k][1]));
-  }
-  const tris_heel = THREE.ShapeUtils.triangulateShape(contour_heel, []);
-  for (const tri of tris_heel) {
-    const [i1, i2, i3] = tri;
-    const idx1 = offset_heel + i1, idx2 = offset_heel + i2, idx3 = offset_heel + i3;
-    const v1 = verts_3d[idx1], v2 = verts_3d[idx2], v3 = verts_3d[idx3];
-    const nz = (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]);
-    if (nz < 0) faces.push([idx1, idx3, idx2]);
-    else faces.push([idx1, idx2, idx3]);
+    const k_next = (k + 1) % M;
+    // Outward normal points away from apex (+Z), opposite to lateral face traversal
+    cap_faces.push([idx_c_heel, idx_outer_start + k, idx_outer_start + k_next]);
   }
 
-  // 5. Smooth Gouraud Normals matching MATLAB compute_smooth_normals
-  const normals = computeSmoothNormals(verts_3d, lat_faces);
+  const all_faces = lat_faces.concat(cap_faces);
 
   return {
     vertices: verts_3d,
-    faces: faces,
-    normals: normals,
+    faces: all_faces,
+    n_lat_faces: lat_faces.length,
     isBevel: true,
     n_verts: verts_3d.length,
-    n_faces: faces.length
+    n_faces: all_faces.length,
+    M,
+    n_sec
   };
 }
 

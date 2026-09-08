@@ -126,32 +126,9 @@ export class GearViewer3D {
     const n_faces = faces.length;
     const n_verts = vertices.length;
 
-    // Bevel gears (Straight, Zerol, Spiral): use true Gouraud smooth normals matching MATLAB
-    if (customMesh.isBevel) {
-      const positions = new Float32Array(n_verts * 3);
-      for (let i = 0; i < n_verts; i++) {
-        positions[i * 3] = vertices[i][0];
-        positions[i * 3 + 1] = vertices[i][1];
-        positions[i * 3 + 2] = vertices[i][2];
-      }
-      const indices = new Uint32Array(n_faces * 3);
-      for (let f = 0; f < n_faces; f++) {
-        indices[f * 3] = faces[f][0];
-        indices[f * 3 + 1] = faces[f][1];
-        indices[f * 3 + 2] = faces[f][2];
-      }
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      if (customMesh.normals && customMesh.normals.length === n_verts * 3) {
-        // Use typed array directly without allocating duplicate copy
-        geometry.setAttribute('normal', new THREE.BufferAttribute(customMesh.normals, 3));
-      } else {
-        geometry.computeVertexNormals();
-      }
-      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-      return geometry;
-    }
-
-    // 1. Calculate face normals and classify faces (cap vs lateral) for cylindrical gears (Spur, Helical)
+    // 1. Calculate face normals and classify faces (cap vs lateral)
+    const isBevel = !!customMesh.isBevel;
+    const n_lat_faces = isBevel ? (customMesh.n_lat_faces || 0) : 0;
     const faceNormals = [];
     const isCap = new Uint8Array(n_faces);
 
@@ -167,9 +144,11 @@ export class GearViewer3D {
       nx /= len; ny /= len; nz /= len;
       faceNormals.push([nx, ny, nz]);
 
-      // A face is an end cap if |nz| > 0.65
-      if (Math.abs(nz) > 0.65) {
-        isCap[f] = 1;
+      // For bevel gears, exact boundary is known (f >= n_lat_faces); for cylindrical gears (spur, helical), |nz| > 0.65
+      if (isBevel) {
+        if (f >= n_lat_faces) isCap[f] = 1;
+      } else {
+        if (Math.abs(nz) > 0.65) isCap[f] = 1;
       }
     }
 
