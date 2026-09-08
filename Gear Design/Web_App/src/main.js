@@ -323,6 +323,16 @@ function updateResultsUI(calc) {
       wmDims.innerHTML = `Pitch Dia: ${calc.dp.toFixed(1)} / ${calc.dg.toFixed(1)} mm<br>Outer Cone Ao: ${calc.Ao.toFixed(1)} mm<br>Face Width: ${calc.F.toFixed(1)} mm`;
     }
   }
+
+  // Update part isolation dropdown with exact multi-pinion count
+  const selPart = document.getElementById('sel-part-mode');
+  if (selPart) {
+    const n = calc.n_pinions || 3;
+    const optAssembly = selPart.querySelector('option[value="assembly"]');
+    if (optAssembly) optAssembly.textContent = `Full Assembly (All ${n} Pinions)`;
+    const optPinion = selPart.querySelector('option[value="pinion"]');
+    if (optPinion) optPinion.textContent = `Pinions Only (All ${n})`;
+  }
 }
 
 // =========================================================================
