@@ -18,6 +18,8 @@ import {
   buildSpiralBevelMesh,
   calculateHelicalDesign,
   buildHelicalMesh,
+  calculatePlanetaryDesign,
+  buildPlanetaryMesh,
   MATERIAL_PRESETS
 } from './engine/gearGeometry.js';
 import {
@@ -39,6 +41,7 @@ import {
 } from './engine/cadExporters.js';
 import { GearViewer3D } from './viz/viewer3d.js';
 import { GearPlot2D } from './viz/plot2d.js';
+import { initParamTooltips } from './ui/paramTooltips.js';
 
 // Application State
 let currentCalc = null;
@@ -81,7 +84,14 @@ const PRESETS = {
   // Spiral Bevel Presets (Gleason 90 deg)
   'spiral-standard-16-48': { gear_type: 'spiral-bevel', m: 3.0, Np: 16, Ng: 48, phi_deg: 20, tooth_angle_deg: 35.0, Sigma_deg: 90, n_pinions: 3, F: 25.0, T_in_ring: 20, n_in_ring: 100 },
   'spiral-compact-18-36': { gear_type: 'spiral-bevel', m: 2.5, Np: 18, Ng: 36, phi_deg: 20, tooth_angle_deg: 35.0, Sigma_deg: 90, n_pinions: 3, F: 20.0, T_in_ring: 15, n_in_ring: 150 },
-  'spiral-high-ratio-12-60': { gear_type: 'spiral-bevel', m: 3.0, Np: 12, Ng: 60, phi_deg: 20, tooth_angle_deg: 35.0, Sigma_deg: 90, n_pinions: 3, F: 28.0, T_in_ring: 30, n_in_ring: 80 }
+  'spiral-high-ratio-12-60': { gear_type: 'spiral-bevel', m: 3.0, Np: 12, Ng: 60, phi_deg: 20, tooth_angle_deg: 35.0, Sigma_deg: 90, n_pinions: 3, F: 28.0, T_in_ring: 30, n_in_ring: 80 },
+
+  // Planetary (Epicyclic) Presets
+  'planetary-standard-12-18-48': { gear_type: 'planetary', m: 3.0, Np: 12, Ng: 18, Nr: 48, phi_deg: 20, Sigma_deg: 0, n_pinions: 3, F: 25.0, T_in_ring: 15, n_in_ring: 500 },
+  'planetary-compact-18-18-54': { gear_type: 'planetary', m: 2.5, Np: 18, Ng: 18, Nr: 54, phi_deg: 20, Sigma_deg: 0, n_pinions: 3, F: 22.0, T_in_ring: 15, n_in_ring: 500 },
+  'planetary-4planet-12-18-48': { gear_type: 'planetary', m: 3.0, Np: 12, Ng: 18, Nr: 48, phi_deg: 20, Sigma_deg: 0, n_pinions: 4, F: 28.0, T_in_ring: 20, n_in_ring: 500 },
+  'planetary-5planet-25-15-55': { gear_type: 'planetary', m: 2.5, Np: 25, Ng: 15, Nr: 55, phi_deg: 20, Sigma_deg: 0, n_pinions: 5, F: 25.0, T_in_ring: 25, n_in_ring: 500 },
+  'planetary-6planet-24-12-48': { gear_type: 'planetary', m: 3.0, Np: 24, Ng: 12, Nr: 48, phi_deg: 20, Sigma_deg: 0, n_pinions: 6, F: 30.0, T_in_ring: 30, n_in_ring: 500 }
 };
 
 // =========================================================================
@@ -120,7 +130,8 @@ function showToast(message, type = 'info') {
 // =========================================================================
 
 function handleGearTypeChange(gearType) {
-  const isCylindrical = gearType === 'spur' || gearType === 'internal_spur' || gearType === 'helical';
+  const isCylindrical = gearType === 'spur' || gearType === 'internal_spur' || gearType === 'helical' || gearType === 'planetary';
+  const isPlanetary = gearType === 'planetary';
   const isStraight = gearType === 'straight-bevel';
   const isSpiral = gearType === 'spiral-bevel';
   const isHelical = gearType === 'helical';
@@ -134,6 +145,29 @@ function handleGearTypeChange(gearType) {
   if (rowFaceMm) rowFaceMm.style.display = (isCylindrical || isStraight || isSpiral) ? 'flex' : 'none';
   if (rowHelixAngle) rowHelixAngle.style.display = (isHelical || isSpiral) ? 'flex' : 'none';
 
+  const rowRingTeeth = document.getElementById('row-ring-teeth');
+  const hintRingTeeth = document.getElementById('hint-ring-teeth');
+  const hintPlanetsK = document.getElementById('hint-planets-k');
+  const rowCarrierThickness = document.getElementById('row-carrier-thickness');
+  const rowCarrierDia = document.getElementById('row-carrier-dia');
+  const rowRingWall = document.getElementById('row-ring-wall');
+
+  if (rowRingTeeth) rowRingTeeth.style.display = isPlanetary ? 'flex' : 'none';
+  if (hintRingTeeth) hintRingTeeth.style.display = isPlanetary ? 'block' : 'none';
+  if (hintPlanetsK) hintPlanetsK.style.display = isPlanetary ? 'block' : 'none';
+  if (rowCarrierThickness) rowCarrierThickness.style.display = isPlanetary ? 'flex' : 'none';
+  if (rowCarrierDia) rowCarrierDia.style.display = isPlanetary ? 'flex' : 'none';
+  if (rowRingWall) rowRingWall.style.display = isPlanetary ? 'flex' : 'none';
+
+  // Dynamic labels for inputs
+  const lblNp = document.querySelector('#inp-Np')?.closest('.config-row')?.querySelector('.row-label');
+  const lblNg = document.querySelector('#inp-Ng')?.closest('.config-row')?.querySelector('.row-label');
+  const lblPinions = document.querySelector('#inp-pinions')?.closest('.config-row')?.querySelector('.row-label');
+
+  if (lblNp) lblNp.textContent = isPlanetary ? 'Sun Teeth (Ns):' : 'Pinion Teeth (Np):';
+  if (lblNg) lblNg.textContent = isPlanetary ? 'Planet Teeth (Np):' : 'Gear Teeth (Ng):';
+  if (lblPinions) lblPinions.textContent = isPlanetary ? 'Planets (K):' : 'Multi-Pinions:';
+
   const inpHlx = document.getElementById('inp-helix-angle');
   if (inpHlx) {
     if (isSpiral && parseFloat(inpHlx.value) < 25) {
@@ -145,7 +179,8 @@ function handleGearTypeChange(gearType) {
 
   const inpFilename = document.getElementById('inp-filename');
   if (inpFilename) {
-    if (gearType === 'internal_spur') inpFilename.value = 'Internal_Spur_Pitch_Drive';
+    if (gearType === 'planetary') inpFilename.value = 'Planetary_Gear_Pitch_Drive';
+    else if (gearType === 'internal_spur') inpFilename.value = 'Internal_Spur_Pitch_Drive';
     else if (gearType === 'spur') inpFilename.value = 'Spur_Gear_Pitch_Drive';
     else if (gearType === 'straight-bevel') inpFilename.value = 'Straight_Bevel_Pitch_Drive';
     else if (gearType === 'helical') inpFilename.value = 'Helical_Pitch_Drive';
@@ -155,30 +190,73 @@ function handleGearTypeChange(gearType) {
 
   const badge = document.getElementById('viewport-gear-type');
   if (badge) {
-    if (gearType === 'internal_spur') badge.textContent = 'Internal Spur Ring';
+    if (gearType === 'planetary') badge.textContent = 'Planetary Gear';
+    else if (gearType === 'internal_spur') badge.textContent = 'Internal Spur Ring';
     else if (gearType === 'spur') badge.textContent = 'Involute Spur';
     else if (gearType === 'straight-bevel') badge.textContent = 'Straight Bevel';
     else if (gearType === 'helical') badge.textContent = 'Helical Gear';
     else if (gearType === 'spiral-bevel') badge.textContent = 'Spiral Bevel';
     else badge.textContent = 'Zerol Bevel';
   }
+
+  // Parameter defaults when switching gear families
+  const inpNp = document.getElementById('inp-Np');
+  const inpNg = document.getElementById('inp-Ng');
+  const inpNr = document.getElementById('inp-Nr');
+  const inpPinions = document.getElementById('inp-pinions');
+  const inpTorque = document.getElementById('inp-torque');
+  const inpRpm = document.getElementById('inp-rpm');
+
+  if (gearType === 'planetary') {
+    if (inpNp && inpNp.value === '16') inpNp.value = '12';
+    if (inpNg && inpNg.value === '48') inpNg.value = '18';
+    if (inpNr) {
+      const ns = parseInt(inpNp?.value || '12', 10);
+      const np = parseInt(inpNg?.value || '18', 10);
+      inpNr.value = String(ns + 2 * np);
+    }
+    if (inpPinions && (inpPinions.value === '1' || !inpPinions.value)) inpPinions.value = '3';
+    if (inpTorque && inpTorque.value === '20.0') inpTorque.value = '15.0';
+    if (inpRpm && inpRpm.value === '100') inpRpm.value = '500';
+    if (inpPinions) {
+      inpPinions.min = '2';
+      inpPinions.max = '8';
+    }
+  } else {
+    if (inpPinions) {
+      inpPinions.min = '1';
+      inpPinions.max = '8';
+    }
+  }
 }
 
 function getFormInputs() {
   const gearType = document.getElementById('sel-gear-type')?.value || 'zerol-bevel';
-  const isCylindrical = gearType === 'spur' || gearType === 'internal_spur' || gearType === 'helical';
+  const isCylindrical = gearType === 'spur' || gearType === 'internal_spur' || gearType === 'helical' || gearType === 'planetary';
+
+  const rawNp = parseInt(document.getElementById('inp-Np').value, 10) || 16;
+  const rawNg = parseInt(document.getElementById('inp-Ng').value, 10) || 48;
+  const rawNr = parseInt(document.getElementById('inp-Nr')?.value, 10) || (rawNp + 2 * rawNg);
+  const rawK = parseInt(document.getElementById('inp-pinions').value, 10) || 3;
 
   return {
     gear_type: gearType,
     m: parseFloat(document.getElementById('inp-m').value) || 3.0,
-    Np: parseInt(document.getElementById('inp-Np').value, 10) || 16,
-    Ng: parseInt(document.getElementById('inp-Ng').value, 10) || 48,
+    Np: rawNp,
+    Ng: rawNg,
+    Ns: rawNp,
+    Np_planet: rawNg,
+    Nr: rawNr,
+    K: rawK,
     phi_deg: parseFloat(document.getElementById('inp-phi').value) || 20.0,
     tooth_angle_deg: parseFloat(document.getElementById('inp-helix-angle')?.value) || (gearType === 'spiral-bevel' ? 35.0 : 15.0),
     Sigma_deg: isCylindrical ? 0.0 : (parseFloat(document.getElementById('inp-Sigma')?.value) || 90.0),
-    n_pinions: parseInt(document.getElementById('inp-pinions').value, 10) || 3,
+    n_pinions: rawK,
     f_factor: parseFloat(document.getElementById('inp-f-factor')?.value) || 0.28,
     F: parseFloat(document.getElementById('inp-f-mm')?.value) || 25.0,
+    carrier_thickness: parseFloat(document.getElementById('inp-tc')?.value) || 8.0,
+    carrier_diameter: parseFloat(document.getElementById('inp-carrier-dia')?.value) || null,
+    ring_wall_thickness: parseFloat(document.getElementById('inp-trim')?.value) || 12.0,
     r_cutter: parseFloat(document.getElementById('inp-rc')?.value) || null,
     khw_factor: parseFloat(document.getElementById('inp-khw')?.value) || 2.00,
     c_factor: parseFloat(document.getElementById('inp-c-factor')?.value) || 0.188,
@@ -209,12 +287,19 @@ function applyPreset(presetKey) {
   document.getElementById('inp-m').value = p.m;
   document.getElementById('inp-Np').value = p.Np;
   document.getElementById('inp-Ng').value = p.Ng;
+  if (p.Nr && document.getElementById('inp-Nr')) {
+    document.getElementById('inp-Nr').value = p.Nr;
+  } else if (p.gear_type === 'planetary' && document.getElementById('inp-Nr')) {
+    document.getElementById('inp-Nr').value = String(p.Np + 2 * p.Ng);
+  }
   document.getElementById('inp-phi').value = p.phi_deg;
   if (p.tooth_angle_deg && document.getElementById('inp-helix-angle')) document.getElementById('inp-helix-angle').value = p.tooth_angle_deg;
   if (document.getElementById('inp-Sigma')) document.getElementById('inp-Sigma').value = p.Sigma_deg;
   document.getElementById('inp-pinions').value = p.n_pinions;
-  if (p.f_factor && document.getElementById('inp-f-factor')) document.getElementById('inp-f-factor').value = p.f_factor;
   if (p.F && document.getElementById('inp-f-mm')) document.getElementById('inp-f-mm').value = p.F;
+  if (document.getElementById('inp-tc')) document.getElementById('inp-tc').value = p.carrier_thickness || '8.0';
+  if (document.getElementById('inp-carrier-dia')) document.getElementById('inp-carrier-dia').value = p.carrier_diameter || '';
+  if (document.getElementById('inp-trim')) document.getElementById('inp-trim').value = p.ring_wall_thickness || '12.0';
   document.getElementById('inp-torque').value = p.T_in_ring;
   document.getElementById('inp-rpm').value = p.n_in_ring;
   if (document.getElementById('inp-rc')) document.getElementById('inp-rc').value = '';
@@ -228,44 +313,90 @@ function applyPreset(presetKey) {
 // =========================================================================
 
 function updateResultsUI(calc) {
+  const isPlanetary = calc.gear_type === 'planetary';
   const isInternal = calc.gear_type === 'internal_spur';
   const isSpur = calc.gear_type === 'spur';
   const isHelical = calc.gear_type === 'helical';
   const isStraight = calc.gear_type === 'straight-bevel';
   const isSpiral = calc.gear_type === 'spiral-bevel';
-  const isCylindrical = isInternal || isSpur || isHelical;
+  const isCylindrical = isInternal || isSpur || isHelical || isPlanetary;
 
   // Right panel table
-  document.getElementById('res-pd').textContent = `${calc.dp.toFixed(1)} / ${calc.dg.toFixed(1)} mm`;
-  document.getElementById('res-angles').textContent = isSpiral
-    ? `${calc.gamma_p_deg.toFixed(2)}\u00B0 / ${calc.gamma_g_deg.toFixed(2)}\u00B0 (\u03B2m=${(calc.beta_m_deg || 35).toFixed(0)}\u00B0)`
-    : isHelical
-    ? `${calc.beta_deg.toFixed(1)}\u00B0 (\u03B2) / Parallel`
-    : isCylindrical
-    ? '0.00\u00B0 / 0.00\u00B0 (Parallel)'
-    : `${calc.gamma_p_deg.toFixed(2)}\u00B0 / ${calc.gamma_g_deg.toFixed(2)}\u00B0`;
-  document.getElementById('res-ao').textContent = isCylindrical ? `${calc.center_dist.toFixed(1)} mm (Center C)` : `${calc.Ao.toFixed(2)} mm`;
-  document.getElementById('res-f').textContent = `${calc.F.toFixed(2)} mm`;
-  document.getElementById('res-rc').textContent = isStraight ? 'N/A (Straight Teeth)' : isHelical ? 'N/A (Helical Teeth)' : isCylindrical ? 'N/A (Cylindrical)' : `${(calc.r_cutter || 0).toFixed(2)} mm`;
+  if (isPlanetary) {
+    document.getElementById('res-pd').textContent = `${calc.ds.toFixed(1)} / ${calc.dp.toFixed(1)} / ${calc.dr.toFixed(1)} mm`;
+    document.getElementById('res-angles').textContent = `Coaxial Epicyclic (i=${calc.i_ratio.toFixed(1)}:1)`;
+    document.getElementById('res-ao').textContent = `${calc.center_dist.toFixed(1)} mm (Orbit C)`;
+    document.getElementById('res-f').textContent = `${calc.F.toFixed(2)} mm`;
+    const resRcEl = document.getElementById('res-rc');
+    const symDesc = calc.is_symmetric ? 'Symmetric' : 'Asymmetric';
+    const clearDesc = calc.has_interference ? ' - COLLISION' : '';
+    resRcEl.textContent = `K=${calc.K} Planets (${symDesc}${clearDesc})`;
+    resRcEl.className = `td-val ${calc.has_interference ? 'highlight-warn' : ''}`;
 
-  const crEl = document.getElementById('res-cr');
-  crEl.textContent = `${calc.CR.toFixed(3)}`;
-  crEl.className = `td-val ${calc.CR >= 1.5 ? 'highlight-green' : 'highlight-warn'}`;
+    const inpPinions = document.getElementById('inp-pinions');
+    if (inpPinions) {
+      inpPinions.max = '8';
+    }
 
-  document.getElementById('res-speed').textContent = `${calc.n_pinion_out.toFixed(0)} RPM`;
-  document.getElementById('res-torque').textContent = `${calc.T_pinion_each.toFixed(2)} N\u00B7m`;
-  document.getElementById('res-forces').textContent = `${calc.Ft.toFixed(1)} / ${calc.F_resultant.toFixed(1)} N`;
+    const hintPlanetsK = document.getElementById('hint-planets-k');
+    if (hintPlanetsK) {
+      if (calc.has_interference) {
+        hintPlanetsK.className = 'field-note warn';
+        hintPlanetsK.innerHTML = `<strong>⚠ Overlap:</strong> &Delta; = ${calc.clearance_adjacent_planets.toFixed(1)} mm! Max <strong>${calc.K_max}</strong> planets fit with Ns=${calc.Ns}, Np=${calc.Np}. Increase Ns (e.g. 24) or decrease Np to fit ${calc.K} planets.`;
+      } else {
+        hintPlanetsK.className = 'field-note success';
+        hintPlanetsK.innerHTML = `✓ Clearance: ${calc.clearance_adjacent_planets.toFixed(1)} mm (Max capacity: <strong>${calc.K_max}</strong> planets)`;
+      }
+    }
 
-  const sfEl = document.getElementById('res-sf');
-  const sf_p_val = isCylindrical ? calc.SF_b_p : calc.SF_p;
-  const sf_g_val = isCylindrical ? calc.SF_b_g : calc.SF_g;
-  sfEl.textContent = `${sf_p_val.toFixed(1)} / ${sf_g_val.toFixed(1)}`;
-  sfEl.className = `td-val ${sf_p_val >= 1.5 && sf_g_val >= 1.5 ? 'highlight-green' : 'highlight-warn'}`;
+    const crEl = document.getElementById('res-cr');
+    crEl.textContent = `${calc.CR_sp.toFixed(3)} / ${calc.CR_pr.toFixed(3)}`;
+    crEl.className = `td-val ${calc.CR_sp >= 1.2 ? 'highlight-green' : 'highlight-warn'}`;
+    document.getElementById('res-speed').textContent = `${calc.n_carrier_out.toFixed(0)} RPM (Carrier)`;
+    document.getElementById('res-torque').textContent = `${calc.T_carrier_out.toFixed(2)} N\u00B7m (Carrier)`;
+    document.getElementById('res-forces').textContent = `${calc.Ft.toFixed(1)} / ${calc.F_resultant.toFixed(1)} N`;
+    const sfEl = document.getElementById('res-sf');
+    sfEl.textContent = `${calc.SF_b_s.toFixed(1)} / ${calc.SF_b_p.toFixed(1)} / ${calc.SF_b_r.toFixed(1)}`;
+    sfEl.className = `td-val ${calc.SF_b_s >= 1.5 && calc.SF_b_p >= 1.5 ? 'highlight-green' : 'highlight-warn'}`;
+
+    const inpCarrierDia = document.getElementById('inp-carrier-dia');
+    if (inpCarrierDia && !inpCarrierDia.value) {
+      inpCarrierDia.placeholder = `Auto (${(2 * calc.r_carrier_disc).toFixed(1)})`;
+    }
+  } else {
+    document.getElementById('res-pd').textContent = `${calc.dp.toFixed(1)} / ${calc.dg.toFixed(1)} mm`;
+    document.getElementById('res-angles').textContent = isSpiral
+      ? `${calc.gamma_p_deg.toFixed(2)}\u00B0 / ${calc.gamma_g_deg.toFixed(2)}\u00B0 (\u03B2m=${(calc.beta_m_deg || 35).toFixed(0)}\u00B0)`
+      : isHelical
+      ? `${calc.beta_deg.toFixed(1)}\u00B0 (\u03B2) / Parallel`
+      : isCylindrical
+      ? '0.00\u00B0 / 0.00\u00B0 (Parallel)'
+      : `${calc.gamma_p_deg.toFixed(2)}\u00B0 / ${calc.gamma_g_deg.toFixed(2)}\u00B0`;
+    document.getElementById('res-ao').textContent = isCylindrical ? `${calc.center_dist.toFixed(1)} mm (Center C)` : `${calc.Ao.toFixed(2)} mm`;
+    document.getElementById('res-f').textContent = `${calc.F.toFixed(2)} mm`;
+    document.getElementById('res-rc').textContent = isStraight ? 'N/A (Straight Teeth)' : isHelical ? 'N/A (Helical Teeth)' : isCylindrical ? 'N/A (Cylindrical)' : `${(calc.r_cutter || 0).toFixed(2)} mm`;
+
+    const crEl = document.getElementById('res-cr');
+    crEl.textContent = `${calc.CR.toFixed(3)}`;
+    crEl.className = `td-val ${calc.CR >= 1.5 ? 'highlight-green' : 'highlight-warn'}`;
+
+    document.getElementById('res-speed').textContent = `${calc.n_pinion_out.toFixed(0)} RPM`;
+    document.getElementById('res-torque').textContent = `${calc.T_pinion_each.toFixed(2)} N\u00B7m`;
+    document.getElementById('res-forces').textContent = `${calc.Ft.toFixed(1)} / ${calc.F_resultant.toFixed(1)} N`;
+
+    const sfEl = document.getElementById('res-sf');
+    const sf_p_val = isCylindrical ? calc.SF_b_p : calc.SF_p;
+    const sf_g_val = isCylindrical ? calc.SF_b_g : calc.SF_g;
+    sfEl.textContent = `${sf_p_val.toFixed(1)} / ${sf_g_val.toFixed(1)}`;
+    sfEl.className = `td-val ${sf_p_val >= 1.5 && sf_g_val >= 1.5 ? 'highlight-green' : 'highlight-warn'}`;
+  }
 
   // Summary title card
   const summaryTitle = document.getElementById('summary-title');
   if (summaryTitle) {
-    summaryTitle.textContent = isInternal
+    summaryTitle.textContent = isPlanetary
+      ? `Planetary Gear (M${calc.m}, S${calc.Ns}/P${calc.Np}/R${calc.Nr}, K${calc.K})`
+      : isInternal
       ? `Internal Ring (M${calc.m}, Z${calc.Np}/${calc.Ng})`
       : isSpur
       ? `Involute Spur (M${calc.m}, Z${calc.Np}/${calc.Ng})`
@@ -281,35 +412,42 @@ function updateResultsUI(calc) {
   // Viewport title
   const gearTypeBadge = document.getElementById('viewport-gear-type');
   if (gearTypeBadge) {
-    gearTypeBadge.textContent = isSpiral ? 'Spiral Bevel' : isInternal ? 'Internal Spur Ring' : isSpur ? 'Involute Spur' : isHelical ? 'Helical Gear' : isStraight ? 'Straight Bevel' : 'Zerol Bevel';
+    gearTypeBadge.textContent = isPlanetary ? 'Planetary (Epicyclic)' : isSpiral ? 'Spiral Bevel' : isInternal ? 'Internal Spur Ring' : isSpur ? 'Involute Spur' : isHelical ? 'Helical Gear' : isStraight ? 'Straight Bevel' : 'Zerol Bevel';
   }
 
   const specs = document.getElementById('viewport-specs');
-  if (specs) specs.textContent = isSpiral
+  if (specs) specs.textContent = isPlanetary
+    ? `Ns=${calc.Ns} \u00B7 Np=${calc.Np} \u00B7 Nr=${calc.Nr} \u00B7 K=${calc.K} \u00B7 m=${calc.m} \u00B7 i=${calc.i_ratio.toFixed(1)}:1`
+    : isSpiral
     ? `Np=${calc.Np} \u00B7 Ng=${calc.Ng} \u00B7 m=${calc.m} \u00B7 \u03B2=${(calc.beta_m_deg || 35).toFixed(0)}\u00B0`
     : isHelical
     ? `Np=${calc.Np} \u00B7 Ng=${calc.Ng} \u00B7 mn=${calc.mn} \u00B7 \u03B2=${calc.beta_deg}\u00B0`
     : `Np=${calc.Np} \u00B7 Ng=${calc.Ng} \u00B7 m=${calc.m} \u00B7 \u03C6${calc.phi_deg}\u00B0`;
 
   // HUD
-  document.getElementById('hud-cr').textContent = calc.CR.toFixed(3);
+  const hudCr = isPlanetary ? calc.CR_sp : calc.CR;
+  document.getElementById('hud-cr').textContent = hudCr.toFixed(3);
   const hudCrStatus = document.getElementById('hud-cr-status');
-  hudCrStatus.className = `hud-badge ${calc.CR >= 1.5 ? 'safe' : calc.CR >= 1.2 ? 'warn' : 'danger'}`;
-  hudCrStatus.textContent = calc.CR >= 1.5 ? 'GOOD (\u22651.5)' : calc.CR >= 1.2 ? 'OK (\u22651.2)' : 'LOW';
+  hudCrStatus.className = `hud-badge ${hudCr >= 1.5 ? 'safe' : hudCr >= 1.2 ? 'warn' : 'danger'}`;
+  hudCrStatus.textContent = hudCr >= 1.5 ? 'GOOD (\u22651.5)' : hudCr >= 1.2 ? 'OK (\u22651.2)' : 'LOW';
 
-  document.getElementById('hud-sf').textContent = `${sf_p_val.toFixed(1)} / ${sf_g_val.toFixed(1)}`;
+  const sf1 = isPlanetary ? calc.SF_b_s : (isCylindrical ? calc.SF_b_p : calc.SF_p);
+  const sf2 = isPlanetary ? calc.SF_b_p : (isCylindrical ? calc.SF_b_g : calc.SF_g);
+  document.getElementById('hud-sf').textContent = `${sf1.toFixed(1)} / ${sf2.toFixed(1)}`;
   const hudSfStatus = document.getElementById('hud-sf-status');
-  hudSfStatus.className = `hud-badge ${sf_p_val >= 1.5 && sf_g_val >= 1.5 ? 'safe' : 'warn'}`;
-  hudSfStatus.textContent = sf_p_val >= 1.5 && sf_g_val >= 1.5 ? 'SAFE (\u22651.5)' : 'WARN';
+  hudSfStatus.className = `hud-badge ${sf1 >= 1.5 && sf2 >= 1.5 ? 'safe' : 'warn'}`;
+  hudSfStatus.textContent = sf1 >= 1.5 && sf2 >= 1.5 ? 'SAFE (\u22651.5)' : 'WARN';
 
   // Canvas Watermark
   const wmTitle = document.getElementById('wm-gear-title');
   if (wmTitle) {
-    wmTitle.textContent = isInternal ? 'Internal Spur Ring Gear' : isSpur ? 'Involute Spur Gear' : isHelical ? 'Helical Gear' : isSpiral ? 'Spiral Bevel Gear' : isStraight ? 'Straight Bevel Gear' : 'Zerol Bevel Gear';
+    wmTitle.textContent = isPlanetary ? 'Planetary Gear (Epicyclic)' : isInternal ? 'Internal Spur Ring Gear' : isSpur ? 'Involute Spur Gear' : isHelical ? 'Helical Gear' : isSpiral ? 'Spiral Bevel Gear' : isStraight ? 'Straight Bevel Gear' : 'Zerol Bevel Gear';
   }
 
   const wmParams = document.getElementById('wm-gear-params');
-  if (wmParams) wmParams.textContent = isHelical
+  if (wmParams) wmParams.textContent = isPlanetary
+    ? `S=${calc.Ns} \u2022 P=${calc.Np} \u2022 R=${calc.Nr} \u2022 K=${calc.K} \u2022 M=${calc.m}`
+    : isHelical
     ? `Z=${calc.Np}/${calc.Ng} \u2022 mn=${calc.mn} \u2022 \u03B2${calc.beta_deg}\u00B0`
     : isSpiral
     ? `Z=${calc.Np}/${calc.Ng} \u2022 M=${calc.m} \u2022 \u03B2m=${(calc.beta_m_deg || 35).toFixed(0)}\u00B0`
@@ -317,7 +455,9 @@ function updateResultsUI(calc) {
 
   const wmDims = document.getElementById('wm-gear-dims');
   if (wmDims) {
-    if (isCylindrical) {
+    if (isPlanetary) {
+      wmDims.innerHTML = `Pitch Dia: ${calc.ds.toFixed(1)} / ${calc.dp.toFixed(1)} / ${calc.dr.toFixed(1)} mm<br>Orbit Radius: ${calc.center_dist.toFixed(1)} mm<br>Carrier Thk: ${calc.carrier_thickness.toFixed(1)} mm<br>Ratio: ${calc.i_ratio.toFixed(2)}:1`;
+    } else if (isCylindrical) {
       wmDims.innerHTML = `Pitch Dia: ${calc.dp.toFixed(1)} / ${calc.dg.toFixed(1)} mm<br>Center Dist: ${calc.center_dist.toFixed(1)} mm<br>Face Width: ${calc.F.toFixed(1)} mm`;
     } else {
       wmDims.innerHTML = `Pitch Dia: ${calc.dp.toFixed(1)} / ${calc.dg.toFixed(1)} mm<br>Outer Cone Ao: ${calc.Ao.toFixed(1)} mm<br>Face Width: ${calc.F.toFixed(1)} mm`;
@@ -327,11 +467,11 @@ function updateResultsUI(calc) {
   // Update part isolation dropdown with exact multi-pinion count
   const selPart = document.getElementById('sel-part-mode');
   if (selPart) {
-    const n = calc.n_pinions || 3;
+    const n = isPlanetary ? (calc.K || 3) : (calc.n_pinions || 3);
     const optAssembly = selPart.querySelector('option[value="assembly"]');
-    if (optAssembly) optAssembly.textContent = `Full Assembly (All ${n} Pinions)`;
+    if (optAssembly) optAssembly.textContent = isPlanetary ? `Full Assembly (Sun, ${n} Planets, Ring, Carrier)` : `Full Assembly (All ${n} Pinions)`;
     const optPinion = selPart.querySelector('option[value="pinion"]');
-    if (optPinion) optPinion.textContent = `Pinions Only (All ${n})`;
+    if (optPinion) optPinion.textContent = isPlanetary ? `Planets Only (All ${n})` : `Pinions Only (All ${n})`;
   }
 }
 
@@ -343,7 +483,23 @@ function recalculateAndRender() {
   try {
     const inputs = getFormInputs();
 
-    if (inputs.gear_type === 'internal_spur') {
+    if (inputs.gear_type === 'planetary') {
+      currentCalc = calculatePlanetaryDesign(inputs);
+
+      const { sunMesh, planetMesh, ringMesh, carrierMesh } = buildPlanetaryMesh(currentCalc, 4, 36);
+      currentPinionMesh = planetMesh;
+      currentGearMesh = ringMesh;
+      currentCalc.sunMesh = sunMesh;
+      currentCalc.planetMesh = planetMesh;
+      currentCalc.ringMesh = ringMesh;
+      currentCalc.carrierMesh = carrierMesh;
+
+      updateResultsUI(currentCalc);
+
+      if (viewer3D) viewer3D.updateGears(currentCalc, currentPinionMesh, currentGearMesh, { sunMesh, carrierMesh });
+      if (plot2D && activeTab === '2d') plot2D.updatePlot(currentCalc);
+      return;
+    } else if (inputs.gear_type === 'internal_spur') {
       currentCalc = calculateInternalSpurDesign(inputs);
 
       currentPinionMesh = buildSpurMesh(
@@ -427,7 +583,8 @@ function recalculateAndRender() {
         currentCalc.a_p, currentCalc.b_p_print, currentCalc.gamma_p,
         currentCalc.Ao, currentCalc.F, currentCalc.r_cutter,
         inputs.n_inv, inputs.n_sec, 3, 3,
-        currentCalc.s_p_print, currentCalc.crowning_p, currentCalc.ps.shrinkage_factor
+        currentCalc.s_p_print, currentCalc.crowning_p, 1.0,
+        0, +1
       );
 
       currentGearMesh = buildBevelMesh(
@@ -435,7 +592,8 @@ function recalculateAndRender() {
         currentCalc.a_g, currentCalc.b_g_print, currentCalc.gamma_g,
         currentCalc.Ao, currentCalc.F, currentCalc.r_cutter,
         inputs.n_inv, inputs.n_sec, 3, 3,
-        currentCalc.s_g_print, currentCalc.crowning_g, currentCalc.ps.shrinkage_factor
+        currentCalc.s_g_print, currentCalc.crowning_g, 1.0,
+        0, -1
       );
     }
 
@@ -462,6 +620,9 @@ function getBaseFilename() {
   const custom = document.getElementById('inp-filename')?.value?.trim();
   if (custom && custom.length > 0) return custom;
   if (currentCalc) {
+    if (currentCalc.gear_type === 'planetary') {
+      return `Planetary_Gear_m${currentCalc.m}_Ns${currentCalc.Ns}_Np${currentCalc.Np}_Nr${currentCalc.Nr}_K${currentCalc.K}`;
+    }
     if (currentCalc.gear_type === 'internal_spur') {
       return `Internal_Spur_m${currentCalc.m}_Np${currentCalc.Np}_Ng${currentCalc.Ng}`;
     }
@@ -484,6 +645,7 @@ function getBaseFilename() {
 function getGearTypeName() {
   if (!currentCalc) return 'Gear';
   switch (currentCalc.gear_type) {
+    case 'planetary': return 'Planetary';
     case 'helical': return 'Helical';
     case 'spur': return 'Spur';
     case 'internal_spur': return 'Internal_Spur';
@@ -702,16 +864,82 @@ function handlePngExport(baseName) {
 // =========================================================================
 
 function setupEvents() {
+  // Initialize Interactive Parameter Tooltips & Engineering Guidance
+  initParamTooltips();
+
   // Input changes
   const inputIds = [
-    'inp-m', 'inp-Np', 'inp-Ng', 'inp-phi', 'inp-helix-angle', 'inp-Sigma', 'inp-pinions',
-    'inp-f-factor', 'inp-f-mm', 'inp-rc', 'inp-khw', 'inp-c-factor', 'inp-torque',
+    'inp-m', 'inp-Np', 'inp-Ng', 'inp-Nr', 'inp-phi', 'inp-helix-angle', 'inp-Sigma', 'inp-pinions',
+    'inp-f-factor', 'inp-f-mm', 'inp-tc', 'inp-carrier-dia', 'inp-trim', 'inp-rc', 'inp-khw', 'inp-c-factor', 'inp-torque',
     'inp-rpm', 'inp-eta', 'inp-sigma-allow', 'inp-n-inv', 'inp-n-sec'
   ];
   inputIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', scheduleRecalculate);
   });
+
+  const btnAutoCarrierDia = document.getElementById('btn-auto-carrier-dia');
+  if (btnAutoCarrierDia) {
+    btnAutoCarrierDia.addEventListener('click', () => {
+      const el = document.getElementById('inp-carrier-dia');
+      if (el) el.value = '';
+      recalculateAndRender();
+      showToast('Carrier diameter reset to Auto', 'info');
+    });
+  }
+
+  // Bidirectional Synchronization between Sun (Np), Planet (Ng), and Ring (Nr) for Planetary
+  const inpNpEl = document.getElementById('inp-Np');
+  const inpNgEl = document.getElementById('inp-Ng');
+  const inpNrEl = document.getElementById('inp-Nr');
+  const hintRingTeethEl = document.getElementById('hint-ring-teeth');
+
+  function syncRingFromSunAndPlanet() {
+    const gearType = document.getElementById('sel-gear-type')?.value;
+    if (gearType !== 'planetary') return;
+    const ns = parseInt(inpNpEl?.value, 10);
+    const np = parseInt(inpNgEl?.value, 10);
+    if (!isNaN(ns) && !isNaN(np) && inpNrEl) {
+      const nr = ns + 2 * np;
+      inpNrEl.value = String(nr);
+      if (hintRingTeethEl) {
+        hintRingTeethEl.className = 'field-note';
+        hintRingTeethEl.textContent = `Coaxial rule: Nr = ${ns} + 2·(${np}) = ${nr}`;
+      }
+    }
+  }
+
+  function syncPlanetFromRing() {
+    const gearType = document.getElementById('sel-gear-type')?.value;
+    if (gearType !== 'planetary') return;
+    const ns = parseInt(inpNpEl?.value, 10);
+    const nr = parseInt(inpNrEl?.value, 10);
+    if (!isNaN(ns) && !isNaN(nr)) {
+      const diff = nr - ns;
+      if (diff > 0 && diff % 2 === 0) {
+        const np = diff / 2;
+        if (inpNgEl) inpNgEl.value = String(np);
+        if (hintRingTeethEl) {
+          hintRingTeethEl.className = 'field-note success';
+          hintRingTeethEl.textContent = `✓ Coaxial: Np = (${nr} - ${ns})/2 = ${np}`;
+        }
+      } else if (diff <= 0) {
+        if (hintRingTeethEl) {
+          hintRingTeethEl.className = 'field-note warn';
+          hintRingTeethEl.textContent = `⚠ Ring teeth (Nr) must be greater than Sun teeth (Ns).`;
+        }
+      } else {
+        if (hintRingTeethEl) {
+          hintRingTeethEl.className = 'field-note warn';
+          hintRingTeethEl.textContent = `⚠ (Nr - Ns) is odd (${diff}). Must be an even difference for whole planet teeth.`;
+        }
+      }
+    }
+  }
+
+  if (inpNpEl) inpNpEl.addEventListener('input', syncRingFromSunAndPlanet);
+  if (inpNgEl) inpNgEl.addEventListener('input', syncRingFromSunAndPlanet);
+  if (inpNrEl) inpNrEl.addEventListener('input', syncPlanetFromRing);
 
   // Material select with dynamic allowable stress & safety factor update
   const selMaterial = document.getElementById('sel-material');

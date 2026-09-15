@@ -366,6 +366,23 @@ body {
   text-align: right;
 }
 
+.field-note {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: -2px;
+  margin-bottom: 6px;
+  line-height: 1.35;
+  padding: 1px 0;
+}
+
+.field-note.warn {
+  color: #ef4444;
+}
+
+.field-note.success {
+  color: #10b981;
+}
+
 select.input-control {
   cursor: pointer;
   font-family: 'Inter', sans-serif;
@@ -1087,3 +1104,223 @@ select.input-control {
   .panel-config { width: 220px; min-width: 220px; }
   .panel-export { width: 190px; min-width: 190px; }
 }
+
+/* --------------------------------------------------------------------------
+   7. PARAMETER ENGINEERING TOOLTIPS & GUIDANCE
+   Follows professional CAD suite aesthetics (Light & Dark theme dynamic tokens)
+   -------------------------------------------------------------------------- */
+
+[data-param-tip] {
+  cursor: help;
+}
+
+[data-param-tip] .row-label,
+.summary-table tr[data-param-tip] .td-key {
+  transition: color 0.15s ease;
+}
+
+[data-param-tip]:hover .row-label,
+.summary-table tr[data-param-tip]:hover .td-key {
+  color: var(--action-blue);
+}
+
+.gear-param-tooltip {
+  position: fixed;
+  z-index: 10000;
+  width: 360px;
+  max-width: 92vw;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  color: var(--text-primary);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.97) translateY(2px);
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 13px 15px;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+[data-theme="dark"] .gear-param-tooltip {
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.gear-param-tooltip.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.gear-param-tooltip .tooltip-arrow {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: var(--bg-panel);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.gear-param-tooltip.on-right .tooltip-arrow {
+  left: -5px;
+  border-right: none;
+  border-top: none;
+  border-left: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.gear-param-tooltip.on-left .tooltip-arrow {
+  right: -5px;
+  border-left: none;
+  border-bottom: none;
+  border-right: 1px solid var(--border-strong);
+  border-top: 1px solid var(--border-strong);
+}
+
+.tip-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  padding-bottom: 9px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tip-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 auto;
+}
+
+.tip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--badge-bg);
+  border: 1px solid rgba(29, 98, 209, 0.25);
+  color: var(--action-blue);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .tip-icon {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.tip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.tip-formula-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--badge-bg);
+  border: 1px solid var(--border-subtle);
+  color: var(--badge-text);
+  padding: 2.5px 7px;
+  border-radius: 4px;
+  white-space: normal;
+  max-width: 100%;
+}
+
+[data-theme="dark"] .tip-formula-badge {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.tip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tip-section-heading {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--action-blue);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+
+.tip-section-text {
+  font-size: 11.5px;
+  line-height: 1.48;
+  color: var(--text-secondary);
+}
+
+.tip-affects-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4.5px;
+}
+
+.tip-affects-list li {
+  position: relative;
+  padding-left: 12px;
+  font-size: 11px;
+  line-height: 1.42;
+  color: var(--text-secondary);
+}
+
+.tip-affects-list li::before {
+  content: "•";
+  position: absolute;
+  left: 1px;
+  top: -1px;
+  color: var(--action-blue);
+  font-size: 13px;
+}
+
+.affects-highlight {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-right: 3px;
+}
+
+.tip-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.tip-footer-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.tip-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tip-pill-tag {
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 9.5px;
+  font-weight: 500;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+}
+

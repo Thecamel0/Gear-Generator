@@ -537,7 +537,7 @@ export function buildBevelMesh(
         const delta = A_s - Am;
         const arg = r_cutter * r_cutter - delta * delta;
         if (arg > 0) {
-          delta_theta = -(r_cutter - Math.sqrt(arg)) / (A_s * Math.sin(gamma));
+          delta_theta = hand * -(r_cutter - Math.sqrt(arg)) / (A_s * Math.sin(gamma));
         }
       } else {
         // Spiral Bevel: Gleason circular cutter arc at mean spiral angle beta_m
@@ -622,9 +622,9 @@ export function buildBevelMesh(
   }
 
   // 4. End Caps (Inner Toe & Outer Heel)
-  // Exact 2D planar polygon triangulation matching MATLAB's build_bevel_mesh_v2.m:
-  // pgon_in = polyshape(x_in, y_in); tr_in = triangulation(pgon_in);
-  // Forms the natural conical basin and flat back face without artificial pancake discs.
+  // 2D polygon triangulation matching MATLAB's polyshape + triangulation:
+  // Fills the star-shaped cross-section with interior triangles.
+  // Visual smoothness is handled by cap normal splitting in viewer3d.js.
   const cap_faces = [];
 
   // Inner cap (toe end, s = 0)
@@ -1422,6 +1422,337 @@ export function buildInternalRingMesh(calc, n_sec = 4, n_pts = 36) {
     r_pitch: calc.rp_g,
     r_rim: calc.r_rim,
     F: F
+  };
+}
+
+// =========================================================================
+// 8B. PLANETARY (EPICYCLIC) GEAR TRAIN GEOMETRY & MESH
+// =========================================================================
+
+/**
+ * Calculates complete kinematic, geometric, and stress properties for an Epicyclic Planetary Gear Train:
+ * Sun Gear, K Planet Gears, Internal Ring Gear, and Planet Carrier.
+ * Follows Willis epicyclic formulation & AGMA 6123-B06.
+ */
+export function calculatePlanetaryDesign(inputs = {}) {
+  const m = parseFloat(inputs.m) || 3.0;
+  // If user provides Ns and Np directly or through Np/Ng fields:
+  const Ns = parseInt(inputs.Ns || inputs.Np, 10) || 12;
+  const Np = parseInt(inputs.Np_planet || inputs.N_planet || (inputs.Ng ? (inputs.Ng - Ns) / 2 : 18), 10) || 18;
+  const K = parseInt(inputs.K || inputs.n_pinions || inputs.n_planets, 10) || 3;
+  const phi_deg = parseFloat(inputs.phi_deg) || 20.0;
+  const phi = (phi_deg * Math.PI) / 180.0;
+  const F = parseFloat(inputs.F) || 25.0;
+
+  const T_in_sun = parseFloat(inputs.T_in_sun || inputs.T_in_ring) || 15.0;
+  const n_in_sun = parseFloat(inputs.n_in_sun || inputs.n_in_ring) || 500.0;
+  const eta = parseFloat(inputs.eta) || 0.97;
+  const sigma_allow_bend = parseFloat(inputs.sigma_allow_bend) || 250.0;
+  const sigma_allow_contact = 1500.0;
+
+  // Coaxiality condition
+  const Nr = Ns + 2 * Np;
+
+  // Pitch, Base, Tip, Root Radii
+  const ds = m * Ns; const rp_s = ds / 2;
+  const dp = m * Np; const rp_p = dp / 2;
+  const dr = m * Nr; const rp_r = dr / 2;
+
+  const rb_s = rp_s * Math.cos(phi);
+  const rb_p = rp_p * Math.cos(phi);
+  const rb_r = rp_r * Math.cos(phi);
+
+  const center_dist = (ds + dp) / 2; // Carrier pin orbit radius C
+
+  // Assembly condition
+  const is_symmetric = (Ns + Nr) % K === 0;
+  const assembly_index = (Ns + Nr) / K;
+
+  // Tip, Root & Proportions
+  const a_s = 1.0 * m; const b_s = 1.25 * m;
+  const a_p = 1.0 * m; const b_p = 1.25 * m;
+  const a_r = 1.0 * m; const b_r = 1.25 * m;
+
+  const ra_s = rp_s + a_s; const rd_s = Math.max(rp_s - b_s, 0.25 * rb_s);
+  const ra_p = rp_p + a_p; const rd_p = Math.max(rp_p - b_p, 0.25 * rb_p);
+  const ra_r_int = rp_r - a_r;
+  const rd_r_int = rp_r + b_r;
+
+  const t_rim = parseFloat(inputs.ring_wall_thickness || inputs.trim) || 12.0;
+  const r_rim = rd_r_int + t_rim;
+  const D_outer = 2 * r_rim;
+
+  // Carrier and Pin Dimensions
+  const r_pin = rd_p * 0.45;
+  const d_pin = 2 * r_pin;
+  const r_bore_planet = r_pin + 0.15;
+  const r_bore_sun = rp_s * 0.35;
+  const r_carrier_disc = inputs.carrier_diameter
+    ? (parseFloat(inputs.carrier_diameter) / 2)
+    : (center_dist + rp_p * 0.65);
+  const carrier_thickness = parseFloat(inputs.carrier_thickness || inputs.tc) || Math.max(8.0, F * 0.35);
+
+  // Maximum number of planets that physically fit without tooth tip interference
+  const sin_max = Math.min(0.999, ra_p / center_dist);
+  const K_max = Math.max(2, Math.floor(Math.PI / Math.asin(sin_max)));
+
+  // Clearance between adjacent planet tips
+  const dist_planet_centers = 2 * center_dist * Math.sin(Math.PI / K);
+  const da_p = 2 * ra_p;
+  const clearance_adjacent_planets = dist_planet_centers - da_p;
+  const has_clearance = clearance_adjacent_planets > 0;
+  const has_interference = !has_clearance;
+
+  // Precise planet angular positions and clocking (guarantees teeth mesh with both Sun and Ring)
+  const planet_angles = [];
+  const planet_clocks = [];
+  const tooth_slots = [];
+  for (let k = 0; k < K; k++) {
+    if (is_symmetric) {
+      const th_k = (k * 2 * Math.PI) / K;
+      planet_angles.push(th_k);
+      const slot = (k * (Ns + Nr)) / K;
+      tooth_slots.push(slot);
+      planet_clocks.push((slot * Math.PI) / Np);
+    } else {
+      // Find nearest integer tooth slot for simultaneous engagement
+      const slot = Math.round((k * (Ns + Nr)) / K);
+      tooth_slots.push(slot);
+      const th_k = (slot * 2 * Math.PI) / (Ns + Nr);
+      planet_angles.push(th_k);
+      planet_clocks.push((slot * Math.PI) / Np);
+    }
+  }
+
+  // Willis Kinematics (Stationary Ring Gear)
+  const i_ratio = 1 + (Nr / Ns);
+  const n_carrier_out = n_in_sun / i_ratio;
+  const n_planet_relative = -n_carrier_out * (Nr / Np);
+  const n_planet_absolute = n_carrier_out + n_planet_relative;
+
+  // Forces & Torques
+  const P_in_total = (T_in_sun * 2 * Math.PI * n_in_sun) / 60;
+  const T_carrier_out = T_in_sun * i_ratio * eta;
+  const P_out_carrier = (T_carrier_out * 2 * Math.PI * n_carrier_out) / 60;
+
+  const K_gamma = (K === 3) ? 1.10 : (K === 4 ? 1.18 : 1.05 + 0.03 * K);
+  const Ft = (2 * T_in_sun * 1000 / (ds * K)) * K_gamma;
+  const Fr = Ft * Math.tan(phi);
+  const F_resultant = Math.hypot(Ft, Fr);
+
+  // Transverse Contact Ratios
+  const pb = Math.PI * m * Math.cos(phi);
+  const L_sp = Math.sqrt(Math.max(0, ra_s * ra_s - rb_s * rb_s)) + Math.sqrt(Math.max(0, ra_p * ra_p - rb_p * rb_p)) - center_dist * Math.sin(phi);
+  const CR_sp = L_sp / pb;
+
+  const L_pr = Math.sqrt(Math.max(0, ra_p * ra_p - rb_p * rb_p)) - Math.sqrt(Math.max(0, ra_r_int * ra_r_int - rb_r * rb_r)) + center_dist * Math.sin(phi);
+  const CR_pr = L_pr / pb;
+
+  // Lewis Bending Stresses
+  const s_nom = (Math.PI * m) / 2;
+  const Y_s = 0.484 - 2.87 / Ns;
+  const Y_p = 0.484 - 2.87 / Np;
+  const Y_r = 0.484 + 1.50 / Nr;
+
+  const sigma_b_s = Ft / (F * m * Y_s);
+  const sigma_b_p = (Ft * 1.4) / (F * m * Y_p); // Reversed bending cycle
+  const sigma_b_r = Ft / (F * m * Y_r);
+
+  const SF_b_s = sigma_allow_bend / Math.max(sigma_b_s, 1e-6);
+  const SF_b_p = sigma_allow_bend / Math.max(sigma_b_p, 1e-6);
+  const SF_b_r = sigma_allow_bend / Math.max(sigma_b_r, 1e-6);
+
+  // Hertzian Contact Stresses
+  const E_mod = 206000; const nu = 0.30;
+  const E_star = E_mod / (2 * (1 - nu * nu));
+
+  const rho_s = rb_s * Math.tan(phi);
+  const rho_p = rb_p * Math.tan(phi);
+  const rho_sp_eq = (rho_s * rho_p) / (rho_s + rho_p);
+  const sigma_H_sp = Math.sqrt((Ft / (Math.PI * F * Math.cos(phi))) * (E_star / rho_sp_eq));
+  const SF_contact_sp = sigma_allow_contact / Math.max(sigma_H_sp, 1e-6);
+
+  const rho_r = rb_r * Math.tan(phi);
+  const rho_pr_eq = (rho_p * rho_r) / Math.max(rho_r - rho_p, 1e-3);
+  const sigma_H_pr = Math.sqrt((Ft / (Math.PI * F * Math.cos(phi))) * (E_star / rho_pr_eq));
+  const SF_contact_pr = sigma_allow_contact / Math.max(sigma_H_pr, 1e-6);
+
+  return {
+    gear_type: 'planetary',
+    m, Ns, Np, Nr, K, n_pinions: K, n_planets: K,
+    phi_deg, phi, F,
+    i_ratio, center_dist, C: center_dist,
+    ds, dp, dr,
+    rp_s, rp_p, rp_r,
+    rb_s, rb_p, rb_r,
+    ra_s, ra_p, ra_r_int,
+    rd_s, rd_p, rd_r_int,
+    r_rim, D_outer,
+    r_pin, d_pin, r_bore_planet, r_bore_sun, r_carrier_disc, carrier_thickness,
+    is_symmetric, assembly_index, dist_planet_centers, clearance_adjacent_planets, has_clearance,
+    has_interference, K_max, planet_angles, planet_clocks, tooth_slots,
+    CR_sp, CR_pr, L_sp, L_pr, pb,
+    T_in_sun, n_in_sun, n_carrier_out, n_planet_relative, n_planet_absolute,
+    T_carrier_out, P_in_total, P_out_carrier, K_gamma,
+    Ft, Fr, F_resultant,
+    sigma_b_s, sigma_b_p, sigma_b_r, SF_b_s, SF_b_p, SF_b_r,
+    sigma_H_sp, sigma_H_pr, SF_contact_sp, SF_contact_pr,
+    // Aliases for generic UI and exporter compatibility:
+    Ng: Nr, dp_gear: dr, dp_pinion: ds,
+    a_p: a_s, b_p: b_s, a_g: a_r, b_g: b_r,
+    s_p: s_nom, s_g: s_nom,
+    CR: CR_sp, sigma_H: sigma_H_sp, SF_contact: SF_contact_sp,
+    SF_b_pinion: SF_b_s, SF_b_gear: SF_b_r
+  };
+}
+
+/**
+ * Builds 3D Carrier solid mesh with annular plate and K cylindrical pins.
+ */
+export function buildCarrierMesh(calc) {
+  const F = calc.F;
+  const C = calc.center_dist;
+  const K = calc.K;
+  const r_disc = calc.r_carrier_disc;
+  const t_disc = calc.carrier_thickness;
+  const r_pin = calc.r_pin;
+
+  const z_disc_bot = -F / 2 - t_disc;
+  const z_disc_top = -F / 2;
+  const z_pin_top = F / 2 + 2.0;
+
+  const r_hub_bore = calc.r_bore_sun * 1.1;
+  const n_circ = 48;
+  const x_out = [], y_out = [], x_in = [], y_in = [];
+  for (let i = 0; i < n_circ; i++) {
+    const th = (i * 2 * Math.PI) / n_circ;
+    x_out.push(r_disc * Math.cos(th));
+    y_out.push(r_disc * Math.sin(th));
+    x_in.push(r_hub_bore * Math.cos(th));
+    y_in.push(r_hub_bore * Math.sin(th));
+  }
+
+  const all_verts = [];
+  const all_faces = [];
+
+  // 1. Carrier Disc Annular Cylinder
+  // Vertices: 0:N-1 = Outer Bot, N:2N-1 = Outer Top, 2N:3N-1 = Inner Bot, 3N:4N-1 = Inner Top
+  for (let i = 0; i < n_circ; i++) all_verts.push([x_out[i], y_out[i], z_disc_bot]);
+  for (let i = 0; i < n_circ; i++) all_verts.push([x_out[i], y_out[i], z_disc_top]);
+  for (let i = 0; i < n_circ; i++) all_verts.push([x_in[i],  y_in[i],  z_disc_bot]);
+  for (let i = 0; i < n_circ; i++) all_verts.push([x_in[i],  y_in[i],  z_disc_top]);
+
+  // Outer wall faces
+  for (let i = 0; i < n_circ; i++) {
+    const nxt = (i + 1) % n_circ;
+    all_faces.push([i, nxt, n_circ + nxt]);
+    all_faces.push([i, n_circ + nxt, n_circ + i]);
+  }
+  // Inner wall faces
+  for (let i = 0; i < n_circ; i++) {
+    const nxt = (i + 1) % n_circ;
+    all_faces.push([2 * n_circ + i, 3 * n_circ + nxt, 2 * n_circ + nxt]);
+    all_faces.push([2 * n_circ + i, 3 * n_circ + i, 3 * n_circ + nxt]);
+  }
+  // Bottom cap (-Z)
+  for (let i = 0; i < n_circ; i++) {
+    const nxt = (i + 1) % n_circ;
+    all_faces.push([i, 2 * n_circ + nxt, nxt]);
+    all_faces.push([i, 2 * n_circ + i, 2 * n_circ + nxt]);
+  }
+  // Top cap (+Z)
+  for (let i = 0; i < n_circ; i++) {
+    const nxt = (i + 1) % n_circ;
+    all_faces.push([n_circ + i, n_circ + nxt, 3 * n_circ + nxt]);
+    all_faces.push([n_circ + i, 3 * n_circ + nxt, 3 * n_circ + i]);
+  }
+
+  // 2. K Carrier Pins
+  const n_p_circ = 20;
+  for (let k = 0; k < K; k++) {
+    const th_k = (calc.planet_angles && calc.planet_angles[k] !== undefined)
+      ? calc.planet_angles[k]
+      : (k * 2 * Math.PI) / K;
+    const cx = C * Math.cos(th_k);
+    const cy = C * Math.sin(th_k);
+
+    const base_idx = all_verts.length;
+    // Bottom circle at z_disc_top, Top circle at z_pin_top
+    for (let i = 0; i < n_p_circ; i++) {
+      const a = (i * 2 * Math.PI) / n_p_circ;
+      all_verts.push([cx + r_pin * Math.cos(a), cy + r_pin * Math.sin(a), z_disc_top]);
+    }
+    for (let i = 0; i < n_p_circ; i++) {
+      const a = (i * 2 * Math.PI) / n_p_circ;
+      all_verts.push([cx + r_pin * Math.cos(a), cy + r_pin * Math.sin(a), z_pin_top]);
+    }
+
+    // Pin side wall
+    for (let i = 0; i < n_p_circ; i++) {
+      const nxt = (i + 1) % n_p_circ;
+      all_faces.push([base_idx + i, base_idx + nxt, base_idx + n_p_circ + nxt]);
+      all_faces.push([base_idx + i, base_idx + n_p_circ + nxt, base_idx + n_p_circ + i]);
+    }
+    // Pin top cap (+Z)
+    const pin_center_top = all_verts.length;
+    all_verts.push([cx, cy, z_pin_top]);
+    for (let i = 0; i < n_p_circ; i++) {
+      const nxt = (i + 1) % n_p_circ;
+      all_faces.push([pin_center_top, base_idx + n_p_circ + i, base_idx + n_p_circ + nxt]);
+    }
+  }
+
+  return {
+    vertices: all_verts,
+    faces: all_faces,
+    n_verts: all_verts.length,
+    n_faces: all_faces.length,
+    C, K
+  };
+}
+
+/**
+ * Builds complete set of 3D solid meshes for a planetary gear train:
+ * Sun Gear, Planet Gear, Internal Ring Gear, and Carrier with pins.
+ */
+export function buildPlanetaryMesh(calc, n_sec = 4, n_pts = 36) {
+  const s_nom = (Math.PI * calc.m) / 2;
+
+  // 1. Sun Gear
+  const sunMesh = buildSpurMesh(
+    calc.Ns, calc.m, calc.phi, calc.m, 1.25 * calc.m, s_nom,
+    calc.F, n_sec, calc.r_bore_sun, n_pts
+  );
+
+  // 2. Planet Gear (Single prototype planet)
+  const planetMesh = buildSpurMesh(
+    calc.Np, calc.m, calc.phi, calc.m, 1.25 * calc.m, s_nom,
+    calc.F, n_sec, calc.r_bore_planet, n_pts
+  );
+
+  // 3. Ring Gear
+  // Prepare temporary internal spur calc representation
+  const ringCalc = {
+    Ng: calc.Nr,
+    phi: calc.phi,
+    rp_g: calc.rp_r,
+    rb_g: calc.rb_r,
+    ra_g_int: calc.ra_r_int,
+    rd_g_int: calc.rd_r_int,
+    r_rim: calc.r_rim,
+    s_g: s_nom,
+    F: calc.F
+  };
+  const ringMesh = buildInternalRingMesh(ringCalc, n_sec, n_pts);
+
+  // 4. Carrier with pins
+  const carrierMesh = buildCarrierMesh(calc);
+
+  return {
+    sunMesh,
+    planetMesh,
+    ringMesh,
+    carrierMesh
   };
 }
 

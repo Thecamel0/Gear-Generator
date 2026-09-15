@@ -37,6 +37,8 @@ export class GearViewer3D {
 
     this.rootAssemblyGroup = null;
     this.gearGroup = null;
+    this.sunGroup = null;
+    this.carrierGroup = null;
     this.pinionGroups = [];
     this.pitchConesGroup = null;
     this.axesHelper = null;
@@ -127,24 +129,78 @@ export class GearViewer3D {
     const n_verts = vertices.length;
 
     // For bevel gears (Zerol, Spiral, Straight Bevel):
-    // Construct single indexed buffer geometry and compute Gouraud smooth normals across the entire mesh,
-    // exactly replicating MATLAB's FaceLighting = 'gouraud' without artificial planar cap normals.
+    // Accumulate smooth normals for lateral tooth flanks exclusively from lateral faces,
+    // and assign dedicated planar normals [0, 0, 1] / [0, 0, -1] for heel and toe end caps.
+    // Completely eliminates diagonal crease artifacts and surface faceting across the end caps.
     if (customMesh.isBevel) {
-      const positions = new Float32Array(n_verts * 3);
+      const n_lat_faces = customMesh.n_lat_faces || 0;
+      const latNormals = new Float32Array(n_verts * 3);
+      const latCounts = new Uint16Array(n_verts);
+
+      for (let f = 0; f < n_lat_faces; f++) {
+        const [i1, i2, i3] = faces[f];
+        const v1 = vertices[i1], v2 = vertices[i2], v3 = vertices[i3];
+        const ax = v2[0] - v1[0], ay = v2[1] - v1[1], az = v2[2] - v1[2];
+        const bx = v3[0] - v1[0], by = v3[1] - v1[1], bz = v3[2] - v1[2];
+        let nx = ay * bz - az * by;
+        let ny = az * bx - ax * bz;
+        let nz = ax * by - ay * bx;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+        nx /= len; ny /= len; nz /= len;
+
+        for (const idx of [i1, i2, i3]) {
+          latNormals[idx * 3] += nx;
+          latNormals[idx * 3 + 1] += ny;
+          latNormals[idx * 3 + 2] += nz;
+          latCounts[idx]++;
+        }
+      }
+
       for (let i = 0; i < n_verts; i++) {
-        positions[i * 3] = vertices[i][0];
-        positions[i * 3 + 1] = vertices[i][1];
-        positions[i * 3 + 2] = vertices[i][2];
+        if (latCounts[i] > 0) {
+          const nx = latNormals[i * 3];
+          const ny = latNormals[i * 3 + 1];
+          const nz = latNormals[i * 3 + 2];
+          const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+          latNormals[i * 3] /= len;
+          latNormals[i * 3 + 1] /= len;
+          latNormals[i * 3 + 2] /= len;
+        }
       }
-      const indices = new Uint32Array(n_faces * 3);
-      for (let f = 0; f < n_faces; f++) {
-        indices[f * 3] = faces[f][0];
-        indices[f * 3 + 1] = faces[f][1];
-        indices[f * 3 + 2] = faces[f][2];
+
+      const positions = [];
+      const normals = [];
+      const indices = [];
+
+      for (let i = 0; i < n_verts; i++) {
+        positions.push(vertices[i][0], vertices[i][1], vertices[i][2]);
+        normals.push(latNormals[i * 3], latNormals[i * 3 + 1], latNormals[i * 3 + 2]);
       }
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-      geometry.computeVertexNormals();
+
+      for (let f = 0; f < n_lat_faces; f++) {
+        indices.push(faces[f][0], faces[f][1], faces[f][2]);
+      }
+
+      for (let f = n_lat_faces; f < n_faces; f++) {
+        const [i1, i2, i3] = faces[f];
+        const v1 = vertices[i1], v2 = vertices[i2], v3 = vertices[i3];
+        const ax = v2[0] - v1[0], ay = v2[1] - v1[1], az = v2[2] - v1[2];
+        const bx = v3[0] - v1[0], by = v3[1] - v1[1], bz = v3[2] - v1[2];
+        const nz = ax * by - ay * bx;
+        const capNormZ = nz >= 0 ? 1.0 : -1.0;
+
+        for (const idx of [i1, i2, i3]) {
+          const v = vertices[idx];
+          const newIdx = positions.length / 3;
+          positions.push(v[0], v[1], v[2]);
+          normals.push(0, 0, capNormZ);
+          indices.push(newIdx);
+        }
+      }
+
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+      geometry.setIndex(indices);
       return geometry;
     }
 
@@ -261,10 +317,12 @@ export class GearViewer3D {
     }
 
     this.gearGroup = null;
+    this.sunGroup = null;
+    this.carrierGroup = null;
     this.pinionGroups = [];
   }
 
-  updateGears(calc, pinionMesh, gearMesh) {
+  updateGears(calc, pinionMesh, gearMesh, extraMeshes = {}) {
     this.calc = calc;
     this.pinionMesh = pinionMesh;
     this.gearMesh = gearMesh;
@@ -272,6 +330,7 @@ export class GearViewer3D {
     // Deep dispose previous geometries and materials to prevent memory accumulation
     this.disposeGears();
 
+    const isPlanetary = calc.gear_type === 'planetary';
     const gearGeo = this.convertMeshToThreeBufferGeometry(gearMesh);
     const pinionGeo = this.convertMeshToThreeBufferGeometry(pinionMesh);
 
@@ -286,12 +345,16 @@ export class GearViewer3D {
     });
 
     // Pinion palette matching MATLAB's exact colors:
-    // [0.45 0.58 0.78; 0.55 0.75 0.55; 0.72 0.48 0.65; 0.78 0.68 0.45]
+    // [0.45 0.58 0.78; 0.55 0.75 0.55; 0.72 0.48 0.65; 0.78 0.68 0.45; 0.50 0.70 0.75; 0.70 0.55 0.55]
     const pinionColors = [
       0x7394c7, // Pinion 1: Steel Blue
       0x8cbf8c, // Pinion 2: Sage Green
       0xb87ba6, // Pinion 3: Dusty Lavender
-      0xc7ad73  // Pinion 4: Warm Gold
+      0xc7ad73, // Pinion 4: Warm Ochre
+      0x7fc2cc, // Pinion 5: Cyan Teal
+      0xcc8c8c, // Pinion 6: Terra Cotta
+      0xa67bcc, // Pinion 7: Amethyst Violet
+      0xc29b7f  // Pinion 8: Amber Bronze
     ];
 
     // 1. Build Ring Gear
@@ -300,10 +363,47 @@ export class GearViewer3D {
     this.gearGroup.add(gearMeshObj);
     this.rootAssemblyGroup.add(this.gearGroup);
 
-    // 2. Build Multi-Pinions
-    const n_pinions = calc.n_pinions || 3;
+    // 1B. If Planetary, Build Sun Gear & Carrier
+    if (isPlanetary) {
+      const sunSourceMesh = extraMeshes.sunMesh || calc.sunMesh;
+      if (sunSourceMesh) {
+        const sunGeo = this.convertMeshToThreeBufferGeometry(sunSourceMesh);
+        const sunMaterial = new THREE.MeshStandardMaterial({
+          color: 0xdde2ea, // Metallic Chrome Silver
+          metalness: 0.65,
+          roughness: 0.35,
+          wireframe: this.showWireframe,
+          side: THREE.DoubleSide
+        });
+        this.sunGroup = new THREE.Group();
+        const sunMeshObj = new THREE.Mesh(sunGeo, sunMaterial);
+        this.sunGroup.add(sunMeshObj);
+        this.rootAssemblyGroup.add(this.sunGroup);
+      }
+
+      const carrierSourceMesh = extraMeshes.carrierMesh || calc.carrierMesh;
+      if (carrierSourceMesh) {
+        const carrierGeo = this.convertMeshToThreeBufferGeometry(carrierSourceMesh);
+        const carrierMaterial = new THREE.MeshStandardMaterial({
+          color: 0x4e5461, // Sleek Graphite Grey
+          metalness: 0.45,
+          roughness: 0.45,
+          transparent: true,
+          opacity: 0.85,
+          wireframe: this.showWireframe,
+          side: THREE.DoubleSide
+        });
+        this.carrierGroup = new THREE.Group();
+        const carrierMeshObj = new THREE.Mesh(carrierGeo, carrierMaterial);
+        this.carrierGroup.add(carrierMeshObj);
+        this.rootAssemblyGroup.add(this.carrierGroup);
+      }
+    }
+
+    // 2. Build Multi-Pinions / Planets
+    const n_pinions = isPlanetary ? (calc.K || 3) : (calc.n_pinions || 3);
     const Ry90 = new THREE.Matrix4().makeRotationY(Math.PI / 2);
-    const Rclock = new THREE.Matrix4().makeRotationZ(Math.PI / calc.Np);
+    const Rclock = new THREE.Matrix4().makeRotationZ(Math.PI / (calc.Np || 18));
 
     for (let p = 0; p < n_pinions; p++) {
       const pColor = pinionColors[p % pinionColors.length];
@@ -319,12 +419,18 @@ export class GearViewer3D {
       const pGroup = new THREE.Group();
       pGroup.add(pinionMeshObj);
 
-      const angleOffset = (p * 2 * Math.PI) / n_pinions;
-      const phaseAngle = angleOffset * (calc.Ng / calc.Np);
+      const angleOffset = (isPlanetary && calc.planet_angles && calc.planet_angles[p] !== undefined)
+        ? calc.planet_angles[p]
+        : (p * 2 * Math.PI) / n_pinions;
+      const initialClock = (isPlanetary && calc.planet_clocks && calc.planet_clocks[p] !== undefined)
+        ? calc.planet_clocks[p]
+        : (angleOffset + angleOffset * ((calc.Ns || 12) / (calc.Np || 18)));
+      const phaseAngle = angleOffset * ((calc.Ng || calc.Nr || 48) / (calc.Np || 18));
 
       pGroup.userData = {
         pinionIndex: p,
         angleOffset: angleOffset,
+        initialClock: initialClock,
         phaseAngle: phaseAngle,
         meshObj: pinionMeshObj
       };
@@ -345,9 +451,62 @@ export class GearViewer3D {
   updateExplodedTransforms() {
     if (!this.calc || !this.gearGroup) return;
 
+    const isPlanetary = this.calc.gear_type === 'planetary';
     const isSpur = this.calc.gear_type === 'spur' || this.calc.gear_type === 'helical';
     const isInternalSpur = this.calc.gear_type === 'internal_spur';
-    const isBevel = !isSpur && !isInternalSpur;
+    const isBevel = !isSpur && !isInternalSpur && !isPlanetary;
+
+    // PLANETARY GEAR: True Willis orbital kinematics and axial exploded view
+    if (isPlanetary) {
+      const C = this.calc.center_dist || 45.0;
+      const Ns = this.calc.Ns || 12;
+      const Np = this.calc.Np || 18;
+      const Nr = this.calc.Nr || 48;
+      const sep = (this.calc.F || 25.0) * 1.5 * this.explodedFactor;
+
+      // Willis Kinematics:
+      // Sun rotates at gearAngle, Carrier rotates at gearAngle / i_ratio
+      const theta_s = this.gearAngle;
+      const theta_c = theta_s / (1 + Nr / Ns);
+
+      // Ring Gear is fixed to frame (stationary)
+      this.gearGroup.position.set(0, 0, 0);
+      this.gearGroup.rotation.set(0, 0, 0);
+
+      // Carrier moves along -Z and rotates at carrier speed
+      if (this.carrierGroup) {
+        this.carrierGroup.position.set(0, 0, -sep * 1.4);
+        this.carrierGroup.rotation.set(0, 0, theta_c);
+      }
+
+      // Sun moves along +Z and rotates at sun speed
+      if (this.sunGroup) {
+        this.sunGroup.position.set(0, 0, sep * 1.2);
+        this.sunGroup.rotation.set(0, 0, theta_s + (Math.PI / Ns));
+      }
+
+      // Planets orbit with carrier and rotate on their pins
+      for (let i = 0; i < this.pinionGroups.length; i++) {
+        const pGroup = this.pinionGroups[i];
+        const { angleOffset, initialClock, meshObj } = pGroup.userData;
+
+        const currentOrbitAngle = angleOffset + theta_c;
+        // Initial clocking plus relative spin: omega_p/c = -omega_c * (Nr / Np)
+        const clock = initialClock !== undefined ? initialClock : (angleOffset + angleOffset * (Ns / Np));
+        const currentSpinAngle = clock + theta_c * (1 - Nr / Np);
+
+        meshObj.matrixAutoUpdate = true;
+        meshObj.rotation.set(0, 0, currentSpinAngle);
+
+        const r_curr = C + sep * 0.25;
+        pGroup.position.set(
+          Math.cos(currentOrbitAngle) * r_curr,
+          Math.sin(currentOrbitAngle) * r_curr,
+          sep * 0.4
+        );
+      }
+      return;
+    }
 
     // Single-Pair Exploded View matching MATLAB's ax2: Exploded View (Single Pair)
     if (isBevel && this.viewMode === 'single-pair') {
@@ -467,17 +626,28 @@ export class GearViewer3D {
 
   updateVisibilityMode() {
     if (!this.gearGroup) return;
+    const hasSun = !!this.sunGroup;
+    const hasCarrier = !!this.carrierGroup;
+
     if (this.viewMode === 'assembly') {
       this.gearGroup.visible = true;
+      if (hasSun) this.sunGroup.visible = true;
+      if (hasCarrier) this.carrierGroup.visible = true;
       this.pinionGroups.forEach(pg => (pg.visible = true));
     } else if (this.viewMode === 'single-pair') {
       this.gearGroup.visible = true;
+      if (hasSun) this.sunGroup.visible = true;
+      if (hasCarrier) this.carrierGroup.visible = false;
       this.pinionGroups.forEach((pg, idx) => (pg.visible = idx === 0));
     } else if (this.viewMode === 'pinion') {
       this.gearGroup.visible = false;
-      this.pinionGroups.forEach((pg, idx) => (pg.visible = idx === 0));
+      if (hasSun) this.sunGroup.visible = true;
+      if (hasCarrier) this.carrierGroup.visible = false;
+      this.pinionGroups.forEach(pg => (pg.visible = true));
     } else if (this.viewMode === 'gear') {
       this.gearGroup.visible = true;
+      if (hasSun) this.sunGroup.visible = false;
+      if (hasCarrier) this.carrierGroup.visible = false;
       this.pinionGroups.forEach(pg => (pg.visible = false));
     }
   }
@@ -486,6 +656,12 @@ export class GearViewer3D {
     this.showWireframe = !!enabled;
     if (this.gearGroup) {
       this.gearGroup.children[0].material.wireframe = this.showWireframe;
+      if (this.sunGroup && this.sunGroup.children[0]) {
+        this.sunGroup.children[0].material.wireframe = this.showWireframe;
+      }
+      if (this.carrierGroup && this.carrierGroup.children[0]) {
+        this.carrierGroup.children[0].material.wireframe = this.showWireframe;
+      }
       this.pinionGroups.forEach(pg => {
         pg.userData.meshObj.material.wireframe = this.showWireframe;
       });
@@ -504,16 +680,17 @@ export class GearViewer3D {
 
   setCameraPreset(preset) {
     if (!this.calc) return;
+    const isPlanetary = this.calc.gear_type === 'planetary';
     const isInternalSpur = this.calc.gear_type === 'internal_spur';
     const isSpur = this.calc.gear_type === 'spur' || this.calc.gear_type === 'helical';
-    const refDist = isInternalSpur
+    const refDist = (isPlanetary || isInternalSpur)
       ? (this.calc.D_outer || (this.calc.r_rim ? this.calc.r_rim * 2 : 180))
       : (isSpur
           ? ((this.calc.dp + this.calc.dg) * 0.8 || 150)
           : Math.max((this.calc.dg || 144) + (this.calc.dp || 48), (this.calc.Ao * 2 || 150)));
     const d = Math.max(refDist * 1.35, 160);
 
-    const targetY = (isSpur || isInternalSpur) ? 0 : 12;
+    const targetY = (isSpur || isInternalSpur || isPlanetary) ? 0 : 12;
 
     switch (preset) {
       case 'iso':

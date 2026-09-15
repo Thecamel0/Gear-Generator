@@ -442,6 +442,27 @@ export function exportIGES(mesh, partName = 'Zerol_Bevel_Gear', headerText = 'Ze
  * Generates SolidWorks Equations text file.
  */
 export function exportSolidWorksEquations(calc) {
+  if (calc.gear_type === 'planetary') {
+    return [
+      `"Module" = ${calc.m}mm`,
+      `"SunTeeth" = ${calc.Ns}`,
+      `"PlanetTeeth" = ${calc.Np}`,
+      `"RingTeeth" = ${calc.Nr}`,
+      `"NumberOfPlanets" = ${calc.K}`,
+      `"PressureAngle" = ${calc.phi_deg}deg`,
+      `"CarrierOrbitRadius" = ${calc.center_dist.toFixed(3)}mm`,
+      `"FaceWidth" = ${calc.F.toFixed(3)}mm`,
+      `"SunPitchDia" = ${calc.ds.toFixed(3)}mm`,
+      `"PlanetPitchDia" = ${calc.dp.toFixed(3)}mm`,
+      `"RingPitchDia" = ${calc.dr.toFixed(3)}mm`,
+      `"SunTipDia" = ${(2 * calc.ra_s).toFixed(3)}mm`,
+      `"PlanetTipDia" = ${(2 * calc.ra_p).toFixed(3)}mm`,
+      `"RingInnerTipDia" = ${(2 * calc.ra_r_int).toFixed(3)}mm`,
+      `"RingOuterRimDia" = ${calc.D_outer.toFixed(3)}mm`,
+      `"WillisRatio" = ${calc.i_ratio.toFixed(2)}`
+    ].join('\n') + '\n';
+  }
+
   if (calc.gear_type === 'internal_spur') {
     return [
       `"Module" = ${calc.m}mm`,
@@ -560,6 +581,31 @@ export function exportSolidWorksEquations(calc) {
  * Generates SolidWorks VBA Macro script (.bas).
  */
 export function exportSolidWorksMacro(calc) {
+  if (calc.gear_type === 'planetary') {
+    return `' ======================================================================
+' SOLIDWORKS VBA MACRO — PARAMETRIC PLANETARY GEAR DRIVE CREATOR
+' Wind Turbine Pitch Control System (Epicyclic Reducer)
+' Generated automatically by Gear Master Studio
+' ======================================================================
+
+Option Explicit
+
+Dim swApp As Object
+Dim swModel As Object
+
+Sub main()
+    Set swApp = Application.SldWorks
+    MsgBox "Parametric Planetary Gear Parameters Loaded:" & vbCrLf & _
+           "Module: ${calc.m} mm" & vbCrLf & _
+           "Sun Teeth: ${calc.Ns} (PD = ${calc.ds.toFixed(2)} mm)" & vbCrLf & _
+           "Planet Teeth: ${calc.Np} (x${calc.K}) (PD = ${calc.dp.toFixed(2)} mm)" & vbCrLf & _
+           "Ring Teeth: ${calc.Nr} (PD = ${calc.dr.toFixed(2)} mm)" & vbCrLf & _
+           "Carrier Orbit Radius: ${calc.center_dist.toFixed(2)} mm" & vbCrLf & _
+           "Willis Ratio: 1:${calc.i_ratio.toFixed(2)}", vbInformation, "Gear Master Studio"
+End Sub
+`;
+  }
+
   if (calc.gear_type === 'internal_spur') {
     const m = calc.m;
     const Np = calc.Np;
@@ -876,6 +922,45 @@ End Sub
  * Generates Design Summary CSV Report.
  */
 export function exportDesignReportCSV(calc) {
+  if (calc.gear_type === 'planetary') {
+    const rows = [
+      ['Parameter', 'Value', 'Unit', 'Notes'],
+      ['Gear Type', 'Epicyclic Planetary Gear Train', '-', 'Sun + K Planets + Ring + Carrier'],
+      ['Module (m)', calc.m, 'mm', 'Standard metric module'],
+      ['Sun Gear Teeth (Ns)', calc.Ns, '-', 'Central input drive gear'],
+      ['Planet Gear Teeth (Np)', calc.Np, '-', 'Planetary idler gears'],
+      ['Ring Gear Teeth (Nr)', calc.Nr, '-', 'Coaxiality: Nr = Ns + 2*Np'],
+      ['Number of Planets (K)', calc.K, '-', 'Symmetrically spaced around carrier'],
+      ['Symmetric Assembly Condition', calc.is_symmetric ? 'Satisfied' : 'Asymmetric', '-', `(Ns + Nr)/K = ${calc.assembly_index}`],
+      ['Willis Transmission Ratio (i)', calc.i_ratio.toFixed(2), '-', 'i = 1 + Nr/Ns (Stationary Ring)'],
+      ['Carrier Orbit Radius (C)', calc.center_dist.toFixed(3), 'mm', 'C = (ds + dp) / 2'],
+      ['Face Width (F)', calc.F.toFixed(3), 'mm', 'Cylindrical face width'],
+      ['Pressure Angle (phi)', calc.phi_deg, 'deg', 'Standard 20 deg involute'],
+      ['Sun Pitch Diameter (ds)', calc.ds.toFixed(3), 'mm', 'ds = m * Ns'],
+      ['Planet Pitch Diameter (dp)', calc.dp.toFixed(3), 'mm', 'dp = m * Np'],
+      ['Ring Pitch Diameter (dr)', calc.dr.toFixed(3), 'mm', 'dr = m * Nr'],
+      ['Sun Tip Diameter', (2 * calc.ra_s).toFixed(3), 'mm', ''],
+      ['Planet Tip Diameter', (2 * calc.ra_p).toFixed(3), 'mm', ''],
+      ['Ring Inner Tip Diameter', (2 * calc.ra_r_int).toFixed(3), 'mm', 'Inner crest circle'],
+      ['Ring Outer Rim Diameter', calc.D_outer.toFixed(3), 'mm', 'Outer casing mounting cylinder'],
+      ['Adjacent Planet Clearance', calc.clearance_adjacent_planets.toFixed(3), 'mm', 'Tip clearance between planets'],
+      ['Sun-Planet Contact Ratio', calc.CR_sp.toFixed(3), '-', 'External mesh'],
+      ['Planet-Ring Contact Ratio', calc.CR_pr.toFixed(3), '-', 'Internal mesh'],
+      ['Input Sun Speed', calc.n_in_sun, 'RPM', 'Motor drive speed'],
+      ['Carrier Output Speed', calc.n_carrier_out.toFixed(1), 'RPM', 'Output pitch drive speed'],
+      ['Planet Spin on Pin', calc.n_planet_relative.toFixed(1), 'RPM', 'Spin on carrier pin bearing'],
+      ['Input Sun Torque', calc.T_in_sun, 'N.m', 'Motor nominal torque'],
+      ['Carrier Output Torque', calc.T_carrier_out.toFixed(2), 'N.m', 'Tc = Ts * i * eta'],
+      ['Tangential Load / Mesh (Ft)', calc.Ft.toFixed(2), 'N', `Ft with AGMA K_gamma = ${calc.K_gamma.toFixed(2)}`],
+      ['Sun Bending SF', calc.SF_b_s.toFixed(1), '-', 'Lewis bending safety factor'],
+      ['Planet Bending SF', calc.SF_b_p.toFixed(1), '-', 'Reversed fatigue bending SF'],
+      ['Ring Bending SF', calc.SF_b_r.toFixed(1), '-', 'Internal tooth bending SF'],
+      ['Sun-Planet Contact SF', calc.SF_contact_sp.toFixed(1), '-', 'Hertzian contact safety factor'],
+      ['Planet-Ring Contact SF', calc.SF_contact_pr.toFixed(1), '-', 'Conforming internal contact SF']
+    ];
+    return rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\n');
+  }
+
   if (calc.gear_type === 'helical') {
     const rows = [
       ['Parameter', 'Value', 'Unit', 'Notes'],
@@ -1116,9 +1201,60 @@ export function exportDesignReportCSV(calc) {
  * Computes in-mesh transformed copies of pinion and gear meshes.
  */
 export function getTransformedAssemblyMeshes(calc, pinionMesh, gearMesh) {
+  const isPlanetary = calc.gear_type === 'planetary';
   const isInternalSpur = calc.gear_type === 'internal_spur';
   const isSpur = calc.gear_type === 'spur' || calc.gear_type === 'helical';
-  const isBevel = !isInternalSpur && !isSpur;
+  const isBevel = !isInternalSpur && !isSpur && !isPlanetary;
+
+  if (isPlanetary) {
+    const C = calc.center_dist || 45.0;
+    const K = calc.K || 3;
+    const Ns = calc.Ns || 12;
+    const Np = calc.Np || 18;
+
+    let combined = {
+      vertices: gearMesh.vertices.map(v => [...v]),
+      faces: gearMesh.faces.map(f => [...f])
+    };
+
+    if (calc.sunMesh) {
+      const th_sun = Math.PI / Ns;
+      const cos_s = Math.cos(th_sun), sin_s = Math.sin(th_sun);
+      const sunTrans = {
+        vertices: calc.sunMesh.vertices.map(([x, y, z]) => [x * cos_s - y * sin_s, x * sin_s + y * cos_s, z]),
+        faces: calc.sunMesh.faces.map(f => [...f])
+      };
+      combined = combineMeshes(combined, sunTrans);
+    }
+
+    for (let k = 0; k < K; k++) {
+      const th_k = (calc.planet_angles && calc.planet_angles[k] !== undefined)
+        ? calc.planet_angles[k]
+        : (k * 2 * Math.PI) / K;
+      const cx = C * Math.cos(th_k);
+      const cy = C * Math.sin(th_k);
+      const phi_rot = (calc.planet_clocks && calc.planet_clocks[k] !== undefined)
+        ? calc.planet_clocks[k]
+        : th_k + th_k * (Ns / Np);
+      const cos_p = Math.cos(phi_rot), sin_p = Math.sin(phi_rot);
+
+      const pTrans = {
+        vertices: pinionMesh.vertices.map(([x, y, z]) => [
+          x * cos_p - y * sin_p + cx,
+          x * sin_p + y * cos_p + cy,
+          z
+        ]),
+        faces: pinionMesh.faces.map(f => [...f])
+      };
+      combined = combineMeshes(combined, pTrans);
+    }
+
+    if (calc.carrierMesh) {
+      combined = combineMeshes(combined, calc.carrierMesh);
+    }
+
+    return { pinionTrans: { vertices: [], faces: [] }, gearCopy: combined };
+  }
 
   const gearCopy = {
     vertices: gearMesh.vertices.map(v => [v[0], v[1], v[2]]),
@@ -1200,15 +1336,29 @@ export function exportAssemblySTEP(calc, pinionMesh, gearMesh, baseName = 'Gear_
  */
 export async function exportSTEPZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set', onProgress = null) {
   const zip = new JSZip();
-  if (onProgress) onProgress('Generating Pinion STEP model...');
+  const isPlanetary = calc.gear_type === 'planetary';
+
+  if (isPlanetary && calc.sunMesh) {
+    if (onProgress) onProgress('Generating Sun STEP model...');
+    await new Promise(r => setTimeout(r, 10));
+    zip.file(`${baseName}_sun.stp`, exportSTEP(calc.sunMesh, `${baseName}_sun`, 'Planetary Sun Gear'));
+  }
+
+  if (onProgress) onProgress(isPlanetary ? 'Generating Planet STEP model...' : 'Generating Pinion STEP model...');
   await new Promise(r => setTimeout(r, 10));
   const pSTP = exportSTEP(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
   zip.file(`${baseName}_pinion.stp`, pSTP);
 
-  if (onProgress) onProgress('Generating Gear STEP model...');
+  if (onProgress) onProgress(isPlanetary ? 'Generating Ring STEP model...' : 'Generating Gear STEP model...');
   await new Promise(r => setTimeout(r, 10));
   const gSTP = exportSTEP(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
   zip.file(`${baseName}_gear.stp`, gSTP);
+
+  if (isPlanetary && calc.carrierMesh) {
+    if (onProgress) onProgress('Generating Carrier STEP model...');
+    await new Promise(r => setTimeout(r, 10));
+    zip.file(`${baseName}_carrier.stp`, exportSTEP(calc.carrierMesh, `${baseName}_carrier`, 'Planetary Carrier'));
+  }
 
   if (onProgress) onProgress('Generating Assembly STEP model...');
   await new Promise(r => setTimeout(r, 10));
@@ -1229,15 +1379,29 @@ export async function exportSTEPZip(calc, pinionMesh, gearMesh, baseName = 'Gear
  */
 export async function exportSTLZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set', onProgress = null) {
   const zip = new JSZip();
-  if (onProgress) onProgress('Generating Pinion STL...');
+  const isPlanetary = calc.gear_type === 'planetary';
+
+  if (isPlanetary && calc.sunMesh) {
+    if (onProgress) onProgress('Generating Sun STL...');
+    await new Promise(r => setTimeout(r, 10));
+    zip.file(`${baseName}_sun.stl`, exportSTLBinary(calc.sunMesh, `${baseName} Sun Gear`));
+  }
+
+  if (onProgress) onProgress(isPlanetary ? 'Generating Planet STL...' : 'Generating Pinion STL...');
   await new Promise(r => setTimeout(r, 10));
   const pSTL = exportSTLBinary(pinionMesh, `${baseName} Pinion`);
   zip.file(`${baseName}_pinion.stl`, pSTL);
 
-  if (onProgress) onProgress('Generating Gear STL...');
+  if (onProgress) onProgress(isPlanetary ? 'Generating Ring STL...' : 'Generating Gear STL...');
   await new Promise(r => setTimeout(r, 10));
   const gSTL = exportSTLBinary(gearMesh, `${baseName} Gear`);
   zip.file(`${baseName}_gear.stl`, gSTL);
+
+  if (isPlanetary && calc.carrierMesh) {
+    if (onProgress) onProgress('Generating Carrier STL...');
+    await new Promise(r => setTimeout(r, 10));
+    zip.file(`${baseName}_carrier.stl`, exportSTLBinary(calc.carrierMesh, `${baseName} Carrier`));
+  }
 
   if (onProgress) onProgress('Generating Assembly STL...');
   await new Promise(r => setTimeout(r, 10));
@@ -1258,15 +1422,29 @@ export async function exportSTLZip(calc, pinionMesh, gearMesh, baseName = 'Gear_
  */
 export async function exportIGESZip(calc, pinionMesh, gearMesh, baseName = 'Gear_Set', onProgress = null) {
   const zip = new JSZip();
-  if (onProgress) onProgress('Generating Pinion IGES...');
+  const isPlanetary = calc.gear_type === 'planetary';
+
+  if (isPlanetary && calc.sunMesh) {
+    if (onProgress) onProgress('Generating Sun IGES...');
+    await new Promise(r => setTimeout(r, 10));
+    zip.file(`${baseName}_sun.igs`, exportIGES(calc.sunMesh, `${baseName}_sun`, 'Planetary Sun Gear'));
+  }
+
+  if (onProgress) onProgress(isPlanetary ? 'Generating Planet IGES...' : 'Generating Pinion IGES...');
   await new Promise(r => setTimeout(r, 10));
   const pIGS = exportIGES(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
   zip.file(`${baseName}_pinion.igs`, pIGS);
 
-  if (onProgress) onProgress('Generating Gear IGES...');
+  if (onProgress) onProgress(isPlanetary ? 'Generating Ring IGES...' : 'Generating Gear IGES...');
   await new Promise(r => setTimeout(r, 10));
   const gIGS = exportIGES(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
   zip.file(`${baseName}_gear.igs`, gIGS);
+
+  if (isPlanetary && calc.carrierMesh) {
+    if (onProgress) onProgress('Generating Carrier IGES...');
+    await new Promise(r => setTimeout(r, 10));
+    zip.file(`${baseName}_carrier.igs`, exportIGES(calc.carrierMesh, `${baseName}_carrier`, 'Planetary Carrier'));
+  }
 
   if (onProgress) onProgress('Compressing IGES ZIP archive...');
   await new Promise(r => setTimeout(r, 10));
@@ -1287,8 +1465,9 @@ export async function exportSolidWorksZip(calc, baseName = 'Gear_Set') {
   const isInternal = calc.gear_type === 'internal_spur';
   const isSpur = calc.gear_type === 'spur';
   const isStraight = calc.gear_type === 'straight-bevel';
-  const macroName = isSpiral ? 'create_spiral_bevel_gears.bas' : isHelical ? 'create_helical_gears.bas' : isInternal ? 'create_internal_spur_gears.bas' : isSpur ? 'create_spur_gears.bas' : isStraight ? 'create_straight_bevel_gears.bas' : 'create_zerol_bevel_gears.bas';
-  const eqName = isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
+  const isPlanetary = calc.gear_type === 'planetary';
+  const macroName = isPlanetary ? 'create_planetary_gears.bas' : isSpiral ? 'create_spiral_bevel_gears.bas' : isHelical ? 'create_helical_gears.bas' : isInternal ? 'create_internal_spur_gears.bas' : isSpur ? 'create_spur_gears.bas' : isStraight ? 'create_straight_bevel_gears.bas' : 'create_zerol_bevel_gears.bas';
+  const eqName = isPlanetary ? 'planetary_gear_equations.txt' : isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
   zip.file(macroName, exportSolidWorksMacro(calc));
   zip.file(eqName, exportSolidWorksEquations(calc));
   return await zip.generateAsync({
@@ -1308,31 +1487,47 @@ export async function createCompleteCADZip(calc, pinionMesh, gearMesh, onProgres
   const isInternal = calc.gear_type === 'internal_spur';
   const isStraight = calc.gear_type === 'straight-bevel';
   const isSpiral = calc.gear_type === 'spiral-bevel';
-  const pPrefix = isSpiral ? 'spiral_bevel_pinion' : isHelical ? 'helical_pinion' : isInternal ? 'internal_pinion' : isSpur ? 'spur_pinion' : isStraight ? 'straight_bevel_pinion' : 'zerol_pinion_v2';
-  const gPrefix = isSpiral ? 'spiral_bevel_gear' : isInternal ? 'internal_ring_gear' : isHelical ? 'helical_gear' : isSpur ? 'spur_gear' : isStraight ? 'straight_bevel_gear' : 'zerol_gear_v2';
-  const aPrefix = isSpiral ? 'spiral_bevel_assembly' : isInternal ? 'internal_spur_assembly' : isHelical ? 'helical_assembly' : isSpur ? 'spur_assembly' : isStraight ? 'straight_bevel_assembly' : 'zerol_assembly_v2';
-  const pDesc = isSpiral ? 'Spiral Bevel Pinion' : isHelical ? 'Helical Pinion' : isInternal ? 'Internal Pinion' : isSpur ? 'Spur Pinion' : isStraight ? 'Straight Bevel Pinion' : 'Zerol Pinion';
-  const gDesc = isSpiral ? 'Spiral Bevel Gear' : isInternal ? 'Internal Ring Gear' : isHelical ? 'Helical Gear' : isSpur ? 'Spur Gear' : isStraight ? 'Straight Bevel Gear' : 'Zerol Gear';
+  const isPlanetary = calc.gear_type === 'planetary';
+  const pPrefix = isPlanetary ? 'planetary_planet_gear' : isSpiral ? 'spiral_bevel_pinion' : isHelical ? 'helical_pinion' : isInternal ? 'internal_pinion' : isSpur ? 'spur_pinion' : isStraight ? 'straight_bevel_pinion' : 'zerol_pinion_v2';
+  const gPrefix = isPlanetary ? 'planetary_ring_gear' : isSpiral ? 'spiral_bevel_gear' : isInternal ? 'internal_ring_gear' : isHelical ? 'helical_gear' : isSpur ? 'spur_gear' : isStraight ? 'straight_bevel_gear' : 'zerol_gear_v2';
+  const aPrefix = isPlanetary ? 'planetary_assembly' : isSpiral ? 'spiral_bevel_assembly' : isInternal ? 'internal_spur_assembly' : isHelical ? 'helical_assembly' : isSpur ? 'spur_assembly' : isStraight ? 'straight_bevel_assembly' : 'zerol_assembly_v2';
+  const pDesc = isPlanetary ? 'Planetary Planet Gear' : isSpiral ? 'Spiral Bevel Pinion' : isHelical ? 'Helical Pinion' : isInternal ? 'Internal Pinion' : isSpur ? 'Spur Pinion' : isStraight ? 'Straight Bevel Pinion' : 'Zerol Pinion';
+  const gDesc = isPlanetary ? 'Planetary Ring Gear' : isSpiral ? 'Spiral Bevel Gear' : isInternal ? 'Internal Ring Gear' : isHelical ? 'Helical Gear' : isSpur ? 'Spur Gear' : isStraight ? 'Straight Bevel Gear' : 'Zerol Gear';
 
   // 1. STL Files
   if (onProgress) onProgress('1/5: Exporting binary STL models...');
   await new Promise(r => setTimeout(r, 10));
+  if (isPlanetary && calc.sunMesh) {
+    zip.file('STL/planetary_sun_gear.stl', exportSTLBinary(calc.sunMesh, 'Planetary Sun Gear STL'));
+  }
   const pinionSTL = exportSTLBinary(pinionMesh, `${pDesc} STL`);
   const gearSTL = exportSTLBinary(gearMesh, `${gDesc} STL`);
+  if (isPlanetary && calc.carrierMesh) {
+    zip.file('STL/planetary_carrier.stl', exportSTLBinary(calc.carrierMesh, 'Planetary Carrier STL'));
+  }
   const assemblySTL = exportAssemblySTLBinary(calc, pinionMesh, gearMesh, `${calc.gear_type || 'Gear'} Assembly STL`);
   zip.file(`STL/${pPrefix}.stl`, pinionSTL);
   zip.file(`STL/${gPrefix}.stl`, gearSTL);
   zip.file(`STL/${aPrefix}.stl`, assemblySTL);
 
   // 2. STEP AP214 Files
-  if (onProgress) onProgress('2/5: Generating STEP Pinion & Gear...');
+  if (onProgress) onProgress('2/5: Generating STEP Models...');
   await new Promise(r => setTimeout(r, 10));
+  if (isPlanetary && calc.sunMesh) {
+    const sunSTP = exportSTEP(calc.sunMesh, 'planetary_sun_gear', `Planetary Sun Gear m${calc.m} Ns${calc.Ns}`);
+    zip.file('STEP/planetary_sun_gear.stp', sunSTP);
+  }
   const pinionSTP = exportSTEP(pinionMesh, pPrefix, `${pDesc} m${calc.m || calc.mn} Np${calc.Np}`);
   zip.file(`STEP/${pPrefix}.stp`, pinionSTP);
 
   await new Promise(r => setTimeout(r, 10));
   const gearSTP = exportSTEP(gearMesh, gPrefix, `${gDesc} m${calc.m || calc.mn} Ng${calc.Ng}`);
   zip.file(`STEP/${gPrefix}.stp`, gearSTP);
+
+  if (isPlanetary && calc.carrierMesh) {
+    const carrierSTP = exportSTEP(calc.carrierMesh, 'planetary_carrier', `Planetary Carrier K${calc.num_planets || 3}`);
+    zip.file('STEP/planetary_carrier.stp', carrierSTP);
+  }
 
   if (onProgress) onProgress('3/5: Generating STEP Assembly in Mesh...');
   await new Promise(r => setTimeout(r, 10));
@@ -1342,22 +1537,30 @@ export async function createCompleteCADZip(calc, pinionMesh, gearMesh, onProgres
   // 3. IGES 5.3 Files
   if (onProgress) onProgress('4/5: Generating IGES surface models...');
   await new Promise(r => setTimeout(r, 10));
+  if (isPlanetary && calc.sunMesh) {
+    const sunIGS = exportIGES(calc.sunMesh, 'planetary_sun_gear', `Planetary Sun Gear m${calc.m} Ns${calc.Ns}`);
+    zip.file('IGES/planetary_sun_gear.igs', sunIGS);
+  }
   const pinionIGS = exportIGES(pinionMesh, pPrefix, `${pDesc} m${calc.m || calc.mn} Np${calc.Np}`);
   const gearIGS = exportIGES(gearMesh, gPrefix, `${gDesc} m${calc.m || calc.mn} Ng${calc.Ng}`);
+  if (isPlanetary && calc.carrierMesh) {
+    const carrierIGS = exportIGES(calc.carrierMesh, 'planetary_carrier', `Planetary Carrier K${calc.num_planets || 3}`);
+    zip.file('IGES/planetary_carrier.igs', carrierIGS);
+  }
   zip.file(`IGES/${pPrefix}.igs`, pinionIGS);
   zip.file(`IGES/${gPrefix}.igs`, gearIGS);
 
   // 4. SolidWorks & CATIA Automation & Reports
   if (onProgress) onProgress('5/5: Adding SolidWorks & CATIA Macros & Reports...');
   await new Promise(r => setTimeout(r, 10));
-  const macroName = isSpiral ? 'create_spiral_bevel_gears.bas' : isHelical ? 'create_helical_gears.bas' : isInternal ? 'create_internal_spur_gears.bas' : isSpur ? 'create_spur_gears.bas' : isStraight ? 'create_straight_bevel_gears.bas' : 'create_zerol_bevel_gears.bas';
-  const catiaMacroName = isSpiral ? 'catia_join_spiral_bevel.catvbs' : isHelical ? 'catia_join_helical.catvbs' : isInternal ? 'catia_join_internal_spur.catvbs' : isSpur ? 'catia_join_spur.catvbs' : isStraight ? 'catia_join_straight_bevel.catvbs' : 'catia_join_zerol_bevel.catvbs';
-  const eqName = isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
+  const macroName = isPlanetary ? 'create_planetary_gears.bas' : isSpiral ? 'create_spiral_bevel_gears.bas' : isHelical ? 'create_helical_gears.bas' : isInternal ? 'create_internal_spur_gears.bas' : isSpur ? 'create_spur_gears.bas' : isStraight ? 'create_straight_bevel_gears.bas' : 'create_zerol_bevel_gears.bas';
+  const catiaMacroName = isPlanetary ? 'catia_join_planetary.catvbs' : isSpiral ? 'catia_join_spiral_bevel.catvbs' : isHelical ? 'catia_join_helical.catvbs' : isInternal ? 'catia_join_internal_spur.catvbs' : isSpur ? 'catia_join_spur.catvbs' : isStraight ? 'catia_join_straight_bevel.catvbs' : 'catia_join_zerol_bevel.catvbs';
+  const eqName = isPlanetary ? 'planetary_gear_equations.txt' : isSpiral ? 'spiral_bevel_equations.txt' : isHelical ? 'helical_equations.txt' : isInternal ? 'internal_spur_equations.txt' : isSpur ? 'spur_gear_equations.txt' : isStraight ? 'straight_bevel_equations.txt' : 'zerol_bevel_equations.txt';
   zip.file(`Solidworks/${macroName}`, exportSolidWorksMacro(calc));
   zip.file(`Solidworks/${eqName}`, exportSolidWorksEquations(calc));
   zip.file(`CATIA/${catiaMacroName}`, exportCATIAMacro(calc));
 
-  const repName = isSpiral ? 'SPIRAL_BEVEL_DESIGN_REPORT.csv' : isHelical ? 'HELICAL_DESIGN_REPORT.csv' : isInternal ? 'INTERNAL_SPUR_DESIGN_REPORT.csv' : isSpur ? 'SPUR_GEAR_DESIGN_REPORT.csv' : isStraight ? 'STRAIGHT_BEVEL_DESIGN_REPORT.csv' : 'ZEROL_BEVEL_DESIGN_REPORT.csv';
+  const repName = isPlanetary ? 'PLANETARY_GEAR_DESIGN_REPORT.csv' : isSpiral ? 'SPIRAL_BEVEL_DESIGN_REPORT.csv' : isHelical ? 'HELICAL_DESIGN_REPORT.csv' : isInternal ? 'INTERNAL_SPUR_DESIGN_REPORT.csv' : isSpur ? 'SPUR_GEAR_DESIGN_REPORT.csv' : isStraight ? 'STRAIGHT_BEVEL_DESIGN_REPORT.csv' : 'ZEROL_BEVEL_DESIGN_REPORT.csv';
   zip.file(`Reports/${repName}`, exportDesignReportCSV(calc));
 
   if (onProgress) onProgress('Compressing complete CAD ZIP package...');
@@ -1378,7 +1581,8 @@ export function exportCATIAMacro(calc) {
   const isSpur = calc.gear_type === 'spur';
   const isStraight = calc.gear_type === 'straight-bevel';
   const isInternal = calc.gear_type === 'internal-spur';
-  const typeName = isSpiral ? 'Spiral Bevel' : isHelical ? 'Helical' : isSpur ? 'Spur' : isStraight ? 'Straight Bevel' : isInternal ? 'Internal Spur' : 'Zerol Bevel';
+  const isPlanetary = calc.gear_type === 'planetary';
+  const typeName = isPlanetary ? 'Planetary' : isSpiral ? 'Spiral Bevel' : isHelical ? 'Helical' : isSpur ? 'Spur' : isStraight ? 'Straight Bevel' : isInternal ? 'Internal Spur' : 'Zerol Bevel';
   const m = calc.m || calc.mn || 3.0;
   const Np = calc.Np || 16;
   const Ng = calc.Ng || 48;

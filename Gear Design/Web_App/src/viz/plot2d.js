@@ -257,6 +257,10 @@ export class GearPlot2D {
 
   render() {
     if (!this.calc || this.width <= 0 || this.height <= 0) return;
+    if (this.calc.gear_type === 'planetary') {
+      this.renderPlanetaryDiagram();
+      return;
+    }
     if (this.calc.gear_type === 'internal_spur') {
       this.renderInternalSpur();
       return;
@@ -1043,6 +1047,364 @@ export class GearPlot2D {
     ctx.fillText(`Contact Ratio: CR = ${calc.CR.toFixed(3)}`, cardX + 8, cardY + 52);
 
     ctx.restore();
+  }
+
+  renderPlanetaryDiagram() {
+    const calc = this.calc;
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
+
+    // Overall Background: MATLAB [0.07 0.07 0.10]
+    ctx.fillStyle = '#12121a';
+    ctx.fillRect(0, 0, w, h);
+
+    const marginLeft = 52;
+    const marginRight = 35;
+    const marginTop = 38;
+    const marginBottom = 45;
+    const gap = 55;
+
+    const availW = w - marginLeft - marginRight - gap;
+    const cellW = Math.floor(availW / 2);
+    const cellH = h - marginTop - marginBottom;
+
+    if (cellW <= 50 || cellH <= 50) return;
+
+    const C = calc.center_dist || 45.0;
+    const Ns = calc.Ns || 12;
+    const Np = calc.Np || 18;
+    const Nr = calc.Nr || 48;
+    const K = calc.K || 3;
+    const m = calc.m || 3.0;
+    const phi = calc.phi;
+
+    const rp_s = calc.rp_s || (m * Ns) / 2;
+    const rp_p = calc.rp_p || (m * Np) / 2;
+    const rp_r = calc.rp_r || (m * Nr) / 2;
+    const r_rim = calc.r_rim || (rp_r + 1.2 * m + 12.0);
+
+    const s_nom = (Math.PI * m) / 2;
+
+    // Generate accurate polygons
+    const polyS = this.generate2DGearPolygon(Ns, m, phi, m, 1.25 * m, s_nom, 120);
+    const polyP = this.generate2DGearPolygon(Np, m, phi, m, 1.25 * m, s_nom, 120);
+
+    // Ring gear profile
+    const ringCalc = {
+      Ng: Nr,
+      phi,
+      rp_g: rp_r,
+      rb_g: calc.rb_r,
+      ra_g_int: calc.ra_r_int,
+      rd_g_int: calc.rd_r_int,
+      r_rim,
+      s_g: s_nom
+    };
+    const ringProf = generateInternalSpurProfile2D(ringCalc, 36);
+
+    // =========================================================================
+    // SUBPLOT 1: Full 2D Epicyclic Overview (Left Pane)
+    // =========================================================================
+    const xMin1 = -r_rim - 10;
+    const xMax1 = r_rim + 10;
+    const yMin1 = -r_rim - 10;
+    const yMax1 = r_rim + 10;
+    const xSpan1 = xMax1 - xMin1;
+    const ySpan1 = yMax1 - yMin1;
+
+    const scale1 = Math.min((cellW - 10) / xSpan1, (cellH - 10) / ySpan1);
+    const s1_w = Math.round(xSpan1 * scale1);
+    const s1_h = Math.round(ySpan1 * scale1);
+    const s1_x = Math.round(marginLeft + (cellW - s1_w) / 2);
+    const s1_y = Math.round(marginTop + (cellH - s1_h) / 2);
+
+    const toScr1 = (wx, wy) => [
+      s1_x + (wx - xMin1) * scale1,
+      s1_y + s1_h - (wy - yMin1) * scale1
+    ];
+
+    const xTicks1 = [-80, -60, -40, -20, 0, 20, 40, 60, 80];
+    const yTicks1 = [-80, -60, -40, -20, 0, 20, 40, 60, 80];
+    const title1 = `2D Planetary Layout: Sun (${Ns}T) + ${K} Planets (${Np}T) + Ring (${Nr}T)`;
+
+    this.drawAxesFrame(s1_x, s1_y, s1_w, s1_h, xMin1, xMax1, yMin1, yMax1, xTicks1, yTicks1, title1, 'X [mm]', 'Y [mm]');
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(s1_x, s1_y, s1_w, s1_h);
+    ctx.clip();
+
+    // 1. Draw Ring Gear Annulus
+    ctx.fillStyle = 'rgba(199, 133, 72, 0.65)';
+    ctx.strokeStyle = '#995924';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    for (let i = 0; i < ringProf.x_rim.length; i++) {
+      const [sx, sy] = toScr1(ringProf.x_rim[i], ringProf.y_rim[i]);
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    for (let i = ringProf.xc_ring.length - 1; i >= 0; i--) {
+      const [sx, sy] = toScr1(ringProf.xc_ring[i], ringProf.yc_ring[i]);
+      ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+    ctx.fill('evenodd');
+    ctx.stroke();
+
+    // 2. Draw Sun Gear (Metallic Silver)
+    ctx.fillStyle = 'rgba(215, 222, 235, 0.88)';
+    ctx.strokeStyle = '#60728c';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    for (let i = 0; i < polyS.xc.length; i++) {
+      const [sx, sy] = toScr1(polyS.xc[i], polyS.yc[i]);
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 3. Draw K Planets
+    const pColors = [
+      'rgba(73, 115, 179, 0.85)', // Steel Blue
+      'rgba(88, 160, 88, 0.85)',   // Sage Green
+      'rgba(175, 110, 155, 0.85)', // Dusty Lavender
+      'rgba(195, 165, 90, 0.85)',  // Warm Ochre
+      'rgba(80, 170, 185, 0.85)',  // Cyan Teal
+      'rgba(190, 110, 110, 0.85)', // Terra Cotta
+      'rgba(166, 123, 204, 0.85)', // Amethyst Violet
+      'rgba(194, 155, 127, 0.85)'  // Amber Bronze
+    ];
+    const pBorders = ['#33598c', '#366d36', '#7d456b', '#8a7235', '#2a6d7a', '#783838', '#6a458c', '#7a5a40'];
+
+    for (let k = 0; k < K; k++) {
+      const th_k = (calc.planet_angles && calc.planet_angles[k] !== undefined)
+        ? calc.planet_angles[k]
+        : (k * 2 * Math.PI) / K;
+      const cx = C * Math.cos(th_k);
+      const cy = C * Math.sin(th_k);
+
+      const phi_rot = (calc.planet_clocks && calc.planet_clocks[k] !== undefined)
+        ? calc.planet_clocks[k]
+        : th_k + th_k * (Ns / Np);
+      const cos_p = Math.cos(phi_rot);
+      const sin_p = Math.sin(phi_rot);
+
+      ctx.fillStyle = pColors[k % pColors.length];
+      ctx.strokeStyle = pBorders[k % pBorders.length];
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      for (let i = 0; i < polyP.xc.length; i++) {
+        const px = polyP.xc[i] * cos_p - polyP.yc[i] * sin_p + cx;
+        const py = polyP.xc[i] * sin_p + polyP.yc[i] * cos_p + cy;
+        const [sx, sy] = toScr1(px, py);
+        if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Planet pin bore circle
+      const r_bore = calc.r_bore_planet || (rp_p * 0.4);
+      const [sbx, sby] = toScr1(cx, cy);
+      ctx.strokeStyle = '#1e2430';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(sbx, sby, r_bore * scale1, 0, 2 * Math.PI);
+      ctx.stroke();
+
+      // Pin center cross
+      ctx.strokeStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(sbx - 4, sby); ctx.lineTo(sbx + 4, sby);
+      ctx.moveTo(sbx, sby - 4); ctx.lineTo(sbx, sby + 4);
+      ctx.stroke();
+    }
+
+    // 4. Pitch circles & Carrier Orbit Circle
+    const drawCirc1 = (r, stroke, dash = []) => {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash(dash);
+      const [scx, scy] = toScr1(0, 0);
+      ctx.beginPath();
+      ctx.arc(scx, scy, r * scale1, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    };
+    drawCirc1(rp_s, '#60a5fa', [4, 3]); // Sun pitch (Blue dashed)
+    drawCirc1(rp_r, '#f59e0b', [4, 3]); // Ring pitch (Gold dashed)
+    drawCirc1(C, '#06b6d4', [6, 4]);    // Carrier orbit (Cyan dash-dot)
+
+    // Center marker
+    const [c0x, c0y] = toScr1(0, 0);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(c0x - 6, c0y); ctx.lineTo(c0x + 6, c0y);
+    ctx.moveTo(c0x, c0y - 6); ctx.lineTo(c0x, c0y + 6);
+    ctx.stroke();
+
+    // Text labels
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Sun (${Ns}T)`, c0x, c0y - rp_s * scale1 * 0.4);
+    const [cp1x, cp1y] = toScr1(C, 0);
+    ctx.fillText(`Planet 1 (${Np}T)`, cp1x, cp1y + 12);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillText(`Ring Gear (${Nr}T)`, c0x, c0y - rp_r * scale1 - 6);
+
+    // Collision or Asymmetric spacing alert overlay
+    if (calc.has_interference) {
+      const [warnX, warnY] = toScr1(0, -r_rim * 0.72);
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.92)';
+      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(`⚠ PLANET OVERLAP: Δ = ${calc.clearance_adjacent_planets.toFixed(1)} mm (Max ${calc.K_max || 3} Planets Fit)`, warnX, warnY);
+    } else if (!calc.is_symmetric) {
+      const [warnX, warnY] = toScr1(0, -r_rim * 0.72);
+      ctx.fillStyle = 'rgba(234, 179, 8, 0.90)';
+      ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(`Asymmetric Meshing: (Ns+Nr)/K = ${calc.assembly_index ? calc.assembly_index.toFixed(2) : ''} (Indexed to Slots)`, warnX, warnY);
+    }
+
+    ctx.restore(); // Restore clip Subplot 1
+
+    // =========================================================================
+    // SUBPLOT 2: High-Magnification Dual Contact Mechanics (Right Pane)
+    // =========================================================================
+    const xMin2 = 5;
+    const xMax2 = 95;
+    const yMin2 = -32;
+    const yMax2 = 32;
+    const xSpan2 = xMax2 - xMin2;
+    const ySpan2 = yMax2 - yMin2;
+
+    const scale2 = Math.min((cellW - 10) / xSpan2, (cellH - 10) / ySpan2);
+    const s2_w = Math.round(xSpan2 * scale2);
+    const s2_h = Math.round(ySpan2 * scale2);
+    const s2_x = Math.round(marginLeft + cellW + gap + (cellW - s2_w) / 2);
+    const s2_y = Math.round(marginTop + (cellH - s2_h) / 2);
+
+    const toScr2 = (wx, wy) => [
+      s2_x + (wx - xMin2) * scale2,
+      s2_y + s2_h - (wy - yMin2) * scale2
+    ];
+
+    const xTicks2 = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+    const yTicks2 = [-30, -20, -10, 0, 10, 20, 30];
+    const title2 = 'Detailed Meshing: Sun-Planet & Planet-Ring Contact Lines';
+
+    this.drawAxesFrame(s2_x, s2_y, s2_w, s2_h, xMin2, xMax2, yMin2, yMax2, xTicks2, yTicks2, title2, 'X [mm]', 'Y [mm]');
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(s2_x, s2_y, s2_w, s2_h);
+    ctx.clip();
+
+    // 1. Ring Gear teeth in zoom
+    ctx.fillStyle = 'rgba(199, 133, 72, 0.50)';
+    ctx.strokeStyle = '#995924';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    for (let i = 0; i < ringProf.xc_ring.length; i++) {
+      const [sx, sy] = toScr2(ringProf.xc_ring[i], ringProf.yc_ring[i]);
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+
+    // 2. Sun Gear teeth in zoom
+    ctx.fillStyle = 'rgba(215, 222, 235, 0.75)';
+    ctx.strokeStyle = '#60728c';
+    ctx.beginPath();
+    for (let i = 0; i < polyS.xc.length; i++) {
+      const [sx, sy] = toScr2(polyS.xc[i], polyS.yc[i]);
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 3. Planet 1 teeth at X = C
+    ctx.fillStyle = 'rgba(73, 115, 179, 0.80)';
+    ctx.strokeStyle = '#33598c';
+    ctx.beginPath();
+    for (let i = 0; i < polyP.xc.length; i++) {
+      const [sx, sy] = toScr2(polyP.xc[i] + C, polyP.yc[i]);
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 4. Pitch Points: P1 at (rp_s, 0) and P2 at (rp_r, 0)
+    const [p1x, p1y] = toScr2(rp_s, 0);
+    const [p2x, p2y] = toScr2(rp_r, 0);
+
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(p1x, p1y, 5, 0, 2 * Math.PI); ctx.fill();
+
+    ctx.fillStyle = '#ec4899';
+    ctx.beginPath(); ctx.arc(p2x, p2y, 5, 0, 2 * Math.PI); ctx.fill();
+
+    // 5. Lines of Action
+    const loa_len = 22;
+    const loa_dir = [Math.sin(phi), Math.cos(phi)];
+
+    // P1 LOA (Red)
+    const [la1x, la1y] = toScr2(rp_s - loa_len * loa_dir[0], -loa_len * loa_dir[1]);
+    const [la2x, la2y] = toScr2(rp_s + loa_len * loa_dir[0], loa_len * loa_dir[0]);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath(); ctx.moveTo(la1x, la1y); ctx.lineTo(la2x, la2y); ctx.stroke();
+
+    // P2 LOA (Pink)
+    const [lb1x, lb1y] = toScr2(rp_r - loa_len * loa_dir[0], -loa_len * loa_dir[1]);
+    const [lb2x, lb2y] = toScr2(rp_r + loa_len * loa_dir[0], loa_len * loa_dir[0]);
+    ctx.strokeStyle = '#ec4899';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath(); ctx.moveTo(lb1x, lb1y); ctx.lineTo(lb2x, lb2y); ctx.stroke();
+
+    // 6. Labels
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`P1: Sun-Planet (CR = ${(calc.CR_sp || 1.475).toFixed(3)})`, p1x + 6, p1y - 8);
+
+    ctx.fillStyle = '#ec4899';
+    ctx.fillText(`P2: Planet-Ring (CR = ${(calc.CR_pr || 1.702).toFixed(3)})`, p2x - 120, p2y - 8);
+
+    // 7. Kinematic HUD Card in Bottom Left of Subplot 2
+    const cardX = s2_x + 12;
+    const cardY = s2_y + s2_h - 100;
+    const cardW = 210;
+    const cardH = 90;
+
+    ctx.fillStyle = '#1e1e28';
+    ctx.strokeStyle = '#4b5563';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.roundRect(cardX, cardY, cardW, cardH, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    ctx.fillText(`Willis Ratio: 1:${(calc.i_ratio || 5.0).toFixed(2)} (Nr = ${Nr}T)`, cardX + 8, cardY + 7);
+    ctx.fillText(`Carrier Speed: ${(calc.n_carrier_out || 100.0).toFixed(1)} RPM`, cardX + 8, cardY + 20);
+    ctx.fillText(`Planet Spin on Pin: ${(calc.n_planet_relative || -266.7).toFixed(1)} RPM`, cardX + 8, cardY + 33);
+    ctx.fillText(`Carrier Torque: ${(calc.T_carrier_out || 72.75).toFixed(2)} N.m`, cardX + 8, cardY + 46);
+    ctx.fillText(`Load / Mesh: Ft = ${(calc.Ft || 305.6).toFixed(1)} N (K\u03B3 = ${(calc.K_gamma || 1.10).toFixed(2)})`, cardX + 8, cardY + 59);
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`Bending SF: Sun ${(calc.SF_b_s || 15.0).toFixed(1)} | Planet ${(calc.SF_b_p || 14.2).toFixed(1)}`, cardX + 8, cardY + 74);
+
+    ctx.restore(); // Restore clip Subplot 2
   }
 
   renderBevelConesAndContact() {

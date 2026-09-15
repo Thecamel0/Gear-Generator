@@ -1,0 +1,30 @@
+Parameter,Value,Unit,Notes
+Gear Type,Planetary (Epicyclic) Gear Train,-,Sun + K Planets + Ring + Carrier
+Module (m),3,mm,Standard metric module
+Sun Gear Teeth (Ns),12,-,Central input gear
+Planet Gear Teeth (Np),18,-,Planetary idler gears
+Ring Gear Teeth (Nr),48,-,Nr = Ns + 2*Np (Coaxiality condition)
+Number of Planets (K),4,-,Equally spaced around carrier
+Symmetric Assembly OK,true,-,(Ns + Nr)/K = 15
+Willis Reduction Ratio (i),5.00,-,i = 1 + Nr/Ns
+Center Distance (C),45.000,mm,Carrier pin orbit radius
+Face Width (F),25.00,mm,Axial tooth width
+Pressure Angle (phi),20.0,deg,Standard involute angle
+Sun Pitch Diameter,36.000,mm,ds = m * Ns
+Planet Pitch Diameter,54.000,mm,dp = m * Np
+Ring Pitch Diameter,144.000,mm,dr = m * Nr
+Outer Rim Diameter,175.500,mm,Outer casing mounting cylinder
+Adjacent Planet Clearance,3.640,mm,Clearance between planet tips
+Sun-Planet Contact Ratio,1.475,-,External involute mesh
+Planet-Ring Contact Ratio,2.016,-,Internal involute mesh
+Input Sun Speed,500.0,RPM,Motor drive speed
+Carrier Output Speed,100.0,RPM,Pitch drive output speed
+Planet Relative Speed on Pin,-266.7,RPM,Spin on needle/pin bearing
+Input Sun Torque,15.00,N*m,Nominal motor torque
+Carrier Output Torque,72.75,N*m,Tc = Ts * i * eta
+Tangential Force / Mesh,245.8,N,Ft with AGMA K_gamma
+Sun Bending SF,18.7,-,Lewis bending safety factor
+Planet Bending SF,17.7,-,Reversed fatigue bending SF
+Ring Bending SF,39.3,-,Internal tooth bending SF
+Sun-Planet Contact SF,4.7,-,Hertzian contact safety factor
+Planet-Ring Contact SF,9.4,-,Conforming contact safety factor
