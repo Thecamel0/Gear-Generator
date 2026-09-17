@@ -211,6 +211,53 @@ body {
   min-height: 0;
 }
 
+/* --- Draggable Panel Splitter Handles --- */
+.splitter-handle {
+  width: 6px;
+  flex-shrink: 0;
+  background: var(--border-subtle);
+  cursor: col-resize;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, width 0.15s ease;
+  z-index: 20;
+  touch-action: none;        /* prevent pointer cancellation on mobile */
+}
+
+.splitter-handle:hover {
+  width: 7px;
+  background: var(--action-blue);
+}
+
+.splitter-handle.active {
+  width: 7px;
+  background: var(--action-blue);
+}
+
+/* Grip dots indicator (three horizontal dots) */
+.splitter-grip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.splitter-handle:hover .splitter-grip,
+.splitter-handle.active .splitter-grip {
+  opacity: 1;
+}
+
+.splitter-grip span {
+  display: block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+}
+
 /* --- 2A. LEFT ICON RAIL --- */
 .icon-rail {
   width: 44px;

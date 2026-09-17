@@ -42,6 +42,7 @@ import {
 import { GearViewer3D } from './viz/viewer3d.js';
 import { GearPlot2D } from './viz/plot2d.js';
 import { initParamTooltips } from './ui/paramTooltips.js';
+import { initPanelResizers } from './ui/panelResizer.js';
 
 // Application State
 let currentCalc = null;
@@ -866,6 +867,9 @@ function handlePngExport(baseName) {
 function setupEvents() {
   // Initialize Interactive Parameter Tooltips & Engineering Guidance
   initParamTooltips();
+
+  // Initialize draggable panel splitters (left config ↔ viewport ↔ right export)
+  initPanelResizers();
 
   // Input changes
   const inputIds = [
