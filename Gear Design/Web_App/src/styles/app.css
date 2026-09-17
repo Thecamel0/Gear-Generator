@@ -1094,22 +1094,23 @@ select.input-control {
 .part-quick-download-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5px;
-  margin-top: 3px;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .btn-part-dl {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 5px;
-  padding: 6px 6px;
+  border-radius: 4px;
+  padding: 6.5px 8px;
   font-family: inherit;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1121,7 +1122,7 @@ select.input-control {
   border-color: var(--action-blue);
   color: var(--action-blue);
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .btn-part-dl:active {
@@ -1129,7 +1130,21 @@ select.input-control {
 }
 
 .btn-part-dl .part-icon {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: color 0.15s ease;
+}
+
+.btn-part-dl:hover .part-icon {
+  color: var(--action-blue);
+}
+
+.part-svg-icon {
+  width: 13px;
+  height: 13px;
+  stroke-width: 1.8px;
 }
 
 /* --------------------------------------------------------------------------
