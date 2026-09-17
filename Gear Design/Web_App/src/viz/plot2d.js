@@ -158,6 +158,29 @@ export class GearPlot2D {
     return { xc, yc };
   }
 
+
+  /**
+   * Generate nicely-rounded tick values for a given data range
+   */
+  generateTicks(min, max, approxCount = 5) {
+    const range = max - min;
+    if (range <= 0) return [min];
+    const rawStep = range / approxCount;
+    // Round to a nice step: 1, 2, 5, 10, 20, 50, ...
+    const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    let step;
+    if (rawStep / mag < 1.5) step = mag;
+    else if (rawStep / mag < 3.5) step = 2 * mag;
+    else if (rawStep / mag < 7.5) step = 5 * mag;
+    else step = 10 * mag;
+    const start = Math.ceil(min / step) * step;
+    const ticks = [];
+    for (let v = start; v <= max + step * 0.001; v += step) {
+      ticks.push(Math.round(v * 1000) / 1000);  // avoid float drift
+    }
+    return ticks;
+  }
+
   /**
    * Helper to draw MATLAB-style axes box, ticks, numeric labels, and engineering grid
    */
@@ -1638,16 +1661,24 @@ export class GearPlot2D {
 
     // =========================================================================
     // SUBPLOT 2: Detailed Tredgold Meshing Zone (Right Pane)
-    // Tredgold back cone plane coordinates around pitch point (rv_p, 0)
+    // Tredgold back-cone plane: virtual gears centred at (0,0) and (center_v,0)
+    // For straight/spiral bevel gears, we use the Tredgold virtual tooth counts
+    // (Nv_p, Nv_g) so the generated involute profiles match the back-cone geometry.
     // =========================================================================
-    const rv_p = calc.rv_p || (calc.m * (calc.Nv_p || 16.86)) / 2;
-    const rv_g = calc.rv_g || (calc.m * (calc.Nv_g || 151.79)) / 2;
+    const Nv_p = calc.Nv_p || (calc.Np / Math.cos(gamma_p));
+    const Nv_g = calc.Nv_g || (calc.Ng / Math.cos(gamma_g));
+    const rv_p = calc.rv_p || (calc.m * Nv_p) / 2;
+    const rv_g = calc.rv_g || (calc.m * Nv_g) / 2;
     const center_v = rv_p + rv_g;
 
-    const s2_xMin = rv_p - 12;
-    const s2_xMax = rv_p + 14;
-    const s2_yMin = -13;
-    const s2_yMax = 13;
+    // Tooth height envelope for adaptive view limits
+    const toothH = (calc.a_p || m) + (calc.b_p || 1.25 * m);
+    const viewPad = Math.max(toothH * 1.8, 8);
+
+    const s2_xMin = rv_p - viewPad;
+    const s2_xMax = rv_p + viewPad * 1.2;
+    const s2_yMin = -viewPad;
+    const s2_yMax = viewPad;
     const s2_xSpan = s2_xMax - s2_xMin;
     const s2_ySpan = s2_yMax - s2_yMin;
     const scale2 = Math.min((cellW - 10) / s2_xSpan, (cellH - 10) / s2_ySpan);
@@ -1657,11 +1688,15 @@ export class GearPlot2D {
     const s2_x = marginLeft + cellW + gap + (cellW - s2_w) / 2;
     const s2_y = marginTop + (cellH - s2_h) / 2;
 
+    // Adaptive tick labels
+    const xTicks2 = this.generateTicks(s2_xMin, s2_xMax, 5);
+    const yTicks2 = this.generateTicks(s2_yMin, s2_yMax, 5);
+
     this.drawAxesFrame(
       s2_x, s2_y, s2_w, s2_h,
       s2_xMin, s2_xMax, s2_yMin, s2_yMax,
-      [15, 20, 25, 30, 35],
-      [-10, -5, 0, 5, 10],
+      xTicks2,
+      yTicks2,
       'Detailed Meshing Zone (Tredgold Equivalent Contact & Line of Action)',
       'Tredgold Plane X [mm]',
       'Tredgold Plane Y [mm]'
@@ -1675,23 +1710,20 @@ export class GearPlot2D {
     ctx.rect(s2_x, s2_y, s2_w, s2_h);
     ctx.clip();
 
-    // In Tredgold plane, generate equivalent pinion and gear teeth
-    const polyP = this.generate2DGearPolygon(calc.Np, calc.m, calc.phi, calc.a_p, calc.b_p, calc.s_p, 200);
-    const polyG = this.generate2DGearPolygon(calc.Ng, calc.m, calc.phi, calc.a_g, calc.b_g, calc.s_g, 200);
+    // Generate Tredgold-equivalent virtual tooth profiles
+    // Using virtual tooth counts so the profile radii match rv_p and rv_g directly.
+    // No additional 1/cos(gamma) scaling — the virtual teeth already encode it.
+    const polyP = this.generate2DGearPolygon(Nv_p, calc.m, calc.phi, calc.a_p, calc.b_p, calc.s_p, 200);
+    const polyG = this.generate2DGearPolygon(Nv_g, calc.m, calc.phi, calc.a_g, calc.b_g, calc.s_g, 200);
 
-    const scale_p = 1 / Math.cos(gamma_p);
-    const scale_g = 1 / Math.cos(gamma_g);
-
-    // Draw Tredgold Pinion
+    // Draw Tredgold Pinion (centred at origin, no extra scale)
     ctx.fillStyle = 'rgba(74, 144, 226, 0.65)';
     ctx.strokeStyle = '#2d5a88';
     ctx.lineWidth = 1.0;
     ctx.beginPath();
     for (let i = 0; i < polyP.xc.length; i++) {
-      const sx = polyP.xc[i] * scale_p;
-      const sy = polyP.yc[i] * scale_p;
-      const mx = mapX2(sx);
-      const my = mapY2(sy);
+      const mx = mapX2(polyP.xc[i]);
+      const my = mapY2(polyP.yc[i]);
       if (i === 0) ctx.moveTo(mx, my);
       else ctx.lineTo(mx, my);
     }
@@ -1699,8 +1731,8 @@ export class GearPlot2D {
     ctx.fill();
     ctx.stroke();
 
-    // Draw Tredgold Gear
-    const half_pitch_g = Math.PI / calc.Ng;
+    // Draw Tredgold Gear (rotated 180° + half pitch, centred at center_v)
+    const half_pitch_g = Math.PI / Nv_g;
     const rot_g = Math.PI + half_pitch_g;
     const cos_rg = Math.cos(rot_g);
     const sin_rg = Math.sin(rot_g);
@@ -1709,10 +1741,8 @@ export class GearPlot2D {
     ctx.strokeStyle = '#8c5023';
     ctx.beginPath();
     for (let i = 0; i < polyG.xc.length; i++) {
-      const gx_scaled = polyG.xc[i] * scale_g;
-      const gy_scaled = polyG.yc[i] * scale_g;
-      const rx = gx_scaled * cos_rg - gy_scaled * sin_rg + center_v;
-      const ry = gx_scaled * sin_rg + gy_scaled * cos_rg;
+      const rx = polyG.xc[i] * cos_rg - polyG.yc[i] * sin_rg + center_v;
+      const ry = polyG.xc[i] * sin_rg + polyG.yc[i] * cos_rg;
       const mx = mapX2(rx);
       const my = mapY2(ry);
       if (i === 0) ctx.moveTo(mx, my);

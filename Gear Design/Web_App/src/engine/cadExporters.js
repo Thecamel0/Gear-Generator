@@ -1346,13 +1346,13 @@ export async function exportSTEPZip(calc, pinionMesh, gearMesh, baseName = 'Gear
 
   if (onProgress) onProgress(isPlanetary ? 'Generating Planet STEP model...' : 'Generating Pinion STEP model...');
   await new Promise(r => setTimeout(r, 10));
-  const pSTP = exportSTEP(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
-  zip.file(`${baseName}_pinion.stp`, pSTP);
+  const pSTP = exportSTEP(pinionMesh, isPlanetary ? `${baseName}_planet` : `${baseName}_pinion`, `${calc.gear_type || 'Gear'} ${isPlanetary ? 'Planet' : 'Pinion'}`);
+  zip.file(isPlanetary ? `${baseName}_planet.stp` : `${baseName}_pinion.stp`, pSTP);
 
   if (onProgress) onProgress(isPlanetary ? 'Generating Ring STEP model...' : 'Generating Gear STEP model...');
   await new Promise(r => setTimeout(r, 10));
-  const gSTP = exportSTEP(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
-  zip.file(`${baseName}_gear.stp`, gSTP);
+  const gSTP = exportSTEP(gearMesh, isPlanetary ? `${baseName}_ring` : `${baseName}_gear`, `${calc.gear_type || 'Gear'} ${isPlanetary ? 'Ring' : 'Gear'}`);
+  zip.file(isPlanetary ? `${baseName}_ring.stp` : `${baseName}_gear.stp`, gSTP);
 
   if (isPlanetary && calc.carrierMesh) {
     if (onProgress) onProgress('Generating Carrier STEP model...');
@@ -1389,13 +1389,13 @@ export async function exportSTLZip(calc, pinionMesh, gearMesh, baseName = 'Gear_
 
   if (onProgress) onProgress(isPlanetary ? 'Generating Planet STL...' : 'Generating Pinion STL...');
   await new Promise(r => setTimeout(r, 10));
-  const pSTL = exportSTLBinary(pinionMesh, `${baseName} Pinion`);
-  zip.file(`${baseName}_pinion.stl`, pSTL);
+  const pSTL = exportSTLBinary(pinionMesh, `${baseName} ${isPlanetary ? 'Planet Gear' : 'Pinion'}`);
+  zip.file(isPlanetary ? `${baseName}_planet.stl` : `${baseName}_pinion.stl`, pSTL);
 
   if (onProgress) onProgress(isPlanetary ? 'Generating Ring STL...' : 'Generating Gear STL...');
   await new Promise(r => setTimeout(r, 10));
-  const gSTL = exportSTLBinary(gearMesh, `${baseName} Gear`);
-  zip.file(`${baseName}_gear.stl`, gSTL);
+  const gSTL = exportSTLBinary(gearMesh, `${baseName} ${isPlanetary ? 'Ring Gear' : 'Gear'}`);
+  zip.file(isPlanetary ? `${baseName}_ring.stl` : `${baseName}_gear.stl`, gSTL);
 
   if (isPlanetary && calc.carrierMesh) {
     if (onProgress) onProgress('Generating Carrier STL...');
@@ -1432,13 +1432,13 @@ export async function exportIGESZip(calc, pinionMesh, gearMesh, baseName = 'Gear
 
   if (onProgress) onProgress(isPlanetary ? 'Generating Planet IGES...' : 'Generating Pinion IGES...');
   await new Promise(r => setTimeout(r, 10));
-  const pIGS = exportIGES(pinionMesh, `${baseName}_pinion`, `${calc.gear_type || 'Gear'} Pinion`);
-  zip.file(`${baseName}_pinion.igs`, pIGS);
+  const pIGS = exportIGES(pinionMesh, isPlanetary ? `${baseName}_planet` : `${baseName}_pinion`, `${calc.gear_type || 'Gear'} ${isPlanetary ? 'Planet' : 'Pinion'}`);
+  zip.file(isPlanetary ? `${baseName}_planet.igs` : `${baseName}_pinion.igs`, pIGS);
 
   if (onProgress) onProgress(isPlanetary ? 'Generating Ring IGES...' : 'Generating Gear IGES...');
   await new Promise(r => setTimeout(r, 10));
-  const gIGS = exportIGES(gearMesh, `${baseName}_gear`, `${calc.gear_type || 'Gear'} Gear`);
-  zip.file(`${baseName}_gear.igs`, gIGS);
+  const gIGS = exportIGES(gearMesh, isPlanetary ? `${baseName}_ring` : `${baseName}_gear`, `${calc.gear_type || 'Gear'} ${isPlanetary ? 'Ring' : 'Gear'}`);
+  zip.file(isPlanetary ? `${baseName}_ring.igs` : `${baseName}_gear.igs`, gIGS);
 
   if (isPlanetary && calc.carrierMesh) {
     if (onProgress) onProgress('Generating Carrier IGES...');

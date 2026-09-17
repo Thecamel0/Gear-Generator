@@ -1091,6 +1091,47 @@ select.input-control {
   font-size: 11px;
 }
 
+.part-quick-download-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.btn-part-dl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  padding: 6px 6px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-part-dl:hover {
+  background: var(--badge-bg);
+  border-color: var(--action-blue);
+  color: var(--action-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-part-dl:active {
+  transform: translateY(0);
+}
+
+.btn-part-dl .part-icon {
+  font-size: 11px;
+}
+
 /* --------------------------------------------------------------------------
    5. TOAST NOTIFICATIONS
    -------------------------------------------------------------------------- */

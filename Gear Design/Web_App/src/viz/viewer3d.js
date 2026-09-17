@@ -639,12 +639,27 @@ export class GearViewer3D {
       if (hasSun) this.sunGroup.visible = true;
       if (hasCarrier) this.carrierGroup.visible = false;
       this.pinionGroups.forEach((pg, idx) => (pg.visible = idx === 0));
+    } else if (this.viewMode === 'sun') {
+      this.gearGroup.visible = false;
+      if (hasSun) this.sunGroup.visible = true;
+      if (hasCarrier) this.carrierGroup.visible = false;
+      this.pinionGroups.forEach(pg => (pg.visible = false));
+    } else if (this.viewMode === 'carrier') {
+      this.gearGroup.visible = false;
+      if (hasSun) this.sunGroup.visible = false;
+      if (hasCarrier) this.carrierGroup.visible = true;
+      this.pinionGroups.forEach(pg => (pg.visible = false));
+    } else if (this.viewMode === 'planet') {
+      this.gearGroup.visible = false;
+      if (hasSun) this.sunGroup.visible = false;
+      if (hasCarrier) this.carrierGroup.visible = false;
+      this.pinionGroups.forEach(pg => (pg.visible = true));
     } else if (this.viewMode === 'pinion') {
       this.gearGroup.visible = false;
       if (hasSun) this.sunGroup.visible = true;
       if (hasCarrier) this.carrierGroup.visible = false;
       this.pinionGroups.forEach(pg => (pg.visible = true));
-    } else if (this.viewMode === 'gear') {
+    } else if (this.viewMode === 'ring' || this.viewMode === 'gear') {
       this.gearGroup.visible = true;
       if (hasSun) this.sunGroup.visible = false;
       if (hasCarrier) this.carrierGroup.visible = false;

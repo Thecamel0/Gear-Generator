@@ -229,6 +229,9 @@ function handleGearTypeChange(gearType) {
       inpPinions.max = '8';
     }
   }
+
+  // Update export format selector options & planetary quick download row
+  updateExportFormatOptions(gearType);
 }
 
 function getFormInputs() {
@@ -469,10 +472,36 @@ function updateResultsUI(calc) {
   const selPart = document.getElementById('sel-part-mode');
   if (selPart) {
     const n = isPlanetary ? (calc.K || 3) : (calc.n_pinions || 3);
-    const optAssembly = selPart.querySelector('option[value="assembly"]');
-    if (optAssembly) optAssembly.textContent = isPlanetary ? `Full Assembly (Sun, ${n} Planets, Ring, Carrier)` : `Full Assembly (All ${n} Pinions)`;
-    const optPinion = selPart.querySelector('option[value="pinion"]');
-    if (optPinion) optPinion.textContent = isPlanetary ? `Planets Only (All ${n})` : `Pinions Only (All ${n})`;
+    const currentMode = selPart.value;
+    if (isPlanetary) {
+      selPart.innerHTML = `
+        <option value="assembly">Full Assembly (Sun, ${n} Planets, Ring, Carrier)</option>
+        <option value="sun">Sun Gear Alone</option>
+        <option value="planet">Planet Gears Alone (All ${n})</option>
+        <option value="ring">Ring Gear Alone</option>
+        <option value="carrier">Carrier Alone</option>
+        <option value="single-pair">Single Planet Pair Only</option>
+      `;
+    } else if (calc.gear_type === 'internal_spur') {
+      selPart.innerHTML = `
+        <option value="assembly">Full Assembly (${n > 1 ? `All ${n} Pinions + Ring` : 'Pinion & Ring'})</option>
+        ${n > 1 ? '<option value="single-pair">Single Pair Only (1 Pinion)</option>' : ''}
+        <option value="pinion">${n > 1 ? `Pinions Only (All ${n})` : 'Pinion Only'}</option>
+        <option value="gear">Internal Ring Gear Only</option>
+      `;
+    } else {
+      selPart.innerHTML = `
+        <option value="assembly">Full Assembly (${n > 1 ? `All ${n} Pinions + Gear` : 'Pinion & Gear'})</option>
+        ${n > 1 ? '<option value="single-pair">Single Pair Only (1 Pinion)</option>' : ''}
+        <option value="pinion">${n > 1 ? `Pinions Only (All ${n})` : 'Pinion Only'}</option>
+        <option value="gear">Gear Only</option>
+      `;
+    }
+    if (Array.from(selPart.options).some(o => o.value === currentMode)) {
+      selPart.value = currentMode;
+    } else {
+      selPart.value = 'assembly';
+    }
   }
 }
 
@@ -656,6 +685,104 @@ function getGearTypeName() {
   }
 }
 
+export function updateExportFormatOptions(gearType) {
+  const selFormat = document.getElementById('sel-export-format');
+  const rowPlanetaryQuick = document.getElementById('row-planetary-quick-download');
+  if (!selFormat) return;
+
+  const prevValue = selFormat.value;
+  const isPlanetary = gearType === 'planetary';
+  const isInternal = gearType === 'internal_spur';
+
+  if (rowPlanetaryQuick) {
+    rowPlanetaryQuick.style.display = isPlanetary ? 'flex' : 'none';
+  }
+
+  if (isPlanetary) {
+    selFormat.innerHTML = `
+      <optgroup label="Complete Packages">
+        <option value="zip">Complete CAD Package (.ZIP)</option>
+        <option value="step">STEP AP214 Package (.zip)</option>
+        <option value="stl">Binary STL Package (.zip)</option>
+        <option value="iges">IGES 5.3 Package (.zip)</option>
+        <option value="solidworks">SolidWorks Automation (.zip)</option>
+      </optgroup>
+      <optgroup label="STEP Solid Models (.stp)">
+        <option value="step-assembly">STEP Full Assembly in Mesh (.stp)</option>
+        <option value="step-sun">STEP Sun Gear Alone (.stp)</option>
+        <option value="step-planet">STEP Planet Gear Alone (.stp)</option>
+        <option value="step-ring">STEP Ring Gear Alone (.stp)</option>
+        <option value="step-carrier">STEP Planet Carrier Alone (.stp)</option>
+      </optgroup>
+      <optgroup label="Binary STL Printable (.stl)">
+        <option value="stl-assembly">STL Full Assembly in Mesh (.stl)</option>
+        <option value="stl-sun">STL Sun Gear Alone (.stl)</option>
+        <option value="stl-planet">STL Planet Gear Alone (.stl)</option>
+        <option value="stl-ring">STL Ring Gear Alone (.stl)</option>
+        <option value="stl-carrier">STL Planet Carrier Alone (.stl)</option>
+      </optgroup>
+      <optgroup label="IGES 5.3 Surfaces (.igs)">
+        <option value="iges-sun">IGES Sun Gear Alone (.igs)</option>
+        <option value="iges-planet">IGES Planet Gear Alone (.igs)</option>
+        <option value="iges-ring">IGES Ring Gear Alone (.igs)</option>
+        <option value="iges-carrier">IGES Planet Carrier Alone (.igs)</option>
+      </optgroup>
+      <optgroup label="Reports & Automation">
+        <option value="catia">CATIA V5 Automation (.catvbs)</option>
+        <option value="csv">Design Report (.csv)</option>
+        <option value="png">2D Mesh Diagram (.png)</option>
+      </optgroup>
+    `;
+  } else {
+    const gearLabel = isInternal ? 'Internal Ring' : 'Gear';
+    selFormat.innerHTML = `
+      <optgroup label="Complete Packages">
+        <option value="zip">Complete CAD Package (.ZIP)</option>
+        <option value="step">STEP AP214 Package (.zip)</option>
+        <option value="stl">Binary STL Package (.zip)</option>
+        <option value="iges">IGES 5.3 Package (.zip)</option>
+        <option value="solidworks">SolidWorks Automation (.zip)</option>
+      </optgroup>
+      <optgroup label="STEP Solid Models (.stp)">
+        <option value="step-assembly">STEP Assembly in Mesh (.stp)</option>
+        <option value="step-pinion">STEP Pinion Only (.stp)</option>
+        <option value="step-gear">STEP ${gearLabel} Only (.stp)</option>
+      </optgroup>
+      <optgroup label="Binary STL Printable (.stl)">
+        <option value="stl-assembly">STL Assembly in Mesh (.stl)</option>
+        <option value="stl-pinion">STL Pinion Only (.stl)</option>
+        <option value="stl-gear">STL ${gearLabel} Only (.stl)</option>
+      </optgroup>
+      <optgroup label="IGES 5.3 Surfaces (.igs)">
+        <option value="iges-pinion">IGES Pinion Only (.igs)</option>
+        <option value="iges-gear">IGES ${gearLabel} Only (.igs)</option>
+      </optgroup>
+      <optgroup label="Reports & Automation">
+        <option value="catia">CATIA V5 Automation (.catvbs)</option>
+        <option value="csv">Design Report (.csv)</option>
+        <option value="png">2D Mesh Diagram (.png)</option>
+      </optgroup>
+    `;
+  }
+
+  // Restore previous value if available, or smart mapping
+  if (Array.from(selFormat.options).some(o => o.value === prevValue)) {
+    selFormat.value = prevValue;
+  } else if (prevValue.includes('pinion') && isPlanetary) {
+    selFormat.value = prevValue.replace('pinion', 'planet');
+  } else if (prevValue.includes('planet') && !isPlanetary) {
+    selFormat.value = prevValue.replace('planet', 'pinion');
+  } else if (prevValue.includes('sun') && !isPlanetary) {
+    selFormat.value = prevValue.replace('sun', 'pinion');
+  } else if (prevValue.includes('ring') && !isPlanetary) {
+    selFormat.value = prevValue.replace('ring', 'gear');
+  } else if (prevValue.includes('carrier') && !isPlanetary) {
+    selFormat.value = prevValue.replace('carrier', 'assembly');
+  } else {
+    selFormat.value = 'zip';
+  }
+}
+
 async function handleExport() {
   const btnExport = document.getElementById('btn-export-design');
   if (btnExport && btnExport.disabled) return;
@@ -685,19 +812,23 @@ async function handleExport() {
         await handleStepZipExport(baseName);
         break;
       case 'step-pinion': {
-        showToast('Generating STEP Pinion model...', 'download');
+        const mesh = (currentCalc.gear_type === 'planetary') ? (currentCalc.planetMesh || currentPinionMesh) : currentPinionMesh;
+        const pLabel = (currentCalc.gear_type === 'planetary') ? 'Planet Gear' : 'Pinion';
+        showToast(`Generating STEP ${pLabel} model...`, 'download');
         await new Promise(r => setTimeout(r, 30));
-        const p = exportSTEP(currentPinionMesh, `${baseName}_pinion`, `${typeName} Pinion m${currentCalc.m || currentCalc.mn} Np${currentCalc.Np}`);
-        downloadFile(p, `${baseName}_pinion.stp`, 'application/step');
-        showToast('Downloaded Pinion STEP (.stp)', 'success');
+        const p = exportSTEP(mesh, `${baseName}_pinion`, `${typeName} ${pLabel} m${currentCalc.m || currentCalc.mn} Np${currentCalc.Np}`);
+        downloadFile(p, `${baseName}_${currentCalc.gear_type === 'planetary' ? 'planet' : 'pinion'}.stp`, 'application/step');
+        showToast(`Downloaded ${pLabel} STEP (.stp)`, 'success');
         break;
       }
       case 'step-gear': {
-        showToast('Generating STEP Gear model...', 'download');
+        const mesh = (currentCalc.gear_type === 'planetary') ? (currentCalc.ringMesh || currentGearMesh) : currentGearMesh;
+        const gLabel = (currentCalc.gear_type === 'planetary') ? 'Ring Gear' : (typeName === 'Internal_Spur' ? 'Ring Gear' : 'Gear');
+        showToast(`Generating STEP ${gLabel} model...`, 'download');
         await new Promise(r => setTimeout(r, 30));
-        const g = exportSTEP(currentGearMesh, `${baseName}_gear`, `${typeName} Gear m${currentCalc.m || currentCalc.mn} Ng${currentCalc.Ng}`);
-        downloadFile(g, `${baseName}_gear.stp`, 'application/step');
-        showToast('Downloaded Gear STEP (.stp)', 'success');
+        const g = exportSTEP(mesh, `${baseName}_gear`, `${typeName} ${gLabel} m${currentCalc.m || currentCalc.mn} Ng${currentCalc.Ng || currentCalc.Nr}`);
+        downloadFile(g, `${baseName}_${currentCalc.gear_type === 'planetary' ? 'ring' : 'gear'}.stp`, 'application/step');
+        showToast(`Downloaded ${gLabel} STEP (.stp)`, 'success');
         break;
       }
       case 'step-assembly': {
@@ -708,25 +839,69 @@ async function handleExport() {
         showToast('Downloaded Assembly STEP (.stp)', 'success');
         break;
       }
+      case 'step-sun': {
+        const mesh = currentCalc.sunMesh || currentPinionMesh;
+        showToast('Generating STEP Sun Gear model...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const s = exportSTEP(mesh, `${baseName}_sun`, `Planetary Sun Gear m${currentCalc.m} Ns${currentCalc.Ns || currentCalc.Np}`);
+        downloadFile(s, `${baseName}_sun.stp`, 'application/step');
+        showToast('Downloaded Sun Gear STEP (.stp)', 'success');
+        break;
+      }
+      case 'step-planet': {
+        const mesh = currentCalc.planetMesh || currentPinionMesh;
+        showToast('Generating STEP Planet Gear model...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const p = exportSTEP(mesh, `${baseName}_planet`, `Planetary Planet Gear m${currentCalc.m} Np${currentCalc.Np}`);
+        downloadFile(p, `${baseName}_planet.stp`, 'application/step');
+        showToast('Downloaded Planet Gear STEP (.stp)', 'success');
+        break;
+      }
+      case 'step-ring': {
+        const mesh = currentCalc.ringMesh || currentGearMesh;
+        showToast('Generating STEP Ring Gear model...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const r_mesh = exportSTEP(mesh, `${baseName}_ring`, `Planetary Ring Gear m${currentCalc.m} Nr${currentCalc.Nr || currentCalc.Ng}`);
+        downloadFile(r_mesh, `${baseName}_ring.stp`, 'application/step');
+        showToast('Downloaded Ring Gear STEP (.stp)', 'success');
+        break;
+      }
+      case 'step-carrier': {
+        const mesh = currentCalc.carrierMesh;
+        if (!mesh) {
+          showToast('No carrier mesh available for current configuration', 'warn');
+          break;
+        }
+        showToast('Generating STEP Carrier model...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const c = exportSTEP(mesh, `${baseName}_carrier`, `Planetary Carrier K${currentCalc.K || 3}`);
+        downloadFile(c, `${baseName}_carrier.stp`, 'application/step');
+        showToast('Downloaded Carrier STEP (.stp)', 'success');
+        break;
+      }
 
       // Binary STL Options
       case 'stl':
         await handleStlZipExport(baseName);
         break;
       case 'stl-pinion': {
-        showToast('Generating Binary STL Pinion...', 'download');
+        const mesh = (currentCalc.gear_type === 'planetary') ? (currentCalc.planetMesh || currentPinionMesh) : currentPinionMesh;
+        const pLabel = (currentCalc.gear_type === 'planetary') ? 'Planet Gear' : 'Pinion';
+        showToast(`Generating Binary STL ${pLabel}...`, 'download');
         await new Promise(r => setTimeout(r, 30));
-        const p = exportSTLBinary(currentPinionMesh, `${typeName} Pinion`);
-        downloadFile(p, `${baseName}_pinion.stl`, 'application/sla');
-        showToast('Downloaded Pinion STL (.stl)', 'success');
+        const p = exportSTLBinary(mesh, `${typeName} ${pLabel}`);
+        downloadFile(p, `${baseName}_${currentCalc.gear_type === 'planetary' ? 'planet' : 'pinion'}.stl`, 'application/sla');
+        showToast(`Downloaded ${pLabel} STL (.stl)`, 'success');
         break;
       }
       case 'stl-gear': {
-        showToast('Generating Binary STL Gear...', 'download');
+        const mesh = (currentCalc.gear_type === 'planetary') ? (currentCalc.ringMesh || currentGearMesh) : currentGearMesh;
+        const gLabel = (currentCalc.gear_type === 'planetary') ? 'Ring Gear' : (typeName === 'Internal_Spur' ? 'Ring Gear' : 'Gear');
+        showToast(`Generating Binary STL ${gLabel}...`, 'download');
         await new Promise(r => setTimeout(r, 30));
-        const g = exportSTLBinary(currentGearMesh, `${typeName} Gear`);
-        downloadFile(g, `${baseName}_gear.stl`, 'application/sla');
-        showToast('Downloaded Gear STL (.stl)', 'success');
+        const g = exportSTLBinary(mesh, `${typeName} ${gLabel}`);
+        downloadFile(g, `${baseName}_${currentCalc.gear_type === 'planetary' ? 'ring' : 'gear'}.stl`, 'application/sla');
+        showToast(`Downloaded ${gLabel} STL (.stl)`, 'success');
         break;
       }
       case 'stl-assembly': {
@@ -737,8 +912,113 @@ async function handleExport() {
         showToast('Downloaded Assembly STL (.stl)', 'success');
         break;
       }
+      case 'stl-sun': {
+        const mesh = currentCalc.sunMesh || currentPinionMesh;
+        showToast('Generating Binary STL Sun Gear...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const s = exportSTLBinary(mesh, 'Planetary Sun Gear');
+        downloadFile(s, `${baseName}_sun.stl`, 'application/sla');
+        showToast('Downloaded Sun Gear STL (.stl)', 'success');
+        break;
+      }
+      case 'stl-planet': {
+        const mesh = currentCalc.planetMesh || currentPinionMesh;
+        showToast('Generating Binary STL Planet Gear...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const p = exportSTLBinary(mesh, 'Planetary Planet Gear');
+        downloadFile(p, `${baseName}_planet.stl`, 'application/sla');
+        showToast('Downloaded Planet Gear STL (.stl)', 'success');
+        break;
+      }
+      case 'stl-ring': {
+        const mesh = currentCalc.ringMesh || currentGearMesh;
+        showToast('Generating Binary STL Ring Gear...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const r_mesh = exportSTLBinary(mesh, 'Planetary Ring Gear');
+        downloadFile(r_mesh, `${baseName}_ring.stl`, 'application/sla');
+        showToast('Downloaded Ring Gear STL (.stl)', 'success');
+        break;
+      }
+      case 'stl-carrier': {
+        const mesh = currentCalc.carrierMesh;
+        if (!mesh) {
+          showToast('No carrier mesh available for current configuration', 'warn');
+          break;
+        }
+        showToast('Generating Binary STL Carrier...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const c = exportSTLBinary(mesh, 'Planetary Carrier');
+        downloadFile(c, `${baseName}_carrier.stl`, 'application/sla');
+        showToast('Downloaded Carrier STL (.stl)', 'success');
+        break;
+      }
 
-      // SolidWorks, CATIA & IGES Packages
+      // IGES Options
+      case 'iges':
+        await handleIgesZipExport(baseName);
+        break;
+      case 'iges-pinion': {
+        const mesh = (currentCalc.gear_type === 'planetary') ? (currentCalc.planetMesh || currentPinionMesh) : currentPinionMesh;
+        const pLabel = (currentCalc.gear_type === 'planetary') ? 'Planet Gear' : 'Pinion';
+        showToast(`Generating IGES ${pLabel} model...`, 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const p = exportIGES(mesh, `${baseName}_pinion`, `${typeName} ${pLabel} IGES 5.3`);
+        downloadFile(p, `${baseName}_${currentCalc.gear_type === 'planetary' ? 'planet' : 'pinion'}.igs`, 'application/iges');
+        showToast(`Downloaded ${pLabel} IGES (.igs)`, 'success');
+        break;
+      }
+      case 'iges-gear': {
+        const mesh = (currentCalc.gear_type === 'planetary') ? (currentCalc.ringMesh || currentGearMesh) : currentGearMesh;
+        const gLabel = (currentCalc.gear_type === 'planetary') ? 'Ring Gear' : (typeName === 'Internal_Spur' ? 'Ring Gear' : 'Gear');
+        showToast(`Generating IGES ${gLabel} model...`, 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const g = exportIGES(mesh, `${baseName}_gear`, `${typeName} ${gLabel} IGES 5.3`);
+        downloadFile(g, `${baseName}_${currentCalc.gear_type === 'planetary' ? 'ring' : 'gear'}.igs`, 'application/iges');
+        showToast(`Downloaded ${gLabel} IGES (.igs)`, 'success');
+        break;
+      }
+      case 'iges-sun': {
+        const mesh = currentCalc.sunMesh || currentPinionMesh;
+        showToast('Generating IGES Sun Gear surface...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const s = exportIGES(mesh, `${baseName}_sun`, 'Planetary Sun Gear IGES 5.3');
+        downloadFile(s, `${baseName}_sun.igs`, 'application/iges');
+        showToast('Downloaded Sun Gear IGES (.igs)', 'success');
+        break;
+      }
+      case 'iges-planet': {
+        const mesh = currentCalc.planetMesh || currentPinionMesh;
+        showToast('Generating IGES Planet Gear surface...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const p = exportIGES(mesh, `${baseName}_planet`, 'Planetary Planet Gear IGES 5.3');
+        downloadFile(p, `${baseName}_planet.igs`, 'application/iges');
+        showToast('Downloaded Planet Gear IGES (.igs)', 'success');
+        break;
+      }
+      case 'iges-ring': {
+        const mesh = currentCalc.ringMesh || currentGearMesh;
+        showToast('Generating IGES Ring Gear surface...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const r_mesh = exportIGES(mesh, `${baseName}_ring`, 'Planetary Ring Gear IGES 5.3');
+        downloadFile(r_mesh, `${baseName}_ring.igs`, 'application/iges');
+        showToast('Downloaded Ring Gear IGES (.igs)', 'success');
+        break;
+      }
+      case 'iges-carrier': {
+        const mesh = currentCalc.carrierMesh;
+        if (!mesh) {
+          showToast('No carrier mesh available for current configuration', 'warn');
+          break;
+        }
+        showToast('Generating IGES Carrier surface...', 'download');
+        await new Promise(r => setTimeout(r, 30));
+        const c = exportIGES(mesh, `${baseName}_carrier`, 'Planetary Carrier IGES 5.3');
+        downloadFile(c, `${baseName}_carrier.igs`, 'application/iges');
+        showToast('Downloaded Carrier IGES (.igs)', 'success');
+        break;
+      }
+
+      // SolidWorks, CATIA & Reports
       case 'solidworks':
         await handleSolidWorksZipExport(baseName);
         break;
@@ -749,11 +1029,6 @@ async function handleExport() {
         showToast('Downloaded CATIA Automation Script (.catvbs)', 'success');
         break;
       }
-      case 'iges':
-        await handleIgesZipExport(baseName);
-        break;
-
-      // Reports & Diagrams
       case 'csv':
         handleCsvExport(baseName);
         break;
@@ -790,7 +1065,8 @@ async function handleZipExport(baseName) {
 }
 
 async function handleStepZipExport(baseName) {
-  showToast('Bundling STEP models (Pinion, Gear & Assembly)...', 'download');
+  const isPlanetary = currentCalc?.gear_type === 'planetary';
+  showToast(isPlanetary ? 'Bundling STEP models (Sun, Planet, Ring, Carrier & Assembly)...' : 'Bundling STEP models (Pinion, Gear & Assembly)...', 'download');
   try {
     const zipBlob = await exportSTEPZip(currentCalc, currentPinionMesh, currentGearMesh, baseName, (msg) => {
       showToast(msg, 'download');
@@ -804,7 +1080,8 @@ async function handleStepZipExport(baseName) {
 }
 
 async function handleStlZipExport(baseName) {
-  showToast('Bundling STL models (Pinion, Gear & Assembly)...', 'download');
+  const isPlanetary = currentCalc?.gear_type === 'planetary';
+  showToast(isPlanetary ? 'Bundling STL models (Sun, Planet, Ring, Carrier & Assembly)...' : 'Bundling STL models (Pinion, Gear & Assembly)...', 'download');
   try {
     const zipBlob = await exportSTLZip(currentCalc, currentPinionMesh, currentGearMesh, baseName, (msg) => {
       showToast(msg, 'download');
@@ -818,7 +1095,8 @@ async function handleStlZipExport(baseName) {
 }
 
 async function handleIgesZipExport(baseName) {
-  showToast('Bundling IGES models...', 'download');
+  const isPlanetary = currentCalc?.gear_type === 'planetary';
+  showToast(isPlanetary ? 'Bundling IGES models (Sun, Planet, Ring & Carrier)...' : 'Bundling IGES models...', 'download');
   try {
     const zipBlob = await exportIGESZip(currentCalc, currentPinionMesh, currentGearMesh, baseName, (msg) => {
       showToast(msg, 'download');
@@ -1018,15 +1296,23 @@ function setupEvents() {
       card.classList.add('active');
       const exportType = card.dataset.exportType;
       if (selFormat) {
-        selFormat.value = exportType;
+        if (exportType === 'step') {
+          if (!selFormat.value.startsWith('step')) selFormat.value = 'step';
+        } else if (exportType === 'stl') {
+          if (!selFormat.value.startsWith('stl')) selFormat.value = 'stl';
+        } else {
+          selFormat.value = exportType;
+        }
       }
     });
   });
 
   if (selFormat) {
     selFormat.addEventListener('change', () => {
+      const val = selFormat.value;
       cadCards.forEach(c => {
-        if (c.dataset.exportType === selFormat.value) {
+        const ct = c.dataset.exportType;
+        if (ct === val || (ct === 'step' && val.startsWith('step')) || (ct === 'stl' && val.startsWith('stl'))) {
           c.classList.add('active');
         } else {
           c.classList.remove('active');
@@ -1034,6 +1320,43 @@ function setupEvents() {
       });
     });
   }
+
+  // Planetary Quick Part Download Buttons (1-click export of Sun, Planet, Ring, Carrier)
+  const partDlButtons = document.querySelectorAll('.btn-part-dl');
+  partDlButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const part = btn.dataset.part;
+      if (!currentCalc) return;
+
+      // Determine active format category (check active CAD card or current selection)
+      const activeCard = document.querySelector('.cad-card.active')?.dataset.exportType;
+      const curFormat = document.getElementById('sel-export-format')?.value || 'step';
+
+      let targetFormat = `step-${part}`;
+      if (activeCard === 'stl' || curFormat.startsWith('stl')) {
+        targetFormat = `stl-${part}`;
+      } else if (activeCard === 'iges' || curFormat.startsWith('iges')) {
+        targetFormat = `iges-${part}`;
+      } else {
+        targetFormat = `step-${part}`;
+      }
+
+      const selFormat = document.getElementById('sel-export-format');
+      if (selFormat) {
+        selFormat.value = targetFormat;
+        cadCards.forEach(c => {
+          const ct = c.dataset.exportType;
+          if (ct === targetFormat || (ct === 'step' && targetFormat.startsWith('step')) || (ct === 'stl' && targetFormat.startsWith('stl'))) {
+            c.classList.add('active');
+          } else {
+            c.classList.remove('active');
+          }
+        });
+      }
+
+      await handleExport();
+    });
+  });
 
   // Tab switching (3D vs 2D)
   const tab3D = document.getElementById('tab-3d');
