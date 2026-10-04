@@ -4,10 +4,11 @@
 **Faculty:** Faculty of Mechanical Engineering, UTM  
 **Target Audience:** Academic Evaluators (UTM), Industry Mentors, and Machine Design Leads  
 **Candidate / Intern:** Ahmed Majdy Ahmed  
-**Project:** Wind Turbine Blade Pitch Control Drivetrain — Multi-Architecture Gear Kinematics, ISO 6336 Stress & Manufacturing  
+**Project:** Wind Turbine Blade Pitch Control Drivetrain — Multi-Architecture Gear Kinematics, Gleason Theory & Manufacturing  
 **Deliverable PPTX:** [`Wind_Turbine_Pitch_Control_System_Internship_Presentation.pptx`](file:///c:/Users/thepr/Desktop/Wind%20Turbine/Pitch%20Control%20System/Wind_Turbine_Pitch_Control_System_Internship_Presentation.pptx)  
 **Dedicated ME Copy:** [`Wind_Turbine_Pitch_Control_System_Mechanical_Engineering_Presentation.pptx`](file:///c:/Users/thepr/Desktop/Wind%20Turbine/Pitch%20Control%20System/Wind_Turbine_Pitch_Control_System_Mechanical_Engineering_Presentation.pptx)  
-**1-Click Launcher:** [`Launch_Presentation.bat`](file:///c:/Users/thepr/Desktop/Wind%20Turbine/Pitch%20Control%20System/Launch_Presentation.bat)
+**1-Click Launcher:** [`Launch_Presentation.bat`](file:///c:/Users/thepr/Desktop/Wind%20Turbine/Pitch%20Control%20System/Launch_Presentation.bat)  
+**Total Slides:** 11 Slides (Formal 16:9 Widescreen)
 
 ---
 
@@ -15,18 +16,18 @@
 
 | Allotment | Slides Covered | Mechanical Engineering Focus |
 |---|---|---|
-| **Minutes 00:00 – 02:30** | **Slides 01 – 03** | Operating Conditions, Aerodynamic Load Cases & Drivetrain Architecture |
-| **Minutes 02:30 – 05:30** | **Slides 04 – 06** | Gleason Zerol Theory, 60/40 Unequal Addendum & Willis Planetary Mechanics |
-| **Minutes 05:30 – 08:30** | **Slides 07 – 08** | Tredgold Virtual Back-Cone Projection & ISO 6336 Stress Verification |
-| **Minutes 08:30 – 11:00** | **Slides 09 – 10** | Backlash Tolerancing, Additive Manufacturing Offsets & Conclusions |
-| **Minutes 11:00 – 15:00** | **Open Floor** | Technical Defense, Kinematic Derivations & Evaluator Q&A |
+| **Minutes 00:00 – 03:00** | **Slides 01 – 03** | Title, Executive Summary & Internship Timeline Progression |
+| **Minutes 03:00 – 06:00** | **Slides 04 – 06** | Problem Statement, Drivetrain Architecture & Zerol Bevel Mechanics |
+| **Minutes 06:00 – 08:30** | **Slides 07 – 08** | Gleason 60/40 Addendum System & Willis Epicyclic Kinematics |
+| **Minutes 08:30 – 11:00** | **Slides 09 – 10** | True Cone Projection Fix, Quantitative Metrics & PrintComp Manufacturing |
+| **Minutes 11:00 – 15:00** | **Slide 11 & Q&A** | Conclusions, Competencies Mastered & Evaluator Technical Defense |
 
 ---
 
 ## 🎯 Evaluator Alignment Strategy
 
-- **For UTM Academic Supervisors:** Emphasize mechanical machine design rigor, involute trigonometry, Gleason circular cutter derivations, ISO 6336 Method B safety factors, and Willis epicyclic speed equations.
-- **For Industry Mentors:** Emphasize load allocation across multiple pinions, bearing life extensions from axial thrust cancellation, manufacturing tolerances, and functional 3D printing shrinkage compensation.
+- **For UTM Academic Supervisors:** Emphasize mechanical machine design rigor, involute trigonometry, Gleason circular cutter derivations, Tredgold virtual spur transformation, Willis epicyclic velocity equations, and normal-to-cone coordinate projection.
+- **For Industry Mentors:** Emphasize load allocation across 3 pinions, bearing life extension from axial thrust elimination, manufacturing tolerances, and functional 3D printing shrinkage compensation (PrintComp).
 
 ---
 
@@ -36,123 +37,139 @@
 
 ### Slide 01: Title & Project Identification
 - **Timing:** 00:00 – 00:45 (45s)
-- **Visual Focus:** Full Deep Maroon cover (`#721422`), Gold accent stripe (`#C58B12`), candidate metadata (**Ahmed Majdy Ahmed**), and Figure 1.1 (Epicyclic Planetary Assembly).
+- **Visual Focus:** Full Deep Maroon cover (`#721422`), Gold accent stripe (`#D49B23`), candidate metadata (**Ahmed Majdy Ahmed**), and Figure 1.1 (Epicyclic Planetary 3D Assembly).
 - **Verbatim Script:**
-> *"Good morning, respected academic evaluators, supervisors, and mentors. My name is **Ahmed Majdy Ahmed** from the Faculty of Mechanical Engineering at Universiti Teknologi Malaysia. Today, I present the engineering defense of my internship project: the **Design, Kinematic Modeling, and Stress Analysis of a Precision Gear Drivetrain for Wind Turbine Blade Pitch Control**.*
+> *"Good morning, respected academic evaluators, supervisors, and mentors. My name is **Ahmed Majdy Ahmed** from the Faculty of Mechanical Engineering at Universiti Teknologi Malaysia. Today, I present the engineering defense of my internship project: the **Design, Kinematic Modeling, and Manufacturing Preparation of a Precision Gear Drivetrain for Wind Turbine Blade Pitch Control**.*
 >
-> *Throughout this project, my focus has been on core mechanical machine design: resolving high cyclic fatigue, eliminating gearbox axial thrust forces, deriving Gleason circular cutter kinematics, verifying tooth durability under ISO 6336, and calibrating manufacturing backlash. Over the next ten minutes, I will guide you through our mechanical formulations, gear trade-offs, and experimental prototype validation."*
+> *Throughout this project, my focus has been on core mechanical machine design: resolving high cyclic fatigue, eliminating gearbox axial thrust forces, deriving Gleason circular cutter kinematics, verifying tooth durability, and calibrating manufacturing backlash. Over the next ten minutes, I will guide you through our mechanical formulations, gear trade-offs, and experimental prototype validation."*
 
 ---
 
-### Slide 02: Pitch Mechanism Operating Conditions & Aerodynamic Load Cases
-- **Timing:** 00:45 – 02:00 (75s)
-- **Visual Focus:** 3-column mechanical cards (Aerodynamic Pitch Demands, Structural Fatigue, Precision Limits).
+### Slide 02: Executive Summary & Project Scope
+- **Timing:** 00:45 – 01:45 (60s)
+- **Visual Focus:** 3-column card grid (Core Engineering Mission, Delivered Technical Artifacts, Engineering & Physical Impact) with 2px accent top stripes.
 - **Verbatim Script:**
-> *"Slide 2 details the mechanical operating environment inside a wind turbine rotor hub:
-> 1. **Aerodynamic Demands:** Utility-scale blades (up to 80 meters long) must continuously micro-pitch between 0° and 30° to maintain the rated power coefficient $C_p(\lambda, \beta)$. Crucially, during storm cut-out gusts exceeding 25 m/s, the mechanism must execute emergency braking by pitching 90 degrees into full feather within under 5 seconds—demanding pitch rates $\dot{\theta} \ge 8^\circ/\text{s}$ against extreme aerodynamic drag moments.
-> 2. **Structural Fatigue:** Gravitational bending moments reverse 180 degrees on every rotor revolution, subjecting the drive pinion and blade root bearings to over $10^8$ cyclic stress reversals across a 20-year design life.
-> 3. **Kinematic Precision:** High reduction ratios between 50:1 and 150:1 are required to step down 3,000 RPM servomotors to 0.5–2 RPM pitch velocity. Furthermore, normal backlash must be constrained to $j_t \le 0.05\text{ mm}$ to prevent aerodynamic stall flutter from exciting destructive blade resonances."*
+> *"Slide 2 outlines the scope of my internship work:
+> 1. **Core Mission:** We set out to design a robust mechanical pitch drive that synchronizes all three wind turbine blades while eliminating bearing-damaging axial thrust.
+> 2. **Delivered Artifacts:** I developed complete parametric kinematic solvers in MATLAB for 7 gear architectures, automated SolidWorks CAD macros, and an interactive engineering design suite.
+> 3. **Measurable Impact:** The design achieves a contact ratio of 1.642, a high bending safety margin, and successfully fixed a critical 68% tooth depth distortion on conical meshes to deliver 100% watertight models ready for physical manufacturing."*
 
 ---
 
-### Slide 03: Pitch Drivetrain Topology: Central Ring to 3-Blade Pinions
-- **Timing:** 02:00 – 03:00 (60s)
-- **Visual Focus:** Left mechanical schematic & kinematic table; Right Figure 3.1 (3-pinion load-sharing drive at 120°).
+### Slide 03: Internship Engineering Progression (Chronological Timeline)
+- **Timing:** 01:45 – 03:00 (75s)
+- **Visual Focus:** 6-node horizontal timeline across the slide with connected nodes (01 to 06), maroon/gold badges, Google X-Y-Z accomplishments, and bottom tech pills.
 - **Verbatim Script:**
-> *"Slide 3 presents our drivetrain architecture.
-> To control all three blades synchronously, we implemented a central driver ring gear ($N_g = 48$ teeth, $d_g = 144.0\text{ mm}$, $m = 3.0\text{ mm}$) that meshes simultaneously with three driven pinions ($N_p = 16$ teeth each) positioned at exact 120-degree spatial intervals around the perimeter.
-> Notice the mechanical advantage of this load-sharing topology:
-> Total input torque of $20\text{ N}\cdot\text{m}$ at 100 RPM is divided equally into three parallel load paths ($6.67\text{ N}\cdot\text{m}$ per mesh). With a transmission ratio of $i = 1:3$, each pinion delivers $2.16\text{ N}\cdot\text{m}$ at 300 RPM to its respective blade shaft at 97% mechanical efficiency. Tangential tooth load at the pitch interface is limited to $101.7\text{ N}$, reducing tooth root bending stress while guaranteeing identical pitch angles across all three blades."*
+> *"This timeline captures the technical progression of my internship across six structured milestones:
+> 1. **Phase 1 (Rapid Tooling):** I began in the mechanical prototyping lab, mastering 3D printer calibration, slicer parameters, and polymer thermal shrinkage control to achieve sub-0.2mm tolerance.
+> 2. **Phase 2 (Mechanical CAD):** I applied CAD modeling to design the motor casing and weather-sealed housing for the Aero-Leaf micro-wind turbine prototype.
+> 3. **Phase 3 (Drivetrain Research):** Next, I researched gearbox failure modes to solve pitch mechanism backlash and axial wear issues in fluctuating wind conditions.
+> 4. **Phase 4 (MATLAB Formulation):** I then developed the mathematical kinematics in MATLAB for a Gleason Zerol bevel gear pair, successfully eliminating axial thrust forces.
+> 5. **Phase 5 (Multi-Gear CAD Engine):** Seeing the power of this analytical approach, I expanded the algorithms to 7 distinct gear types with 2D contact simulations and SolidWorks B-Rep generation.
+> 6. **Phase 6 (Final Software Deliverable):** Finally, I synthesized these engineering capabilities into a universal software tool, allowing any engineer to generate custom CAD models and export them directly to SolidWorks in seconds."*
 
 ---
 
-### Slide 04: Gleason Zerol Bevel Gear Theory & Axial Thrust Elimination
+### Slide 04: Problem Statement & Engineering Objectives
 - **Timing:** 03:00 – 04:15 (75s)
-- **Visual Focus:** Figure 4.1 (Zerol bevel mesh with curved teeth pointing to apex) and bottom comparison table (Straight vs. Zerol vs. Spiral).
+- **Visual Focus:** 50/50 split comparison: Left slate container (Current State & Operational Challenges) vs. Right white/maroon container (Target Solution).
 - **Verbatim Script:**
-> *"Slide 4 addresses one of the central mechanical decisions in this project: why choose Zerol bevel gears over straight or spiral bevels?
-> - **Straight bevel gears** produce full line contact across the face width. When wind shear deflects the blade housing, load concentrates at the tooth edges, causing localized tooth chipping.
-> - **Spiral bevel gears** provide smooth progressive overlap, but their 35° spiral angle generates massive axial thrust forces ($F_a$), requiring heavy duplex angular-contact bearings and stiffened housings.
-> - **Our Zerol Solution:** A Zerol bevel gear is generated with a Gleason face-milling cutter of radius $r_c \approx 76.2\text{ mm}$, but the spiral angle at midface is strictly zero ($\beta_m = 0^\circ$).
-> Looking at the force decomposition: because $\tan(\beta_m) = \tan(0^\circ) = 0$, the axial thrust force component cancels out ($F_a \approx 0$). The drive behaves like a straight bevel in terms of zero axial bearing load, while retaining the localized, elliptical crowned contact patch of spiral gears that easily accommodates shaft deflections without edge loading."*
+> *"Slide 4 highlights the core engineering challenge:
+> In wind turbine blade pitch mechanisms, conventional gear design poses four major issues:
+> First, standard CAD software cannot accurately model Gleason spiral or Zerol bevel curves, forcing designers to use coarse approximations.
+> Second, a 16-tooth pinion experiences root undercutting under standard proportions, threatening tooth shear.
+> Third, standard spiral bevel gears produce heavy axial thrust that loads blade root bearings.
+> Finally, uncompensated CAD models bind tightly when 3D printed due to polymer cooling shrinkage.
+> Our solution addresses each point: exact Gleason equations, a 60/40 addendum shift, zero axial thrust geometry, and automated PrintComp tolerancing."*
 
 ---
 
-### Slide 05: Gleason Unequal Addendum System & Tooth Profile Geometry
-- **Timing:** 04:15 – 05:30 (75s)
-- **Visual Focus:** Left 60/40 addendum derivation; Right derived bevel cone parameters table ($m = 3\text{ mm}, \Sigma = 90^\circ$).
+### Slide 05: Pitch Drivetrain Topology & Kinematic Architecture
+- **Timing:** 04:15 – 05:15 (60s)
+- **Visual Focus:** Top block flow diagram (Actuation Motor → Central Ring Gear → 3x Zerol Pinions at 120° → Blade Pitch Shafts); Bottom categorized tech pills.
 - **Verbatim Script:**
-> *"Slide 5 resolves a fundamental gear geometry constraint: tooth undercutting on small pinions.
-> In standard 20° involute gearing, any pinion with fewer than 17 teeth suffers from undercutting during generation, where the hob removes active involute flank and thins the root fillet. Because our pitch pinion has only 16 teeth, standard proportions would fail in bending fatigue.
-> We implemented the **Gleason Unequal Addendum System**:
-> - We allocate 60% of working depth ($h_w = 6.0\text{ mm}$) to the pinion addendum ($a_p = 3.600\text{ mm}$) and 40% to the gear addendum ($a_g = 2.400\text{ mm}$).
-> - Whole depth is $h_t = 6.564\text{ mm}$, with clearance $c = 0.564\text{ mm}$.
-> This positive profile shift moves the active line of engagement away from the pinion base circle, completely eliminating undercutting while balancing specific sliding velocities to minimize adhesive wear."*
+> *"Slide 5 illustrates the physical drivetrain topology and engineering toolchain:
+> Looking at the power flow at the top:
+> A central ring gear (48 teeth, 144 mm pitch diameter) driven by the actuation motor meshes simultaneously with three 16-tooth driven pinions placed at 120-degree intervals.
+> Each pinion connects directly to one wind turbine blade pitch shaft.
+> This load-sharing architecture divides total motor torque into three equal parallel branches (6.67 N·m per mesh interface), drastically cutting tooth bending stress while ensuring all 3 blades pitch in perfect angular synchronization.
+> At the bottom, our toolchain pairs rigorous Gleason and Willis theory with MATLAB numerical algorithms, SolidWorks CAD macros, and PrintComp additive manufacturing compensation."*
 
 ---
 
-### Slide 06: Epicyclic Planetary Architecture & Willis Velocity Kinematics
-- **Timing:** 05:30 – 06:45 (75s)
-- **Visual Focus:** Left Willis kinematic equations; Right Figure 6.1 (isolated Sun & Planet gears) and force distribution box.
+### Slide 06: Core Mechanism 1: Gleason Zerol Bevel Kinematics
+- **Timing:** 05:15 – 06:30 (75s)
+- **Visual Focus:** 60/40 split: Left Figure 6.1 (high-res MATLAB 2D conjugate meshing diagram with pitch circles, base circles, contact line, and CR = 1.642); Right 3 structured points (Design, Implementation, Validation).
 - **Verbatim Script:**
-> *"For high-torque, compact nacelle packaging, we modeled the Epicyclic Planetary Drive:
-> 1. **Willis Kinematics:** With a stationary ring gear ($\omega_r = 0$), the speed reduction ratio is $i = 1 + N_r / N_s = 1 + 48/12 = 5.0:1$. Output carrier torque reaches $72.75\text{ N}\cdot\text{m}$.
-> 2. **Coaxial Assembly Rule:** We satisfy the coaxial center distance condition $N_r = N_s + 2N_p$ ($48 = 12 + 2\times 18$).
-> 3. **Assembly Symmetry:** Symmetrical 120-degree planet spacing requires $(N_s + N_r)/K$ to be an integer. $(12 + 48)/3 = 20$, proving that all three planets mesh with identical tooth phase.
-> 4. **Force Balancing:** Radial separating forces ($F_r = 111.2\text{ N}$) cancel out symmetrically at 120-degree vectors on the central sun shaft, completely relieving the motor shaft of transverse bending loads. We also incorporated the AGMA 6123 load-sharing factor $K_\gamma = 1.10$ to account for pitch runout."*
+> *"Slide 6 presents our deep dive into the primary pitch transmission: the Gleason Zerol Bevel Gear.
+> Look at the high-resolution MATLAB visualization on the left:
+> Figure 6.1 shows the full 2D conjugate meshing zone. The line of action is drawn tangent to the base circles, giving a calculated contact ratio of 1.642, well above the 1.20 required for continuous tooth engagement.
+> On the right, we highlight three critical engineering achievements:
+> 1. **Design:** The circular tooth curve produced by a 65.3 mm Gleason cutter localizes contact at the center, accommodating hub deflections.
+> 2. **Implementation:** At 6.67 N·m torque per mesh, tangential force is 107.7 N, while the zero midface spiral angle eliminates bearing-destroying axial thrust.
+> 3. **Validation:** Tredgold virtual teeth (16.88 and 151.79) prove flawless conjugate action with zero tip interference."*
 
 ---
 
-### Slide 07: 2D Contact Diagnostics & Tredgold Back-Cone Kinematics
-- **Timing:** 06:45 – 07:45 (60s)
-- **Visual Focus:** Figure 7.1 (2D contact mesh with base circles and pressure line of action $\alpha = 20^\circ$) and right derivation box.
+### Slide 07: Gleason Unequal Addendum System & Tooth Geometry
+- **Timing:** 06:30 – 07:30 (60s)
+- **Visual Focus:** Left undercutting problem and 60/40 formulation; Right derived bevel cone parameters table ($m = 3.0\text{ mm}, \Sigma = 90^\circ$).
 - **Verbatim Script:**
-> *"Slide 7 addresses our kinematic contact verification.
-> Because bevel gear teeth lie on intersecting cones, projecting them onto a flat 2D screen skews geometry and produces false interference.
-> We implemented the classical **Tredgold Virtual Back-Cone Transformation**:
-> - We replace the spherical back-cone with equivalent virtual spur gears: $z_{vp} = 16 / \cos(18.435^\circ) = 16.86$ teeth, and $z_{vg} = 48 / \cos(71.565^\circ) = 151.79$ teeth, with virtual center distance $C_v = 252.99\text{ mm}$.
-> - As shown in Figure 7.1, the pressure line of action is drawn tangent to both virtual base circles ($r_b = r_v \cos 20^\circ$).
-> During simulation, the contact point tracks smoothly along this line, verifying a continuous transverse contact ratio $\epsilon_\alpha = 1.62$ (well above the 1.20 minimum threshold), confirming smooth conjugate action and zero tooth interference."*
+> *"In standard gear design, a 16-tooth pinion would suffer severe undercutting because 16 is below the critical threshold of 17 teeth.
+> To solve this, we applied the **Gleason Unequal Addendum System**:
+> The pinion receives 60% of the 6.0 mm working depth (3.60 mm addendum), while the gear gets 40% (2.40 mm addendum).
+> Furthermore, we applied a tooth thickness shift of $0.180\cdot m$, giving the pinion a thicker root thickness of 5.252 mm compared to the gear's 4.172 mm.
+> This shifts the active contact line away from the pinion root, completely eliminates undercutting, balances approach and recess sliding velocities, and bolsters tooth bending resistance without changing center distance."*
 
 ---
 
-### Slide 08: ISO 6336 Tooth Root Bending & Hertzian Contact Durability
-- **Timing:** 07:45 – 09:00 (75s)
-- **Visual Focus:** Left ISO 6336 Method B equations; Right material properties & safety factor table ($S_F = 2.15, S_H = 1.48$).
+### Slide 08: Core Mechanism 2: Epicyclic Planetary Reducer
+- **Timing:** 07:30 – 08:30 (60s)
+- **Visual Focus:** 60/40 split: Left Figure 8.1 (Planetary 2D mesh diagram); Right Willis kinematic ratio (5:1), coaxial geometry, and symmetrical planet spacing equations.
 - **Verbatim Script:**
-> *"Slide 8 presents our structural stress verification adhering strictly to ISO 6336 Method B:
-> 1. **Tooth Root Bending Stress:** Using the Lewis form factor $Y_F = 2.45$, stress correction $Y_S = 1.72$, and dynamic factor $K_V = 1.15$, nominal bending stress on the pinion is $\sigma_F = 116.4\text{ MPa}$. Against quenched and tempered 4140 alloy steel ($\sigma_{FP} = 250\text{ MPa}$), this yields a bending safety factor $S_F = 2.15$, comfortably exceeding the ISO 1.4 minimum.
-> 2. **Hertzian Surface Contact Stress:** Using zone factor $Z_H = 2.495$ and elasticity factor $Z_E = 189.8\text{ MPa}^{0.5}$, maximum contact pressure is $\sigma_H = 675.8\text{ MPa}$. Against carburized 8620 steel ($\sigma_{HP} = 1,000\text{ MPa}$), this yields a pitting safety factor $S_H = 1.48$ (exceeding the ISO 1.2 requirement).
-> This guarantees that the gear teeth will withstand both root fracture and surface fatigue over 175,000 operating hours."*
+> *"For high-torque, compact nacelle installations, we modeled the Epicyclic Planetary Gear Train:
+> 1. **Willis Kinematics:** With a fixed ring gear, the speed reduction ratio is exactly $1 + N_r / N_s = 1 + 48/12 = 5:1$.
+> 2. **Geometric Coaxiality:** Requires $N_r = N_s + 2N_p$ ($48 = 12 + 36$), which equalizes the sun-planet and planet-ring center distances at 45.0 mm.
+> 3. **Assembly Symmetry:** Requires $(N_s + N_r) / K$ to be an exact integer. $(12 + 48)/3 = 20$, guaranteeing that all three planets mesh with identical 120-degree phase spacing.
+> 4. **Force Sharing:** Radial tooth forces cancel out symmetrically on the central sun shaft, eliminating bending loads on the high-speed motor shaft."*
 
 ---
 
-### Slide 09: Backlash Tolerancing, PrintComp Offsets & Prototype Validation
-- **Timing:** 09:00 – 10:00 (60s)
-- **Visual Focus:** Left PrintComp shrinkage equations; Right Figure 9.1 (STEP AP214 B-Rep export) and 3 manufacturing metric boxes.
+### Slide 09: Technical Challenge Overcome: True Cone Projection
+- **Timing:** 08:30 – 09:45 (75s)
+- **Visual Focus:** 3-column step cards: Step 01 (The Challenge: 68% depth loss on ring gear) → Step 02 (Investigation & Failed Iterations) → Step 03 (The Solution: Normal Cone Vector Projection, highlighted in Maroon).
 - **Verbatim Script:**
-> *"Slide 9 bridges machine design theory to physical manufacturing.
-> When 3D printing test prototypes in PETG or PLA-CF, cooling from 230°C causes 0.4%–0.7% radial thermal shrinkage, and bead expansion causes teeth to bind tightly if printed from nominal CAD models.
-> Our **PrintComp Algorithm** applies two calibrated offsets:
-> 1. **Flank Thinning ($0.10\text{ mm}$):** Applied normal to the involute profile to establish operating backlash ($j_n = 0.08–0.12\text{ mm}$) preventing tooth binding across wind turbine thermal swings (-20°C to +45°C).
-> 2. **Bore Expansion ($+0.15\text{ mm}$):** Compensates for hole shrinkage, allowing standard 608 ball bearings to press-fit without secondary lathe reaming.
-> Finally, Figure 9.1 shows our direct ISO 10303-21 STEP B-Rep solid model export, ready for SolidWorks assemblies and CNC hobbing toolpaths."*
+> *"Slide 9 demonstrates a genuine mechanical engineering problem we encountered and resolved:
+> When we first generated the 48-tooth ring bevel gear, the teeth looked strangely shallow—measuring only 2.07 mm deep instead of the 6.564 mm specified by Gleason standards. That was a 68% depth loss!
+> We discovered that the initial code was stacking involute profiles radially outward in cylindrical coordinates. But bevel gear teeth exist on a cone surface tilted at 71.57 degrees. Slicing radially multiplied the true depth by $\cos(71.57^\circ)$, shrinking it to less than a third.
+> After rejecting ad-hoc scaling factors, we solved this from first principles: we formulated the exact coordinate transformation projecting points normal to the pitch cone generator.
+> This restored the full 6.564 mm depth across the entire 21.25 mm face width and produced a verified watertight B-Rep solid with Euler characteristic $V - E + F = 2$."*
 
 ---
 
-### Slide 10: Conclusions, Mechanical Competencies Mastered & Acknowledgments
-- **Timing:** 10:00 – 11:00 (60s)
-- **Visual Focus:** 2-column layout (Mechanical Contributions vs. Competencies Mastered) and bottom Deep Maroon footer bar.
+### Slide 10: Quantitative Results & Manufacturing Prototyping
+- **Timing:** 09:45 – 10:45 (60s)
+- **Visual Focus:** 3 large Gold stat callouts (`1.642` Contact Ratio, `46.4` Bending Safety SF, `0 Non-Manifold` Watertight CAD); Bottom PrintComp manufacturing table.
 - **Verbatim Script:**
-> *"In conclusion, this internship provided comprehensive, practical mastery of mechanical drive systems and machine design:
-> - We formulated the kinematics of 7 pitch gear architectures.
-> - We proved Gleason Zerol axial thrust cancellation and modeled Willis planetary kinematics.
-> - We validated bending and contact stress safety factors ($S_F = 2.15, S_H = 1.48$) under ISO 6336.
-> - We successfully fabricated functional, non-binding physical prototypes using PrintComp compensation.
->
-> I want to express my sincere appreciation to the Faculty of Mechanical Engineering at Universiti Teknologi Malaysia (UTM), my academic supervisors, and mentors for their technical leadership throughout this project.
->
-> Thank you for your time. The floor is now open for technical discussion and examination questions."*
+> *"Slide 10 presents our quantitative validation:
+> Look at the three primary metrics at the top:
+> 1. **Contact Ratio:** 1.642, comfortably above the 1.20 industrial minimum, ensuring uninterrupted conjugate motion.
+> 2. **Bending Safety:** Under 6.67 N·m mesh torque, tooth bending stress is only 5.39 MPa on the gear and 4.67 MPa on the pinion. For alloy steel this yields a safety factor of 46.4, and even for 3D printed polymer prototypes with 50 MPa yield, safety factor exceeds 9.
+> 3. **Mesh Integrity:** The output meshes possess zero non-manifold edges, satisfying the closed Euler polyhedron metric $V - E + F = 2$.
+> At the bottom, our PrintComp algorithm applies material-calibrated shrinkage scaling (+0.3% for PLA) and 0.15 mm flank thinning, ensuring functional physical prototypes assemble smoothly without binding."*
+
+---
+
+### Slide 11: Conclusions, Competencies Mastered & Defense Q&A
+- **Timing:** 10:45 – 11:30 (45s)
+- **Visual Focus:** 2-column summary (Core Deliverables vs. Competencies Mastered & Roadmap); Bottom Deep Maroon banner opening floor for Q&A.
+- **Verbatim Script:**
+> *"In conclusion, this internship provided comprehensive, practical mastery of mechanical machine design, precision gear kinematics, and software automation:
+> From early 3D printer calibration and casing design, through analytical Gleason equations and True Cone projection fixes, to a deployable universal CAD software suite.
+> We proved Gleason Zerol axial thrust cancellation, eliminated pinion undercutting, modeled Willis planetary kinematics, and validated safety margins.
+> Most importantly, we verified that the synthesized gears can be manufactured with zero binding.
+> I want to express my sincere appreciation to Universiti Teknologi Malaysia (UTM), my academic supervisors, and mentors for their guidance throughout this journey.
+> Thank you for your time. The floor is now open for technical questions and discussion."*
 
 ---
 
@@ -162,20 +179,22 @@
 **Authoritative Mechanical Answer:**
 > *"In spiral bevel gears, the axial thrust force is directly proportional to $\tan\beta_m \sin\delta$, where $\beta_m$ is the spiral angle at the midface radius.
 > In a Gleason Zerol bevel gear, the cutter center is positioned such that at the exact mean cone distance $A_m$, the tangent to the tooth curve points directly toward the cone apex. Therefore, the mean spiral angle is $\beta_m = 0^\circ$.
-> Because $\tan(0^\circ) = 0$, the axial thrust component from the spiral angle vanishes ($F_a \approx 0$). The only residual axial load is the minor component from the 20° pressure angle acting on the cone slope ($F_t \tan\phi \sin\delta_p$), which is identical to a straight bevel gear and drastically smaller than a 35° spiral bevel."*
+> Because $\tan(0^\circ) = 0$, the axial thrust component from the spiral angle vanishes ($F_a \approx 0$). The only residual axial load is the minor component from the 20° pressure angle acting on the cone slope ($F_t \tan\phi \sin\delta_p = 12.4\text{ N}$), which is identical to a straight bevel gear and drastically smaller than a 35° spiral bevel."*
 
 ### Q2: "How does the Gleason 60/40 unequal addendum shift affect the contact ratio and sliding velocities?"
 **Authoritative Mechanical Answer:**
 > *"In a 16-tooth pinion mating with a 48-tooth gear, standard addenda ($1.0m$) produce excessive specific sliding at the pinion root and undercutting below the base circle.
 > By enlarging the pinion addendum to $1.2m$ (60% of working depth) and reducing the gear addendum to $0.8m$ (40%), we:
 > 1. Move the contact start point outside the pinion base circle radius ($r_b = 22.55\text{ mm}$), eliminating undercutting.
-> 2. Equalize the maximum specific sliding velocities ($v_{slide} = |\omega_1 r_1 - \omega_2 r_2|$) between the approach and recess phases, reducing adhesive wear and scuffing risks.
-> 3. Maintain a transverse contact ratio $\epsilon_\alpha = 1.62$, which ensures continuous two-pair tooth load sharing over 62% of the engagement cycle."*
+> 2. Equalize the maximum specific sliding velocities between the approach and recess phases, reducing adhesive wear and scuffing risks.
+> 3. Maintain a transverse contact ratio $\text{CR} = 1.642$, which ensures continuous two-pair tooth load sharing over 64% of the engagement cycle."*
 
-### Q3: "In your planetary drive, what ensures that the planets do not collide with each other?"
+### Q3: "What was the mathematical cause of the 68% depth loss in the initial bevel gear model, and how did you correct it?"
 **Authoritative Mechanical Answer:**
-> *"We evaluate the adjacent planet tip clearance condition:
-> The center-to-center distance between adjacent planets on the carrier pitch circle radius $C = (d_s + d_p)/2 = 30\text{ mm}$ is:
-> $$d_{centers} = 2 C \sin\left(\frac{\pi}{K}\right) = 2(30)\sin\left(60^\circ\right) = 51.96\text{ mm}$$
-> The planet tip diameter is $d_{a,p} = d_p + 2m = 36 + 6 = 42.00\text{ mm}$.
-> The tip clearance is $51.96 - 42.00 = 9.96\text{ mm} > 0$, guaranteeing generous mechanical clearance between adjacent planet tips during high-speed rotation."*
+> *"The root cause was measuring tooth addendum and dedendum in global cylindrical coordinates ($r, \theta, z$) rather than local cone-normal coordinates.
+> On a bevel gear, the pitch cone surface is inclined at angle $\gamma$. For the 48-tooth ring gear, $\gamma_g = 71.565^\circ$.
+> When slicing radially along $r$, the projection onto the normal to the cone scaled by $\cos(\gamma_g) = \cos(71.565^\circ) \approx 0.316$. Therefore, an addendum designed as $2.4\text{ mm}$ manifested as only $2.4 \times 0.316 = 0.76\text{ mm}$, shrinking the entire tooth depth from $6.564\text{ mm}$ down to $2.07\text{ mm}$—a 68% loss.
+> We corrected this by deriving normal-to-cone coordinate transformation vectors:
+> $$r_{3D} = A \sin\gamma + \Delta r \cos\gamma$$
+> $$z_{3D} = A \cos\gamma - \Delta r \sin\gamma$$
+> This guarantees that tooth profiles are erected strictly perpendicular to the cone generator across all cone distances $A$ from $A_o = 75.895\text{ mm}$ down to $A_i = 54.64\text{ mm}$."*

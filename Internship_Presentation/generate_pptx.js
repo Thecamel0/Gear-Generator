@@ -5,6 +5,7 @@
  * Branding: Universiti Teknologi Malaysia (UTM) Modern Technical Deck
  * Author: Ahmed Majdy Ahmed
  * Target Audience: Academic Evaluators, Industry Mentors & Mechanical Engineering Leads
+ * Total Slides: 11 (including Internship Timeline & Roadmap)
  */
 
 const pptxgen = require('pptxgenjs');
@@ -21,15 +22,16 @@ pres.layout = 'WIDE_16_9';
 const C = {
   white: 'FFFFFF',            // Canvas Background (60%)
   cardBg: 'FFFFFF',           // Crisp White Card Container
-  cardAlt: 'F8FAFC',          // Light Slate-50 Container
+  cardAlt: 'F8FAFC',          // Light Slate-50 Container (Platinum)
   slateDark: '0F172A',        // Primary Engineering Typography (30%)
-  slateMuted: '334155',       // Secondary Technical Text
+  slateMuted: '475569',       // Secondary Technical Text / Body
   slateDim: '64748B',         // Annotations, Captions & Metadata
   borderSlate: 'CBD5E1',      // Precise Technical Borders (1px)
+  borderLight: 'E2E8F0',      // Light subtle component border
   maroon: '721422',           // UTM Primary Brand (10% Accent)
   maroonTint: 'F8EEF0',       // Light Maroon Pill Background
   maroonBorder: 'D89EA7',     // Pill & Box Border
-  gold: 'C58B12',             // UTM Warm Gold Accent (Darkened for contrast on white)
+  gold: 'D49B23',             // UTM Warm Gold Accent
   goldLight: 'FDF8EB',        // Light Gold Pill Background
   goldBorder: 'E6C77B',       // Gold Border
   emerald: '059669',          // Verified / Pass indicator
@@ -37,15 +39,18 @@ const C = {
 };
 
 const ASSETS = {
+  planetaryAssembly: path.join(__dirname, 'assets', 'planetary_assembly.png'),
+  planetaryMesh2d: path.join(__dirname, 'assets', 'planetary_mesh2d.png'),
   planetaryOverview: path.join(__dirname, 'assets', 'planetary_overview.png'),
-  planetaryDropdown: path.join(__dirname, 'assets', 'planetary_dropdown_options.png'),
   planetarySun: path.join(__dirname, 'assets', 'planetary_sun_isolated.png'),
   planetaryPlanet: path.join(__dirname, 'assets', 'planetary_planet_isolated.png'),
-  spiralBevel: path.join(__dirname, 'assets', 'spiral_bevel_view.png'),
-  straightBevel: path.join(__dirname, 'assets', 'straight_bevel_view.png'),
-  straightMesh2d: path.join(__dirname, 'assets', 'straight_bevel_mesh2d.png'),
+  zerolMesh2d: path.join(__dirname, 'assets', 'zerol_mesh2d.png'),
   zerolBevel: path.join(__dirname, 'assets', 'zerol_bevel_3d.png'),
-  spurGear: path.join(__dirname, 'assets', 'spur_gear_3d.png'),
+  straightBevelAssembly: path.join(__dirname, 'assets', 'straight_bevel_assembly.png'),
+  straightMesh2d: path.join(__dirname, 'assets', 'straight_bevel_mesh2d.png'),
+  helicalAssembly: path.join(__dirname, 'assets', 'helical_assembly.png'),
+  spurAssembly: path.join(__dirname, 'assets', 'spur_assembly.png'),
+  spiralBevelAssembly: path.join(__dirname, 'assets', 'spiral_bevel_assembly.png'),
   cadToast: path.join(__dirname, 'assets', 'cad_export_toast.png')
 };
 
@@ -54,8 +59,8 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
   slide.background = { color: C.white };
 
   // Section Tag Pill (UTM Maroon Border & Text)
-  slide.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 0.42, w: 3.6, h: 0.26,
+  slide.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 0.42, w: 3.6, h: 0.26, rectRadius: 0.05,
     fill: { color: C.maroonTint },
     line: { color: C.maroonBorder, width: 1 }
   });
@@ -89,7 +94,7 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
   // Bottom Footer
   slide.addShape(pres.ShapeType.line, {
     x: 0.8, y: 6.9, w: 11.733, h: 0,
-    line: { color: C.borderSlate, width: 0.8 }
+    line: { color: C.borderLight, width: 0.8 }
   });
 
   slide.addText('Universiti Teknologi Malaysia (UTM)  |  Faculty of Mechanical Engineering', {
@@ -98,13 +103,13 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
     valign: 'middle'
   });
 
-  slide.addText('Ahmed Majdy Ahmed  —  Wind Turbine Pitch Drive Gearbox Design', {
+  slide.addText('Ahmed Majdy Ahmed  —  Wind Turbine Blade Pitch Control Drivetrain', {
     x: 5.5, y: 6.96, w: 5.0, h: 0.3,
     fontFace: 'Segoe UI', fontSize: 9, color: C.slateDim,
     align: 'center', valign: 'middle'
   });
 
-  slide.addText(`Slide ${String(slideNum).padStart(2, '0')} / 10`, {
+  slide.addText(`Slide ${String(slideNum).padStart(2, '0')} / 11`, {
     x: 10.7, y: 6.96, w: 1.833, h: 0.3,
     fontFace: 'Consolas', fontSize: 9, color: C.maroon, bold: true,
     align: 'right', valign: 'middle'
@@ -112,7 +117,7 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
 }
 
 // ==============================================================================
-// SLIDE 01: Title & Project Identification
+// SLIDE 01: Title & Project Identification (Full Maroon Cover)
 // ==============================================================================
 {
   const s = pres.addSlide();
@@ -126,8 +131,8 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
   });
 
   // Institution Banner
-  s.addShape(pres.ShapeType.rect, {
-    x: 1.2, y: 0.85, w: 5.2, h: 0.32,
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 1.2, y: 0.85, w: 5.2, h: 0.32, rectRadius: 0.04,
     fill: { color: '580E18' },
     line: { color: C.gold, width: 1 }
   });
@@ -142,7 +147,7 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
     x: 1.2, y: 1.45, w: 10.8, h: 0.6,
     fontFace: 'Segoe UI', fontSize: 29, bold: true, color: C.white
   });
-  s.addText('Multi-Architecture Gear Kinematics, ISO 6336 Stress & Manufacturing', {
+  s.addText('Multi-Architecture Gear Kinematics, Gleason Theory & Manufacturing', {
     x: 1.2, y: 2.1, w: 10.8, h: 0.55,
     fontFace: 'Segoe UI', fontSize: 24, bold: true, color: C.gold
   });
@@ -153,15 +158,15 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
     fontFace: 'Segoe UI', fontSize: 12, color: 'E2E8F0'
   });
 
-  // Divider
+  // Divider Line
   s.addShape(pres.ShapeType.line, {
     x: 1.2, y: 3.25, w: 11.3, h: 0,
     line: { color: '8B1E2E', width: 1 }
   });
 
   // Candidate & Academic Info Box
-  s.addShape(pres.ShapeType.rect, {
-    x: 1.2, y: 3.55, w: 5.8, h: 3.0,
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 1.2, y: 3.55, w: 5.8, h: 3.0, rectRadius: 0.08,
     fill: { color: '580E18' },
     line: { color: '8B1E2E', width: 1 }
   });
@@ -176,28 +181,31 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
     { text: 'Universiti Teknologi Malaysia (UTM)\n', options: { color: 'F1F5F9' } },
     { text: 'Discipline: ', options: { bold: true, color: C.white } },
     { text: 'Mechanical Engineering (Machine Design & Drivetrains)\n', options: { color: 'F1F5F9' } },
-    { text: 'Primary Standards: ', options: { bold: true, color: C.white } },
-    { text: 'ISO 6336 (Method B), AGMA 2003-B02, Gleason Bevel Standards\n', options: { color: 'F1F5F9' } },
-    { text: 'Deliverables: ', options: { bold: true, color: C.white } },
-    { text: 'Kinematic Solvers, MATLAB Suites, SolidWorks B-Rep CAD Models', options: { color: 'F1F5F9' } }
+    { text: 'Host Organization: ', options: { bold: true, color: C.white } },
+    { text: '[Host Company / Research Group]  |  Mentors: [Supervisor / Mentors]\n', options: { color: 'F1F5F9' } },
+    { text: 'Key Standards: ', options: { bold: true, color: C.white } },
+    { text: 'Gleason Bevel Standards, Willis Epicyclic Theory, Tredgold Approximation\n', options: { color: 'F1F5F9' } },
+    { text: 'Core Deliverables: ', options: { bold: true, color: C.white } },
+    { text: 'MATLAB Kinematic Suites, SolidWorks B-Rep CAD Models, Web Design Suite', options: { color: 'F1F5F9' } }
   ], {
     x: 1.4, y: 4.05, w: 5.4, h: 2.35,
-    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.2
+    fontFace: 'Segoe UI', fontSize: 9.5, lineSpacingMultiple: 1.15
   });
 
   // Right Side Preview Container: Real Planetary 3D Gear Assembly
-  s.addShape(pres.ShapeType.rect, {
-    x: 7.3, y: 3.55, w: 5.2, h: 3.0,
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 7.3, y: 3.55, w: 5.2, h: 3.0, rectRadius: 0.08,
     fill: { color: '000000' },
     line: { color: C.gold, width: 1.2 }
   });
-  if (fs.existsSync(ASSETS.planetaryOverview)) {
+  if (fs.existsSync(ASSETS.planetaryAssembly)) {
     s.addImage({
-      path: ASSETS.planetaryOverview,
-      x: 7.32, y: 3.57, w: 5.16, h: 2.65
+      path: ASSETS.planetaryAssembly,
+      x: 7.32, y: 3.57, w: 5.16, h: 2.65,
+      sizing: { type: 'contain', w: 5.16, h: 2.65 }
     });
   }
-  s.addText('Figure 1.1: Coaxial Epicyclic Pitch Reducer Assembly (Sun, 3 Planets, Fixed Ring)', {
+  s.addText('Figure 1.1: Epicyclic Pitch Reducer Assembly (Coaxial 5:1 Planetary Mechanism)', {
     x: 7.32, y: 6.27, w: 5.16, h: 0.25,
     fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
     align: 'center', valign: 'middle'
@@ -206,59 +214,58 @@ function setupMechanicalSlide(slide, slideNum, sectionTag, title, subtitle) {
   s.addNotes(`Slide 1: Title & Project Identification
 "Good morning, respected academic supervisors and mentors.
 My name is Ahmed Majdy Ahmed from the Faculty of Mechanical Engineering at Universiti Teknologi Malaysia.
-Today, I present the engineering results of my internship: the design, kinematic modeling, and ISO 6336 stress analysis of a precision gear drive for wind turbine blade pitch regulation.
-Rather than treating this purely as software, I will focus on the mechanical machine design challenges: tooth contact kinematics, Gleason cutter geometry, Willis planetary velocity ratios, bending and contact stress safety factors, and manufacturing backlash tolerancing."`);
+Today, I present the engineering accomplishments of my internship: the design, kinematic modeling, and manufacturing preparation of a precision pitch control drivetrain for wind turbine blades.
+Throughout this presentation, I focus on core mechanical engineering principles: conjugate tooth kinematics, Gleason cutter geometry, Willis planetary velocity ratios, bending safety factors, and manufacturing backlash tolerancing."`);
 }
 
 // ==============================================================================
-// SLIDE 02: Pitch Mechanism Operating Conditions & Aerodynamic Load Cases
+// SLIDE 02: Executive Summary & Internship Scope (3-Column Cards)
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupMechanicalSlide(s, 2, 'OPERATING ENVIRONMENT', 'Pitch Actuator Mechanical Operating Conditions & Load Cases', 'Aerodynamic pitch regulation, cyclic gravity moments, emergency storm feathering, and backlash limits');
+  setupMechanicalSlide(s, 2, 'EXECUTIVE SUMMARY', 'Executive Summary: Engineering Scope & Core Contributions', 'High-level synthesis of machine design objectives, technical deliverables, and measurable outcomes');
 
-  const cards = [
+  const execCards = [
     {
-      title: 'Aerodynamic Pitch Demands',
-      badge: 'AERODYNAMICS',
-      content: [
-        { text: '• Power Coefficient Regulation: ', options: { bold: true, color: C.slateDark } },
-        { text: 'Blades continuously adjust pitch angle beta between 0° and 30° to maintain optimal tip-speed ratio lambda and maximize aerodynamic efficiency Cp(lambda, beta).\n\n', options: { color: C.slateMuted } },
-        { text: '• Emergency Full Feathering: ', options: { bold: true, color: C.slateDark } },
-        { text: 'Must pitch 90° into feather within < 5 seconds (pitch rate theta_dot >= 8°/s) to arrest rotor rotation during extreme storm gusts (> 25 m/s).' }
+      title: 'Core Engineering Mission',
+      badge: 'MISSION & OBJECTIVES',
+      bullets: [
+        'Formulated precision gear kinematics for synchronous 3-blade pitch adjustment under aerodynamic moments.',
+        'Eliminated axial thrust on blade root bearings by implementing Gleason Zerol bevel tooth curves (beta_m = 0°).',
+        'Prevented pinion undercutting on 16T pinions by applying a Gleason 60/40 unequal addendum system.'
       ]
     },
     {
-      title: 'Structural & Dynamic Loads',
-      badge: 'MECHANICAL FATIGUE',
-      content: [
-        { text: '• Cyclic Gravitational Bending: ', options: { bold: true, color: C.slateDark } },
-        { text: 'Each 360° rotor rotation exerts alternating bending moments on the blade root bearing and drive pinion (over 10^8 cycles across 20-year lifespan).\n\n', options: { color: C.slateMuted } },
-        { text: '• Aerodynamic Torsional Flutter: ', options: { bold: true, color: C.slateDark } },
-        { text: 'Wind shear across rotor swept area produces fluctuating pitch axis torque, requiring strict gear tooth stiffness and surface durability.' }
+      title: 'Delivered Technical Artifacts',
+      badge: 'DELIVERED ARTIFACTS',
+      bullets: [
+        'Developed parametric kinematic solvers in MATLAB for 7 distinct industrial gear architectures.',
+        'Generated automated SolidWorks CAD models with verified B-Rep solids and direct STEP AP214 export.',
+        'Engineered an interactive engineering software tool for instant gear configuration and SolidWorks export.'
       ]
     },
     {
-      title: 'Kinematic & Backlash Limits',
-      badge: 'PRECISION LIMITS',
-      content: [
-        { text: '• High Gear Reduction Ratios: ', options: { bold: true, color: C.slateDark } },
-        { text: 'Servomotors operating at 1,500–3,000 RPM must be stepped down to 0.5–2 RPM at the blade root, requiring ratios of i = 50:1 to 150:1 in compact nacelle space.\n\n', options: { color: C.slateMuted } },
-        { text: '• Strict Backlash Tolerance: ', options: { bold: true, color: C.slateDark } },
-        { text: 'Circumferential backlash must not exceed jt <= 0.05 mm to prevent aerodynamic blade vibration and loss of active stall control.' }
+      title: 'Engineering & Physical Impact',
+      badge: 'MEASURABLE OUTCOMES',
+      bullets: [
+        'Achieved contact ratio CR = 1.642, exceeding the 1.20 minimum threshold for continuous quiet conjugate action.',
+        'Verified bending safety factor SF = 46.4 under rated torque, ensuring robust fatigue durability.',
+        'Resolved 68% tooth depth distortion via True Cone Projection, producing 100% watertight printable meshes.'
       ]
     }
   ];
 
-  cards.forEach((c, i) => {
+  execCards.forEach((c, i) => {
     const cx = 0.8 + i * 4.0;
-    s.addShape(pres.ShapeType.rect, {
-      x: cx, y: 1.82, w: 3.75, h: 4.8,
+    
+    // White Card Container
+    s.addShape(pres.ShapeType.roundRect, {
+      x: cx, y: 1.82, w: 3.75, h: 4.8, rectRadius: 0.08,
       fill: { color: C.cardBg },
-      line: { color: C.borderSlate, width: 1 }
+      line: { color: C.borderLight, width: 1 }
     });
 
-    // Top Accent Stripe
+    // 2px Top Accent Stripe
     s.addShape(pres.ShapeType.rect, {
       x: cx, y: 1.82, w: 3.75, h: 0.04,
       fill: { color: i === 0 ? C.maroon : (i === 1 ? C.gold : C.slateDark) },
@@ -267,266 +274,526 @@ Rather than treating this purely as software, I will focus on the mechanical mac
 
     s.addText(c.title, {
       x: cx + 0.25, y: 2.05, w: 3.25, h: 0.4,
-      fontFace: 'Segoe UI', fontSize: 12.5, bold: true, color: C.slateDark
+      fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.slateDark
     });
 
-    s.addShape(pres.ShapeType.rect, {
-      x: cx + 0.25, y: 2.5, w: 1.6, h: 0.22,
+    // Badge Pill
+    s.addShape(pres.ShapeType.roundRect, {
+      x: cx + 0.25, y: 2.5, w: 2.0, h: 0.24, rectRadius: 0.04,
       fill: { color: C.cardAlt },
-      line: { color: C.borderSlate, width: 0.8 }
+      line: { color: C.borderLight, width: 0.8 }
     });
     s.addText(c.badge, {
-      x: cx + 0.25, y: 2.5, w: 1.6, h: 0.22,
+      x: cx + 0.25, y: 2.5, w: 2.0, h: 0.24,
       fontFace: 'Consolas', fontSize: 7.5, bold: true, color: C.maroon,
       align: 'center', valign: 'middle'
     });
 
-    s.addText(c.content, {
-      x: cx + 0.25, y: 2.9, w: 3.25, h: 3.5,
-      fontFace: 'Segoe UI', fontSize: 9.8, lineSpacingMultiple: 1.15
+    // Bullets (Google X-Y-Z formula)
+    const bulletContent = c.bullets.map(b => ({
+      text: `• ${b}\n\n`,
+      options: { fontFace: 'Segoe UI', fontSize: 10, color: C.slateMuted }
+    }));
+
+    s.addText(bulletContent, {
+      x: cx + 0.25, y: 2.95, w: 3.25, h: 3.5,
+      lineSpacingMultiple: 1.15
     });
   });
 
-  s.addNotes(`Slide 2: Pitch Actuator Mechanical Operating Conditions & Load Cases
-"To design a reliable pitch gearbox, we must understand the mechanical load cases:
-1. Aerodynamic power regulation requires continuous micro-pitching to hold the rated aerodynamic power curve, but in storms exceeding 25 m/s, the drive must feather 90 degrees in under 5 seconds against massive drag moments.
-2. Cyclic fatigue: as each blade rotates, gravitational bending moments reverse every cycle, totaling over 100 million cycles in 20 years.
-3. Kinematics: high reduction ratios between 50:1 and 150:1 are required to step down 3000 RPM servomotors to 1 RPM, while limiting backlash under 0.05 mm to prevent aerodynamic stall flutter."`);
+  s.addNotes(`Slide 2: Executive Summary: Scope & Key Contributions
+"Slide 2 outlines the scope of my internship work:
+1. Core Mission: We set out to design a robust mechanical pitch drive that synchronizes all three blades while eliminating bearing-damaging axial thrust.
+2. Delivered Artifacts: I developed complete parametric kinematic solvers in MATLAB for 7 gear architectures, automated SolidWorks CAD macros, and an interactive engineering design suite.
+3. Measurable Impact: The design achieves a contact ratio of 1.642, a high bending safety margin, and successfully fixed a critical 68% tooth depth distortion on conical meshes to deliver 100% watertight models ready for physical manufacturing."`);
 }
 
 // ==============================================================================
-// SLIDE 03: Drivetrain Architecture: Central Ring to 3-Blade Pinions
+// SLIDE 03: Internship Engineering Progression (Chronological Timeline)
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupMechanicalSlide(s, 3, 'DRIVETRAIN ARCHITECTURE', 'Pitch Drivetrain Topology: Central Ring to 3-Blade Pitch Pinions', 'Mechanical power transmission, 120° spatial layout, torque allocation, and kinematic step-down');
+  setupMechanicalSlide(s, 3, 'INTERNSHIP ROADMAP & MILESTONES', 'Internship Engineering Progression: Hands-On Tooling to Software Deployment', 'Chronological journey across rapid prototyping, enclosure CAD, drivetrain research, kinematic algorithms, and universal software');
 
-  // Left Side: Drivetrain Schematic & Technical Specs
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 6.0, h: 4.8,
+  // Connecting Horizontal Timeline Track
+  s.addShape(pres.ShapeType.line, {
+    x: 0.8, y: 2.1, w: 11.733, h: 0,
+    line: { color: C.borderLight, width: 2 }
+  });
+
+  const timelineSteps = [
+    {
+      num: '01',
+      title: '3D Printer Tooling',
+      phase: 'RAPID TOOLING',
+      xyz: 'Mastered 3D printer calibration and FDM slicing parameters, achieving sub-0.2mm tolerance across PLA and PETG materials.',
+      pill: 'FDM Slicing / Calibration'
+    },
+    {
+      num: '02',
+      title: 'Aero-Leaf Enclosure',
+      phase: 'MECHANICAL CAD',
+      xyz: 'Designed custom motor casing for Aero-Leaf wind turbine, ensuring weather sealing and thermal venting in SolidWorks.',
+      pill: 'SolidWorks Part & Enclosure'
+    },
+    {
+      num: '03',
+      title: 'Gearbox Research',
+      phase: 'DRIVETRAIN RESEARCH',
+      xyz: 'Investigated wind turbine pitch failure modes, identifying root causes of backlash binding and excessive axial thrust.',
+      pill: 'Gleason / AGMA Standards'
+    },
+    {
+      num: '04',
+      title: 'Zerol Bevel Solver',
+      phase: 'MATLAB FORMULATION',
+      xyz: 'Formulated mathematical kinematic model in MATLAB for Zerol bevels, eliminating axial thrust (Fa = 0) with curved teeth.',
+      pill: 'Curved Gleason Kinematics'
+    },
+    {
+      num: '05',
+      title: 'Multi-Gear Engine',
+      phase: '7 GEAR ARCHITECTURES',
+      xyz: 'Expanded solvers to 7 gear types with 2D contact roll, 3D simulations, and automated SolidWorks B-Rep export.',
+      pill: '2D/3D Kinematics & SolidWorks'
+    },
+    {
+      num: '06',
+      title: 'Universal CAD Suite',
+      phase: 'FINAL SOFTWARE',
+      xyz: 'Deployed interactive engineering software allowing any engineer to configure custom gears and export directly to SolidWorks.',
+      pill: 'Deployable Design Tool'
+    }
+  ];
+
+  timelineSteps.forEach((step, i) => {
+    const cx = 0.8 + i * 1.98;
+    const cardW = 1.82;
+
+    // Node Circle on Track Line
+    s.addShape(pres.ShapeType.ellipse, {
+      x: cx + cardW / 2 - 0.18, y: 1.92, w: 0.36, h: 0.36,
+      fill: { color: i === 5 ? C.gold : C.maroon },
+      line: { color: C.white, width: 2 }
+    });
+    s.addText(step.num, {
+      x: cx + cardW / 2 - 0.18, y: 1.92, w: 0.36, h: 0.36,
+      fontFace: 'Consolas', fontSize: 9, bold: true, color: C.white,
+      align: 'center', valign: 'middle'
+    });
+
+    // Timeline Card Container
+    s.addShape(pres.ShapeType.roundRect, {
+      x: cx, y: 2.45, w: cardW, h: 4.25, rectRadius: 0.08,
+      fill: { color: C.cardBg },
+      line: { color: C.borderLight, width: 1 }
+    });
+
+    // Top Accent Stripe
+    s.addShape(pres.ShapeType.rect, {
+      x: cx, y: 2.45, w: cardW, h: 0.03,
+      fill: { color: i === 5 ? C.gold : C.maroon },
+      line: { color: C.white, width: 0 }
+    });
+
+    // Phase Pill
+    s.addShape(pres.ShapeType.roundRect, {
+      x: cx + 0.1, y: 2.6, w: cardW - 0.2, h: 0.22, rectRadius: 0.04,
+      fill: { color: C.maroonTint },
+      line: { color: C.maroonBorder, width: 0.6 }
+    });
+    s.addText(step.phase, {
+      x: cx + 0.1, y: 2.6, w: cardW - 0.2, h: 0.22,
+      fontFace: 'Consolas', fontSize: 6.8, bold: true, color: C.maroon,
+      align: 'center', valign: 'middle'
+    });
+
+    // Milestone Title
+    s.addText(step.title, {
+      x: cx + 0.1, y: 2.9, w: cardW - 0.2, h: 0.45,
+      fontFace: 'Segoe UI', fontSize: 10.5, bold: true, color: C.slateDark,
+      align: 'center'
+    });
+
+    // X-Y-Z Description
+    s.addText(step.xyz, {
+      x: cx + 0.1, y: 3.4, w: cardW - 0.2, h: 2.5,
+      fontFace: 'Segoe UI', fontSize: 8.8, color: C.slateMuted,
+      lineSpacingMultiple: 1.15
+    });
+
+    // Bottom Tech Badge Pill
+    s.addShape(pres.ShapeType.roundRect, {
+      x: cx + 0.08, y: 6.2, w: cardW - 0.16, h: 0.35, rectRadius: 0.04,
+      fill: { color: C.cardAlt },
+      line: { color: C.borderSlate, width: 0.8 }
+    });
+    s.addText(step.pill, {
+      x: cx + 0.08, y: 6.2, w: cardW - 0.16, h: 0.35,
+      fontFace: 'Consolas', fontSize: 7, color: C.slateDark, bold: true,
+      align: 'center', valign: 'middle'
+    });
+  });
+
+  s.addNotes(`Slide 3: Internship Engineering Progression
+"This timeline captures the technical journey of my internship across six structured milestones:
+1. I began in the mechanical prototyping lab, mastering 3D printer calibration, slicer settings, and polymer shrinkage control.
+2. I applied CAD modeling to design the motor casing and weather-sealed housing for the Aero-Leaf micro-wind turbine project.
+3. Next, I researched drivetrain failure modes to solve pitch gearbox backlash and axial wear issues in fluctuating wind conditions.
+4. I then developed the mathematical kinematics in MATLAB for a Gleason Zerol bevel gear pair, successfully eliminating axial thrust forces.
+5. Seeing the power of this analytical approach, I expanded the algorithms to 7 distinct gear types with 2D contact simulations and SolidWorks B-Rep generation.
+6. Finally, I synthesized these engineering capabilities into a universal software tool, allowing any engineer to generate custom CAD models and export them directly to SolidWorks in seconds."`);
+}
+
+// ==============================================================================
+// SLIDE 04: Problem Statement & Engineering Objectives (Split 50/50 Comparison)
+// ==============================================================================
+{
+  const s = pres.addSlide();
+  setupMechanicalSlide(s, 4, 'PROBLEM STATEMENT', 'The Problem: Bridging the Gap in Wind Turbine Pitch Drivetrains', 'Operational pitch control challenges, legacy drafting limitations, and the target kinematic solution');
+
+  // Left Column: Legacy Limitations / Challenges (Slate Gray Container)
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 1.82, w: 5.75, h: 4.8, rectRadius: 0.08,
     fill: { color: C.cardAlt },
     line: { color: C.borderSlate, width: 1 }
   });
-  s.addText('DRIVETRAIN MECHANICAL SCHEMATIC & POWER FLOW', {
-    x: 1.05, y: 2.02, w: 5.5, h: 0.3,
+  s.addShape(pres.ShapeType.rect, {
+    x: 0.8, y: 1.82, w: 5.75, h: 0.04,
+    fill: { color: '475569' },
+    line: { color: C.white, width: 0 }
+  });
+  s.addText('CURRENT STATE & OPERATIONAL CHALLENGES', {
+    x: 1.05, y: 2.05, w: 5.25, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 12.5, bold: true, color: C.slateDark
+  });
+
+  const legacyPoints = [
+    {
+      label: 'Manual CAD Drafting Bottlenecks',
+      desc: 'Standard CAD tools lack native Gleason bevel curves. Engineers manually approximate tooth forms with 2D lofting, causing flank profile errors up to 0.4 mm.'
+    },
+    {
+      label: 'Pinion Undercutting Risk (z < 17)',
+      desc: 'Pitch pinions with 16 teeth suffer severe root undercutting under standard 20° involute proportions, dramatically reducing tooth bending fatigue strength.'
+    },
+    {
+      label: 'Axial Thrust on Blade Bearings',
+      desc: 'Spiral bevel gears generate substantial axial forces, requiring heavy duplex thrust bearings inside compact blade root enclosures and increasing nacelle mass.'
+    },
+    {
+      label: '3D Print Binding & Thermal Contraction',
+      desc: 'Direct CAD exports fail during physical manufacturing: polymer cooling shrinkage (0.3%–0.6%) causes tooth flank interference and tight bore binding.'
+    }
+  ];
+
+  let ly = 2.45;
+  legacyPoints.forEach(p => {
+    s.addText(`• ${p.label}:`, {
+      x: 1.05, y: ly, w: 5.25, h: 0.25,
+      fontFace: 'Segoe UI', fontSize: 10, bold: true, color: '8B1E2E'
+    });
+    s.addText(p.desc, {
+      x: 1.25, y: ly + 0.22, w: 5.05, h: 0.55,
+      fontFace: 'Segoe UI', fontSize: 9.2, color: C.slateMuted, lineSpacingMultiple: 1.15
+    });
+    ly += 0.85;
+  });
+
+  // Right Column: Target Solution (Crisp White Container with Maroon Accent)
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 6.78, y: 1.82, w: 5.75, h: 4.8, rectRadius: 0.08,
+    fill: { color: C.cardBg },
+    line: { color: C.maroonBorder, width: 1.2 }
+  });
+  s.addShape(pres.ShapeType.rect, {
+    x: 6.78, y: 1.82, w: 5.75, h: 0.04,
+    fill: { color: C.maroon },
+    line: { color: C.white, width: 0 }
+  });
+  s.addText('TARGET SOLUTION: INTEGRATED GEAR ARCHITECTURE', {
+    x: 7.05, y: 2.05, w: 5.25, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 12.5, bold: true, color: C.maroon
+  });
+
+  const targetPoints = [
+    {
+      label: 'Parametric Gleason Zerol Generation',
+      desc: 'Synthesized exact curved flank coordinates (beta_m = 0°) directly from Gleason face-cutter kinematics, eliminating manual drafting inaccuracies.'
+    },
+    {
+      label: 'Gleason 60/40 Addendum System',
+      desc: 'Shifted addendum proportions (pinion 3.60 mm / gear 2.40 mm) to completely eliminate pinion root undercutting and equalize specific sliding.'
+    },
+    {
+      label: 'Zero Net Axial Bearing Thrust',
+      desc: 'Zerol curved geometry eliminates thrust forces (Fa = 0), reducing bearing size, reducing hub weight, and extending blade root operating lifespan.'
+    },
+    {
+      label: 'Automated PrintComp Tolerancing',
+      desc: 'Embedded calibrated shrinkage offsets (+0.3%) and flank thinning (0.15 mm backlash) for guaranteed smooth, non-binding physical 3D assembly.'
+    }
+  ];
+
+  let ry = 2.45;
+  targetPoints.forEach(p => {
+    s.addText(`✔ ${p.label}:`, {
+      x: 7.05, y: ry, w: 5.25, h: 0.25,
+      fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.emerald
+    });
+    s.addText(p.desc, {
+      x: 7.25, y: ry + 0.22, w: 5.05, h: 0.55,
+      fontFace: 'Segoe UI', fontSize: 9.2, color: C.slateMuted, lineSpacingMultiple: 1.15
+    });
+    ry += 0.85;
+  });
+
+  s.addNotes(`Slide 4: Problem Statement & Engineering Objectives
+"Slide 4 highlights the core engineering challenge:
+In wind turbine blade pitch mechanisms, conventional gear design poses four major issues:
+First, standard CAD software cannot accurately model Gleason spiral or Zerol bevel curves, forcing designers to use coarse approximations.
+Second, a 16-tooth pinion experiences root undercutting under standard proportions, threatening tooth shear.
+Third, standard spiral bevel gears produce heavy axial thrust that loads blade root bearings.
+Finally, uncompensated CAD models bind tightly when 3D printed due to polymer cooling shrinkage.
+Our solution addresses each point: exact Gleason equations, a 60/40 addendum shift, zero axial thrust geometry, and automated PrintComp tolerancing."`);
+}
+
+// ==============================================================================
+// SLIDE 05: Pitch Drivetrain Topology & Kinematic Architecture
+// ==============================================================================
+{
+  const s = pres.addSlide();
+  setupMechanicalSlide(s, 5, 'DRIVETRAIN TOPOLOGY', 'System Architecture: Central Ring to 3-Blade Pitch Pinions', 'End-to-end mechanical transmission topology, 120° spatial load sharing, and categorized technology stack');
+
+  // Top Half: Block Flow Diagram Container
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 1.82, w: 11.733, h: 2.5, rectRadius: 0.08,
+    fill: { color: C.cardBg },
+    line: { color: C.borderLight, width: 1 }
+  });
+  s.addText('MECHANICAL POWER FLOW & 3-BLADE LOAD-SHARING TOPOLOGY', {
+    x: 1.05, y: 1.98, w: 11.2, h: 0.25,
     fontFace: 'Consolas', fontSize: 9, bold: true, color: C.maroon
   });
 
-  // Power flow diagram box
-  s.addShape(pres.ShapeType.rect, {
-    x: 1.05, y: 2.4, w: 5.5, h: 1.4,
-    fill: { color: C.white },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  s.addText([
-    { text: 'Actuation Motor  (100 RPM, T_in = 20.0 N·m, P = 209.4 W)\n', options: { fontFace: 'Consolas', fontSize: 9, bold: true, color: C.slateDark } },
-    { text: '       │\n       ▼\n', options: { fontFace: 'Consolas', fontSize: 9, color: C.maroon } },
-    { text: 'Central Ring Gear Driver  (Ng = 48 teeth, dg = 144.0 mm, m = 3.0 mm)\n', options: { fontFace: 'Consolas', fontSize: 9, bold: true, color: C.slateDark } },
-    { text: '       ├─── [ 120° Spacing ] ──► Pinion #1 (16T, 300 RPM) ──► Blade 1 Shaft\n', options: { fontFace: 'Consolas', fontSize: 8.5, color: C.slateMuted } },
-    { text: '       ├─── [ 120° Spacing ] ──► Pinion #2 (16T, 300 RPM) ──► Blade 2 Shaft\n', options: { fontFace: 'Consolas', fontSize: 8.5, color: C.slateMuted } },
-    { text: '       └─── [ 120° Spacing ] ──► Pinion #3 (16T, 300 RPM) ──► Blade 3 Shaft', options: { fontFace: 'Consolas', fontSize: 8.5, color: C.slateMuted } }
-  ], {
-    x: 1.15, y: 2.45, w: 5.3, h: 1.3,
-    lineSpacingMultiple: 1.1
-  });
-
-  // Table of Kinematic & Force Parameters
-  const paramTable = [
-    [
-      { text: 'Kinematic Parameter', options: { bold: true, color: C.maroon, fill: C.maroonTint } },
-      { text: 'Symbol / Formula', options: { bold: true, color: C.slateDark, fill: C.maroonTint } },
-      { text: 'Design Value', options: { bold: true, color: C.slateDark, fill: C.maroonTint } }
-    ],
-    [
-      { text: 'Shaft Angle (Orthogonal)', options: { bold: true } },
-      { text: 'Sigma = delta_1 + delta_2', options: { fontFace: 'Consolas' } },
-      { text: '90.0°', options: { fontFace: 'Consolas', bold: true } }
-    ],
-    [
-      { text: 'Transmission Ratio (per mesh)', options: { bold: true } },
-      { text: 'i = Ng / Np = 48 / 16', options: { fontFace: 'Consolas' } },
-      { text: '1 : 3.0 (Speed Step-Up)', options: { fontFace: 'Consolas', bold: true } }
-    ],
-    [
-      { text: 'Torque per Mesh Interface', options: { bold: true } },
-      { text: 'T_mesh = T_total / 3', options: { fontFace: 'Consolas' } },
-      { text: '6.67 N·m', options: { fontFace: 'Consolas', bold: true } }
-    ],
-    [
-      { text: 'Output Torque per Pinion', options: { bold: true } },
-      { text: 'T_pinion = (T_mesh / i) * eta', options: { fontFace: 'Consolas' } },
-      { text: '2.16 N·m  (eta = 97%)', options: { fontFace: 'Consolas', bold: true } }
-    ],
-    [
-      { text: 'Pitch Tangential Force', options: { bold: true } },
-      { text: 'Ft = 2 * T_mesh / d_mean', options: { fontFace: 'Consolas' } },
-      { text: '101.7 N', options: { fontFace: 'Consolas', bold: true } }
-    ]
+  // 4 Horizontal Block Stages
+  const blocks = [
+    { title: 'Actuation Motor', sub: 'Input Prime Mover', desc: '100 RPM\nT_in = 20.0 N·m\nP = 209.4 W' },
+    { title: 'Central Ring Gear', sub: 'Master Driver (Ng = 48)', desc: '100 RPM, m = 3.0 mm\nd_g = 144.0 mm\nTorque = 20.0 N·m' },
+    { title: '3x Zerol Pinions', sub: '120° Spatial Mesh (Np = 16)', desc: '300 RPM (Ratio 1:3)\nT_mesh = 6.67 N·m\nT_pinion = 2.16 N·m' },
+    { title: 'Blade Pitch Shafts', sub: 'Synchronous Blade Roots', desc: 'Blade 1 (0°)\nBlade 2 (120°)\nBlade 3 (240°)' }
   ];
 
-  s.addTable(paramTable, {
-    x: 1.05, y: 3.95, w: 5.5, h: 2.5,
-    colW: [2.3, 1.9, 1.3],
-    fill: C.white,
-    border: { pt: 0.8, color: C.borderSlate },
-    fontFace: 'Segoe UI', fontSize: 9,
-    align: 'left', valign: 'middle'
-  });
-
-  // Right Side: 3D Visualization of the Multi-Pinion Drive
-  s.addShape(pres.ShapeType.rect, {
-    x: 7.05, y: 1.82, w: 5.48, h: 4.8,
-    fill: { color: '000000' },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  if (fs.existsSync(ASSETS.spurGear)) {
-    s.addImage({
-      path: ASSETS.spurGear,
-      x: 7.07, y: 1.84, w: 5.44, h: 4.4
+  blocks.forEach((b, i) => {
+    const bx = 1.05 + i * 2.85;
+    s.addShape(pres.ShapeType.roundRect, {
+      x: bx, y: 2.3, w: 2.45, h: 1.8, rectRadius: 0.06,
+      fill: { color: C.cardAlt },
+      line: { color: C.maroon, width: 1.2 }
     });
-  }
-  s.addText('Figure 3.1: 3-Pinion Load-Sharing Pitch Drive Synchronized at 120° Spatial Intervals', {
-    x: 7.07, y: 6.3, w: 5.44, h: 0.25,
-    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
-    align: 'center', valign: 'middle'
-  });
-
-  s.addNotes(`Slide 3: Pitch Drivetrain Topology: Central Ring to 3-Blade Pitch Pinions
-"Here is the physical drivetrain topology:
-A central driver gear (48 teeth, 144 mm pitch diameter) meshes simultaneously with three driven pinions (16 teeth each) spaced at 120 degrees around the perimeter.
-Each pinion is keyed directly to one wind turbine blade pitch shaft.
-Notice the mechanical advantage of this load-sharing architecture: total motor torque is split equally into three parallel paths (6.67 N·m per mesh), reducing tooth bending loads while ensuring all three blades pitch in perfect angular synchronization."`);
-}
-
-// ==============================================================================
-// SLIDE 04: Gleason Zerol Bevel Gear Theory & Axial Thrust Elimination
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupMechanicalSlide(s, 4, 'BEVEL GEAR MECHANICS', 'Gleason Zerol Bevel Gear Theory & Axial Thrust Elimination', 'Zero mean spiral angle, localized crowned tooth contact, and bearing load reduction');
-
-  // Left Column: Mechanical Theory & Equations
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 5.75, h: 4.8,
-    fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  s.addText('THE KINEMATIC PRINCIPLE OF ZEROL BEVELS', {
-    x: 1.05, y: 2.05, w: 5.25, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
-  });
-  s.addText([
-    { text: 'Definition & Geometry:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'A Zerol bevel gear is a curved-tooth bevel gear manufactured via the Gleason face-milling process where the spiral angle at midface is strictly zero (beta_m = 0°).\n\n', options: { color: C.slateMuted } },
-    { text: 'Gleason Face-Cutter Radius Formulation:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'r_cutter = (A_0 * sin(delta_2)) / cos(delta_1)   ~= A_m (Mean Cone Distance)\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: 'Tooth Force Decomposition (Zero Axial Thrust):\n', options: { bold: true, color: C.slateDark } },
-    { text: '• Tangential force:   Ft = 2 * T_p / d_mp\n• Radial separating:  Fr = Ft * tan(phi) * cos(delta_p)\n• Axial thrust force: Fa = Ft * [tan(phi)*sin(delta_p) - tan(beta_m)*cos(delta_p)]\n\n', options: { fontFace: 'Consolas', color: C.slateDark } },
-    { text: 'When beta_m = 0° ==> tan(beta_m) = 0:\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: 'The heavy axial thrust load generated by spiral bevel gears is eliminated, drastically reducing axial bearing preload requirements and housing mass.', options: { color: C.slateMuted } }
-  ], {
-    x: 1.05, y: 2.45, w: 5.25, h: 4.0,
-    fontFace: 'Segoe UI', fontSize: 9.8, lineSpacingMultiple: 1.15
-  });
-
-  // Right Side: Zerol Bevel 3D Mesh & Mechanical Comparison Table
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.82, w: 5.75, h: 2.5,
-    fill: { color: '000000' },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  if (fs.existsSync(ASSETS.zerolBevel)) {
-    s.addImage({
-      path: ASSETS.zerolBevel,
-      x: 6.8, y: 1.84, w: 5.71, h: 2.15
+    s.addText(b.title, {
+      x: bx, y: 2.4, w: 2.45, h: 0.28,
+      fontFace: 'Segoe UI', fontSize: 11, bold: true, color: C.slateDark,
+      align: 'center'
     });
-  }
-  s.addText('Figure 4.1: Zerol Bevel Gear Mesh showing Curved Flanks pointing to Cone Apex', {
-    x: 6.8, y: 4.05, w: 5.71, h: 0.22,
-    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
-    align: 'center', valign: 'middle'
+    s.addText(b.sub, {
+      x: bx, y: 2.68, w: 2.45, h: 0.22,
+      fontFace: 'Consolas', fontSize: 8, bold: true, color: C.maroon,
+      align: 'center'
+    });
+    s.addText(b.desc, {
+      x: bx, y: 2.95, w: 2.45, h: 1.05,
+      fontFace: 'Segoe UI', fontSize: 9, color: C.slateMuted,
+      align: 'center', lineSpacingMultiple: 1.15
+    });
+
+    // Connecting Arrow (except last)
+    if (i < 3) {
+      s.addShape(pres.ShapeType.line, {
+        x: bx + 2.45, y: 3.2, w: 0.4, h: 0,
+        line: { color: C.maroon, width: 2, endArrowType: 'triangle' }
+      });
+    }
   });
 
-  // Comparison Table: Straight vs Zerol vs Spiral
-  const compTable = [
-    [
-      { text: 'Bevel Gear Type', options: { bold: true, color: C.maroon, fill: C.maroonTint } },
-      { text: 'Spiral Angle', options: { bold: true, fill: C.maroonTint } },
-      { text: 'Axial Thrust (Fa)', options: { bold: true, fill: C.maroonTint } },
-      { text: 'Contact Pattern', options: { bold: true, fill: C.maroonTint } }
-    ],
-    [
-      { text: 'Straight Bevel', options: { bold: true } },
-      { text: 'beta = 0° (Straight)', options: { fontFace: 'Consolas' } },
-      { text: 'Low', options: { fontFace: 'Consolas' } },
-      { text: 'Full line contact (sensitive to misalignment)' }
-    ],
-    [
-      { text: 'Zerol Bevel (Selected)', options: { bold: true, color: C.maroon } },
-      { text: 'beta_m = 0° (Curved)', options: { fontFace: 'Consolas', bold: true } },
-      { text: 'Zero / Minimal', options: { fontFace: 'Consolas', bold: true, color: C.emerald } },
-      { text: 'Elliptical crowned contact (tolerates shaft deflection)', options: { bold: true } }
-    ],
-    [
-      { text: 'Spiral Bevel', options: { bold: true } },
-      { text: 'beta = 25°–35°', options: { fontFace: 'Consolas' } },
-      { text: 'Very High', options: { fontFace: 'Consolas' } },
-      { text: 'Overlapping helical contact (heavy thrust bearings)' }
-    ]
-  ];
-
-  s.addTable(compTable, {
-    x: 6.78, y: 4.4, w: 5.75, h: 2.2,
-    colW: [1.7, 1.4, 1.1, 1.55],
-    fill: C.white,
-    border: { pt: 0.8, color: C.borderSlate },
-    fontFace: 'Segoe UI', fontSize: 8.5,
-    align: 'left', valign: 'middle'
-  });
-
-  s.addNotes(`Slide 4: Gleason Zerol Bevel Gear Theory & Axial Thrust Elimination
-"Why did we choose Zerol bevel gears for the blade pitch mechanism?
-Look at the mechanical comparison table at the bottom right:
-- Straight bevel gears have straight line contact, which concentrates stress at tooth edges under shaft deflection.
-- Spiral bevel gears provide smooth overlap, but generate severe axial thrust forces, requiring heavy angular-contact duplex bearings.
-- The Zerol bevel gear resolves both: its teeth follow a circular arc (cut with a 76.2 mm Gleason cutter), providing a localized elliptical contact patch that accommodates aerodynamic hub deflection, while setting beta_m = 0° eliminates axial thrust. This saves significant bearing mass in the wind turbine blade root."`);
-}
-
-// ==============================================================================
-// SLIDE 05: Gleason Unequal Addendum System & Tooth Geometry
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupMechanicalSlide(s, 5, 'GEAR TOOTH GEOMETRY', 'Gleason Unequal Addendum System & Tooth Profile Geometry', 'Preventing pinion undercutting, balancing specific sliding velocities, and tooth depth standards');
-
-  // Left Column: Unequal Addendum Explanation & Table
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 5.75, h: 4.8,
-    fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  s.addText('GLEASON 60/40 UNEQUAL ADDENDUM RATIO', {
-    x: 1.05, y: 2.05, w: 5.25, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
-  });
-  s.addText([
-    { text: 'The Undercutting Problem on Pinions (z < 17):\n', options: { bold: true, color: C.slateDark } },
-    { text: 'Standard 20° full-depth involute teeth suffer from severe root undercutting when tooth count z < 17. Because our pitch pinion has only Np = 16 teeth, standard proportions would hollow out the tooth fillet, severely compromising bending fatigue strength.\n\n', options: { color: C.slateMuted } },
-    { text: 'Gleason Addendum Modification Solution:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'We allocate 60% of working depth to the pinion and 40% to the gear:\n', options: { color: C.slateMuted } },
-    { text: '• Pinion Addendum:  a_p = 0.60 * hw = 0.60 * (2.0 * m) = 3.600 mm\n• Gear Addendum:    a_g = 0.40 * hw = 0.40 * (2.0 * m) = 2.400 mm\n• Clearance:        c   = 0.188 * m = 0.564 mm\n• Whole Depth:      ht  = hw + c = 6.000 + 0.564 = 6.564 mm\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: 'Kinematic Benefit:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'This shift displaces the active mesh contact outside the interference zone, completely eliminates undercutting, and balances maximum specific sliding velocities between pinion approach and recess.', options: { color: C.slateMuted } }
-  ], {
-    x: 1.05, y: 2.45, w: 5.25, h: 4.0,
-    fontFace: 'Segoe UI', fontSize: 9.8, lineSpacingMultiple: 1.15
-  });
-
-  // Right Column: Tooth Proportions Table & Cone Angle Metrics
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.82, w: 5.75, h: 4.8,
+  // Bottom Half: Categorized Tech Stack Pills
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 4.45, w: 11.733, h: 2.2, rectRadius: 0.08,
     fill: { color: C.cardAlt },
+    line: { color: C.borderLight, width: 1 }
+  });
+  s.addText('ENGINEERING TOOLCHAIN, STANDARDS & FABRICATION PIPELINE', {
+    x: 1.05, y: 4.6, w: 11.2, h: 0.25,
+    fontFace: 'Consolas', fontSize: 9, bold: true, color: C.slateDark
+  });
+
+  const categories = [
+    { cat: 'Kinematic Theory', pills: ['Gleason Bevel Standards', 'Willis Epicyclic Theory', 'Tredgold Back-Cone Approximation'] },
+    { cat: 'Computation & CAD', pills: ['MATLAB Mathematical Engine', 'SolidWorks VBA API', 'STEP AP214 / IGES 5.3 Export'] },
+    { cat: 'Analysis & Standards', pills: ['Lewis Tooth Bending Stress', 'AGMA 6123-B06 Load Sharing', 'Watertight Euler Verification (V-E+F=2)'] },
+    { cat: 'Prototyping & Mfg', pills: ['PrintComp Thermal Offsetting', '0.15 mm Backlash Allocation', 'Direct FDM 3D Prototyping'] }
+  ];
+
+  categories.forEach((c, idx) => {
+    const colX = 1.05 + idx * 2.85;
+    s.addText(c.cat, {
+      x: colX, y: 4.95, w: 2.65, h: 0.25,
+      fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.maroon
+    });
+
+    c.pills.forEach((p, pIdx) => {
+      const py = 5.25 + pIdx * 0.42;
+      s.addShape(pres.ShapeType.roundRect, {
+        x: colX, y: py, w: 2.65, h: 0.32, rectRadius: 0.04,
+        fill: { color: C.white },
+        line: { color: C.borderSlate, width: 0.8 }
+      });
+      s.addText(p, {
+        x: colX, y: py, w: 2.65, h: 0.32,
+        fontFace: 'Segoe UI', fontSize: 8.5, color: C.slateDark,
+        align: 'center', valign: 'middle'
+      });
+    });
+  });
+
+  s.addNotes(`Slide 5: System Architecture & Technology Stack
+"Slide 5 illustrates the physical drivetrain topology and engineering toolchain:
+Looking at the power flow at the top:
+A central ring gear (48 teeth, 144 mm pitch diameter) driven by the actuation motor meshes simultaneously with three 16-tooth driven pinions placed at 120-degree intervals.
+Each pinion connects directly to one wind turbine blade pitch shaft.
+This load-sharing architecture divides total motor torque into three equal parallel branches (6.67 N·m per mesh interface), drastically cutting tooth bending stress while ensuring all 3 blades pitch in perfect angular synchronization.
+At the bottom, our toolchain pairs rigorous Gleason and Willis theory with MATLAB numerical algorithms, SolidWorks CAD macros, and PrintComp additive manufacturing compensation."`);
+}
+
+// ==============================================================================
+// SLIDE 06: Core Mechanism 1: Gleason Zerol Bevel Kinematics (60/40 Split)
+// ==============================================================================
+{
+  const s = pres.addSlide();
+  setupMechanicalSlide(s, 6, 'CORE MECHANISM 1', 'Zerol Bevel Mechanics: Axial Thrust Elimination & High Contact Ratio', 'Gleason face-milling kinematics, zero mean spiral angle, contact ratio CR = 1.642, and localized contact patch');
+
+  // Left Side (55%): High-Resolution MATLAB 2D Mesh Diagram
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 1.82, w: 6.5, h: 4.8, rectRadius: 0.08,
+    fill: { color: '000000' },
     line: { color: C.borderSlate, width: 1 }
+  });
+  if (fs.existsSync(ASSETS.zerolMesh2d)) {
+    s.addImage({
+      path: ASSETS.zerolMesh2d,
+      x: 0.82, y: 1.84, w: 6.46, h: 4.4,
+      sizing: { type: 'contain', w: 6.46, h: 4.4 }
+    });
+  }
+  s.addText('Figure 6.1: MATLAB 2D Conjugate Meshing: Pitch Circles, Base Circles & Contact Line (CR = 1.642)', {
+    x: 0.82, y: 6.3, w: 6.46, h: 0.25,
+    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
+    align: 'center', valign: 'middle'
+  });
+
+  // Right Side (45%): 3 Structured Points (Design, Implementation, Validation)
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 7.5, y: 1.82, w: 5.033, h: 4.8, rectRadius: 0.08,
+    fill: { color: C.cardBg },
+    line: { color: C.borderLight, width: 1 }
+  });
+  s.addShape(pres.ShapeType.rect, {
+    x: 7.5, y: 1.82, w: 5.033, h: 0.04,
+    fill: { color: C.maroon },
+    line: { color: C.white, width: 0 }
+  });
+  s.addText('MECHANICAL DEEP DIVE: ZEROL BEVEL PAIR', {
+    x: 7.75, y: 2.05, w: 4.5, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
+  });
+
+  const deepPoints = [
+    {
+      tag: 'DESIGN',
+      title: 'Curved Flank Kinematics (beta_m = 0°)',
+      desc: 'Teeth are curved along circular arcs generated by a Gleason face cutter of radius rc = 65.3 mm (~ Am). Setting spiral angle to zero at midface cancels axial thrust forces while providing localized elliptical contact.'
+    },
+    {
+      tag: 'IMPLEMENTATION',
+      title: 'Resolved 3-Axis Force Decomposition',
+      desc: 'At mean cone distance Am = 65.27 mm under 6.67 N·m mesh torque: Tangential force Ft = 107.7 N, separating radial force Fr = 37.2 N, and axial thrust Fa = 12.4 N. Zero spiral component eliminates excessive thrust bearing preload.'
+    },
+    {
+      tag: 'VALIDATION',
+      title: 'Conjugate Roll & Contact Ratio CR = 1.642',
+      desc: 'Simulated 2D line of action tracking via Tredgold virtual spur transformation (Nv_p = 16.88, Nv_g = 151.79). Contact ratio of 1.642 comfortably exceeds the 1.20 threshold, ensuring quiet and uninterrupted meshing.'
+    }
+  ];
+
+  let dy = 2.45;
+  deepPoints.forEach(p => {
+    s.addShape(pres.ShapeType.roundRect, {
+      x: 7.75, y: dy, w: 1.3, h: 0.22, rectRadius: 0.04,
+      fill: { color: C.maroonTint },
+      line: { color: C.maroonBorder, width: 0.6 }
+    });
+    s.addText(p.tag, {
+      x: 7.75, y: dy, w: 1.3, h: 0.22,
+      fontFace: 'Consolas', fontSize: 7.5, bold: true, color: C.maroon,
+      align: 'center', valign: 'middle'
+    });
+    s.addText(p.title, {
+      x: 9.15, y: dy - 0.02, w: 3.2, h: 0.25,
+      fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.slateDark
+    });
+    s.addText(p.desc, {
+      x: 7.75, y: dy + 0.25, w: 4.5, h: 0.85,
+      fontFace: 'Segoe UI', fontSize: 8.8, color: C.slateMuted, lineSpacingMultiple: 1.15
+    });
+    dy += 1.25;
+  });
+
+  s.addNotes(`Slide 6: Core Mechanism 1: Gleason Zerol Bevel Kinematics
+"Slide 6 presents our deep dive into the primary pitch transmission: the Gleason Zerol Bevel Gear.
+Look at the high-resolution MATLAB visualization on the left:
+Figure 6.1 shows the full 2D conjugate meshing zone. The line of action is drawn tangent to the base circles, giving a calculated contact ratio of 1.642, well above the 1.20 required for continuous tooth engagement.
+On the right, we highlight three critical engineering achievements:
+1. Design: The circular tooth curve produced by a 65.3 mm Gleason cutter localizes contact at the center, accommodating hub deflections.
+2. Implementation: At 6.67 N·m torque per mesh, tangential force is 107.7 N, while the zero midface spiral angle eliminates bearing-destroying axial thrust.
+3. Validation: Tredgold virtual teeth (16.88 and 151.79) prove flawless conjugate action with zero tip interference."`);
+}
+
+// ==============================================================================
+// SLIDE 07: Gleason Unequal Addendum System & Tooth Geometry
+// ==============================================================================
+{
+  const s = pres.addSlide();
+  setupMechanicalSlide(s, 7, 'GEAR TOOTH GEOMETRY', 'Gleason Unequal Addendum System: Eliminating Pinion Undercutting', '60/40 working depth allocation, tooth thickness modification (0.180·m shift), and balanced specific sliding');
+
+  // Left Column: Kinematic Principle & Formulation
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 1.82, w: 5.75, h: 4.8, rectRadius: 0.08,
+    fill: { color: C.cardBg },
+    line: { color: C.borderLight, width: 1 }
+  });
+  s.addText('THE KINEMATIC PROBLEM: PINION UNDERCUTTING (z = 16 < 17)', {
+    x: 1.05, y: 2.05, w: 5.25, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 11.5, bold: true, color: C.maroon
+  });
+  s.addText([
+    { text: 'Root Weakening Mechanism:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Standard 20° full-depth involute cutters dig into the tooth root when tooth count is below 17. For our 16-tooth pitch pinion, standard proportions would severely undercut the trochoid fillet, reducing bending strength by over 30%.\n\n', options: { color: C.slateMuted } },
+    { text: 'Gleason 60/40 Addendum Modification Solution:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'We allocate 60% of working depth (hw = 6.000 mm) to the pinion and 40% to the gear:\n', options: { color: C.slateMuted } },
+    { text: '• Pinion Addendum:   a_p = 0.60 · hw = 3.600 mm  (Dedendum b_p = 2.964 mm)\n• Gear Addendum:     a_g = 0.40 · hw = 2.400 mm  (Dedendum b_g = 4.164 mm)\n• Clearance:         c   = 0.188 · m = 0.564 mm  (Whole depth ht = 6.564 mm)\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
+    { text: 'Tooth Thickness Modification (0.180 · m Shift):\n', options: { bold: true, color: C.slateDark } },
+    { text: '• Pinion Circular Thickness: s_p = 5.252 mm (thickened at root)\n• Gear Circular Thickness:   s_g = 4.172 mm (nominal = 4.712 mm)\n\n', options: { fontFace: 'Consolas', color: C.slateDark } },
+    { text: 'Result: Complete elimination of undercutting and equalization of maximum specific sliding velocities between approach and recess.', options: { color: C.slateMuted } }
+  ], {
+    x: 1.05, y: 2.42, w: 5.25, h: 4.05,
+    fontFace: 'Segoe UI', fontSize: 9.3, lineSpacingMultiple: 1.15
+  });
+
+  // Right Column: Derived Gear Parameters Table
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 6.78, y: 1.82, w: 5.75, h: 4.8, rectRadius: 0.08,
+    fill: { color: C.cardAlt },
+    line: { color: C.borderLight, width: 1 }
   });
   s.addText('DERIVED BEVEL CONE PARAMETERS (m = 3.0 mm, Sigma = 90°)', {
     x: 7.05, y: 2.05, w: 5.25, h: 0.3,
@@ -542,432 +809,401 @@ Look at the mechanical comparison table at the bottom right:
     ],
     [
       { text: 'Pitch Diameter (d)', options: { bold: true } },
-      { text: 'm * N', options: { fontFace: 'Consolas' } },
+      { text: 'm · N', options: { fontFace: 'Consolas' } },
       { text: '48.00 mm', options: { fontFace: 'Consolas', bold: true } },
       { text: '144.00 mm', options: { fontFace: 'Consolas', bold: true } }
     ],
     [
-      { text: 'Pitch Cone Angle (delta)', options: { bold: true } },
+      { text: 'Pitch Cone Angle (gamma)', options: { bold: true } },
       { text: 'atan(Np / Ng)', options: { fontFace: 'Consolas' } },
       { text: '18.435°', options: { fontFace: 'Consolas', bold: true } },
       { text: '71.565°', options: { fontFace: 'Consolas', bold: true } }
     ],
     [
-      { text: 'Outer Cone Distance (A0)', options: { bold: true } },
-      { text: 'd / (2 * sin(delta))', options: { fontFace: 'Consolas' } },
+      { text: 'Outer Cone Distance (Ao)', options: { bold: true } },
+      { text: 'd / (2·sin(gamma))', options: { fontFace: 'Consolas' } },
       { text: '75.895 mm', options: { fontFace: 'Consolas' } },
       { text: '75.895 mm', options: { fontFace: 'Consolas' } }
     ],
     [
-      { text: 'Face Width (b)', options: { bold: true } },
-      { text: 'min(10*m, 0.3*A0)', options: { fontFace: 'Consolas' } },
-      { text: '20.00 mm', options: { fontFace: 'Consolas', bold: true } },
-      { text: '20.00 mm', options: { fontFace: 'Consolas', bold: true } }
+      { text: 'Face Width (F)', options: { bold: true } },
+      { text: '0.28 · Ao', options: { fontFace: 'Consolas' } },
+      { text: '21.25 mm', options: { fontFace: 'Consolas', bold: true } },
+      { text: '21.25 mm', options: { fontFace: 'Consolas', bold: true } }
     ],
     [
       { text: 'Mean Cone Distance (Am)', options: { bold: true } },
-      { text: 'A0 - b / 2', options: { fontFace: 'Consolas' } },
-      { text: '65.895 mm', options: { fontFace: 'Consolas' } },
-      { text: '65.895 mm', options: { fontFace: 'Consolas' } }
+      { text: 'Ao - F / 2', options: { fontFace: 'Consolas' } },
+      { text: '65.27 mm', options: { fontFace: 'Consolas' } },
+      { text: '65.27 mm', options: { fontFace: 'Consolas' } }
     ],
     [
-      { text: 'Addendum Angle (alpha_a)', options: { bold: true } },
-      { text: 'atan(a / A0)', options: { fontFace: 'Consolas' } },
-      { text: '2.716°', options: { fontFace: 'Consolas' } },
-      { text: '1.811°', options: { fontFace: 'Consolas' } }
+      { text: 'Tredgold Virtual Teeth (Nv)', options: { bold: true } },
+      { text: 'N / cos(gamma)', options: { fontFace: 'Consolas' } },
+      { text: '16.88', options: { fontFace: 'Consolas', bold: true } },
+      { text: '151.79', options: { fontFace: 'Consolas', bold: true } }
     ],
     [
-      { text: 'Face Angle (delta_f)', options: { bold: true } },
-      { text: 'delta + alpha_a', options: { fontFace: 'Consolas' } },
-      { text: '21.151°', options: { fontFace: 'Consolas', bold: true } },
-      { text: '73.376°', options: { fontFace: 'Consolas', bold: true } }
+      { text: 'Mounting Distance (M)', options: { bold: true } },
+      { text: 'Ao · cos(gamma)', options: { fontFace: 'Consolas' } },
+      { text: '70.86 mm', options: { fontFace: 'Consolas' } },
+      { text: '21.72 mm', options: { fontFace: 'Consolas' } }
     ]
   ];
 
   s.addTable(geomTable, {
     x: 7.05, y: 2.45, w: 5.25, h: 3.9,
-    colW: [1.6, 1.45, 1.1, 1.1],
-    fill: C.cardBg,
-    border: { pt: 0.8, color: C.borderSlate },
+    colW: [1.65, 1.4, 1.1, 1.1],
+    fill: C.white,
+    border: { pt: 0.8, color: C.borderLight },
     fontFace: 'Segoe UI', fontSize: 8.5,
     align: 'left', valign: 'middle'
   });
 
-  s.addNotes(`Slide 5: Gleason Unequal Addendum System & Tooth Geometry
-"In standard gear design, a 16-tooth pinion would suffer severe undercutting because 16 is below the theoretical limit of 17 teeth.
+  s.addNotes(`Slide 7: Gleason Unequal Addendum System & Tooth Geometry
+"In standard gear design, a 16-tooth pinion would suffer severe undercutting because 16 is below the critical threshold of 17 teeth.
 To solve this, we applied the Gleason Unequal Addendum system:
-The pinion is given 60% of the working depth (3.60 mm addendum), while the gear gets 40% (2.40 mm addendum).
-This modification shifts the contact line away from the pinion root, eliminating undercutting and strengthening tooth root bending resistance without changing center distance or operating pressure angle."`);
+The pinion receives 60% of the 6.0 mm working depth (3.60 mm addendum), while the gear gets 40% (2.40 mm addendum).
+Furthermore, we applied a tooth thickness shift of 0.180*m, giving the pinion a thicker root thickness of 5.252 mm compared to the gear's 4.172 mm.
+This shifts the active contact line away from the pinion root, completely eliminates undercutting, balances approach and recess sliding velocities, and bolsters tooth bending resistance without changing center distance."`);
 }
 
 // ==============================================================================
-// SLIDE 06: Epicyclic Planetary Architecture & Willis Kinematics
+// SLIDE 08: Core Mechanism 2: Epicyclic Planetary Reducer (60/40 Split)
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupMechanicalSlide(s, 6, 'PLANETARY TRANSMISSION', 'Epicyclic Planetary Architecture & Willis Velocity Kinematics', 'Coaxial high-reduction drive, Willis relative speed equation, assembly symmetry, and AGMA load sharing');
+  setupMechanicalSlide(s, 8, 'CORE MECHANISM 2', 'Planetary Transmission: Willis Kinematics & Coaxial Load Sharing', 'Coaxial high-reduction drive, Willis relative speed equation (5:1 ratio), assembly symmetry, and AGMA load sharing');
 
-  // Left Column: Kinematic Equations & Assembly Rules
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 5.75, h: 4.8,
-    fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  s.addText('WILLIS RELATIVE VELOCITY & COAXIAL GEOMETRY', {
-    x: 1.05, y: 2.05, w: 5.25, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
-  });
-  s.addText([
-    { text: 'Willis Fundamental Epicyclic Equation:\n', options: { bold: true, color: C.slateDark } },
-    { text: '(omega_sun - omega_carrier) / (omega_ring - omega_carrier) = - (N_ring / N_sun)\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: 'Stationary Ring Gear Configuration (omega_ring = 0):\n', options: { bold: true, color: C.slateDark } },
-    { text: '• Speed Ratio:         i = omega_sun / omega_carrier = 1 + (N_r / N_s)\n• For N_s = 12, N_r = 48 ==> i = 1 + (48 / 12) = 5.0 : 1\n• Planet Spin Speed:   omega_planet/carrier = - omega_c * (N_r / N_p)\n\n', options: { fontFace: 'Consolas', color: C.slateDark } },
-    { text: 'Coaxial Kinematic Assembly Sizing Rule:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'N_ring = N_sun + 2 * N_planet  ==>  48 = 12 + 2 * (18)  [Verified Equal Center Distances]\n\n', options: { fontFace: 'Consolas', color: C.slateMuted } },
-    { text: 'Symmetrical Planet Spacing Condition (K = 3 Planets at 120°):\n', options: { bold: true, color: C.slateDark } },
-    { text: '(N_sun + N_ring) / K = (12 + 48) / 3 = 20  [Exact Integer ==> Symmetrical Mesh]\n\n', options: { fontFace: 'Consolas', color: C.emerald, bold: true } },
-    { text: 'AGMA 6123-B06 Planetary Load-Sharing Factor:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'Due to manufacturing pitch runout, load is not split perfectly 33.3%; we apply K_gamma = 1.10 to size tooth forces conservative for industrial reliability.', options: { color: C.slateMuted } }
-  ], {
-    x: 1.05, y: 2.45, w: 5.25, h: 4.0,
-    fontFace: 'Segoe UI', fontSize: 9.8, lineSpacingMultiple: 1.15
-  });
-
-  // Right Column: Isolated Planetary Components (Sun + Planet + Assembly)
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.82, w: 5.75, h: 2.8,
+  // Left Side (55%): Planetary 2D/3D CAD Assembly Visualizer
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 1.82, w: 6.5, h: 4.8, rectRadius: 0.08,
     fill: { color: '000000' },
     line: { color: C.borderSlate, width: 1 }
   });
-  if (fs.existsSync(ASSETS.planetarySun)) {
+  if (fs.existsSync(ASSETS.planetaryMesh2d)) {
     s.addImage({
-      path: ASSETS.planetarySun,
-      x: 6.8, y: 1.84, w: 2.85, h: 2.5
+      path: ASSETS.planetaryMesh2d,
+      x: 0.82, y: 1.84, w: 6.46, h: 4.4,
+      sizing: { type: 'contain', w: 6.46, h: 4.4 }
     });
   }
-  if (fs.existsSync(ASSETS.planetaryPlanet)) {
-    s.addImage({
-      path: ASSETS.planetaryPlanet,
-      x: 9.68, y: 1.84, w: 2.83, h: 2.5
-    });
-  }
-  s.addText('Figure 6.1: Extracted Sun Gear (Left, Motor Bore) & Planet Gear (Right, Needle Bearing Bore)', {
-    x: 6.8, y: 4.37, w: 5.71, h: 0.22,
+  s.addText('Figure 8.1: Planetary 2D Meshing Diagram: Sun (12T), Planets (18T), Internal Ring (48T) — Ratio 5:1', {
+    x: 0.82, y: 6.3, w: 6.46, h: 0.25,
     fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
     align: 'center', valign: 'middle'
   });
 
-  // Mechanical Metrics Card
+  // Right Side (45%): Kinematics & Force Allocation Cards
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 7.5, y: 1.82, w: 5.033, h: 4.8, rectRadius: 0.08,
+    fill: { color: C.cardBg },
+    line: { color: C.borderLight, width: 1 }
+  });
   s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 4.7, w: 5.75, h: 1.92,
-    fill: { color: C.cardAlt },
-    line: { color: C.borderSlate, width: 1 }
+    x: 7.5, y: 1.82, w: 5.033, h: 0.04,
+    fill: { color: C.maroon },
+    line: { color: C.white, width: 0 }
   });
-  s.addText('PLANETARY FORCE & TORQUE DISTRIBUTION (Input: 15 N·m @ 500 RPM)', {
-    x: 7.0, y: 4.85, w: 5.3, h: 0.25,
-    fontFace: 'Consolas', fontSize: 9, bold: true, color: C.slateDark
-  });
-  s.addText([
-    { text: '• Carrier Output Torque:  ', options: { bold: true, color: C.slateDark } },
-    { text: 'T_out = T_in * i * eta = 15.0 * 5.0 * 0.97 = 72.75 N·m\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: '• Tangential Mesh Load:   ', options: { bold: true, color: C.slateDark } },
-    { text: 'Ft = (2 * T_in / (d_s * K)) * K_gamma = (30,000 / (36 * 3)) * 1.10 = 305.6 N\n', options: { fontFace: 'Consolas', color: C.slateDark } },
-    { text: '• Separating Radial Load: ', options: { bold: true, color: C.slateDark } },
-    { text: 'Fr = Ft * tan(20°) = 305.6 * 0.364 = 111.2 N (balanced on central sun)', options: { fontFace: 'Consolas', color: C.slateMuted } }
-  ], {
-    x: 7.0, y: 5.15, w: 5.3, h: 1.35,
-    fontFace: 'Segoe UI', fontSize: 9.5, lineSpacingMultiple: 1.2
+  s.addText('WILLIS KINEMATICS & COAXIAL GEOMETRY', {
+    x: 7.75, y: 2.05, w: 4.5, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
   });
 
-  s.addNotes(`Slide 6: Epicyclic Planetary Architecture & Willis Velocity Kinematics
+  const planetaryPoints = [
+    {
+      title: 'Willis Relative Velocity Ratio (5:1)',
+      eq: 'i = 1 + (N_ring / N_sun) = 1 + (48 / 12) = 5.0 : 1',
+      desc: 'With the internal ring gear held stationary, input servomotor power to the central sun steps down by 5:1 at the planet carrier, amplifying output pitch torque by 5x (72.75 N·m at eta = 97%).'
+    },
+    {
+      title: 'Geometric Coaxial Assembly Condition',
+      eq: 'N_ring = N_sun + 2·N_planet  ==>  48 = 12 + 2·(18)',
+      desc: 'Guarantees equal center distances (a = 45.0 mm) between sun-planet and planet-ring meshes, ensuring perfect collinear alignment of motor and output shafts.'
+    },
+    {
+      title: 'Symmetrical Planet Spacing (K = 3 or 4)',
+      eq: '(N_sun + N_ring) / K = (12 + 48) / 3 = 20  [Integer]',
+      desc: 'Yields an integer index, ensuring planets mesh symmetrically at 120° intervals. Tangential loads split across multiple planets, while separating forces cancel out radially on the sun shaft.'
+    }
+  ];
+
+  let py = 2.45;
+  planetaryPoints.forEach(p => {
+    s.addText(p.title, {
+      x: 7.75, y: py, w: 4.5, h: 0.25,
+      fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.slateDark
+    });
+    s.addShape(pres.ShapeType.roundRect, {
+      x: 7.75, y: py + 0.25, w: 4.5, h: 0.28, rectRadius: 0.04,
+      fill: { color: C.cardAlt },
+      line: { color: C.borderLight, width: 0.8 }
+    });
+    s.addText(p.eq, {
+      x: 7.75, y: py + 0.25, w: 4.5, h: 0.28,
+      fontFace: 'Consolas', fontSize: 8.5, bold: true, color: C.maroon,
+      align: 'center', valign: 'middle'
+    });
+    s.addText(p.desc, {
+      x: 7.75, y: py + 0.58, w: 4.5, h: 0.65,
+      fontFace: 'Segoe UI', fontSize: 8.8, color: C.slateMuted, lineSpacingMultiple: 1.15
+    });
+    py += 1.25;
+  });
+
+  s.addNotes(`Slide 8: Core Mechanism 2: Epicyclic Planetary Reducer
 "For high-torque, compact nacelle installations, we modeled the Epicyclic Planetary Gear Train:
 1. Willis Kinematics: with a fixed ring gear, the speed reduction ratio is exactly 1 + Nr/Ns = 1 + 48/12 = 5:1.
-2. Geometric coaxiality requires Nr = Ns + 2*Np (48 = 12 + 36), which equalizes the sun-planet and planet-ring center distances.
+2. Geometric coaxiality requires Nr = Ns + 2*Np (48 = 12 + 36), which equalizes the sun-planet and planet-ring center distances at 45.0 mm.
 3. Assembly symmetry requires (Ns + Nr) / K to be an exact integer. (12 + 48)/3 = 20, guaranteeing that all three planets mesh with identical 120-degree phase spacing.
 4. Force sharing: radial tooth forces cancel out symmetrically on the central sun shaft, eliminating bending loads on the high-speed motor shaft."`);
 }
 
 // ==============================================================================
-// SLIDE 07: 2D Contact Diagnostics & Tredgold Back-Cone Mechanics
+// SLIDE 09: Technical Challenge Overcome: True Cone Projection (3 Steps)
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupMechanicalSlide(s, 7, 'CONTACT MECHANICS', '2D Contact Diagnostics & Tredgold Back-Cone Kinematics', 'Conjugate tooth action, line-of-action tracking, base circle tangency, and spherical projection');
+  setupMechanicalSlide(s, 9, 'TECHNICAL CHALLENGE OVERCOME', 'Case Study: True Cone Projection & Watertight CAD Generation', 'Diagnosing a 68% conical tooth depth loss, implementing normal vector projection, and producing watertight B-Rep CAD');
 
-  // Left Side: 2D Contact Mesh Image
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 5.75, h: 4.8,
-    fill: { color: '000000' },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  if (fs.existsSync(ASSETS.straightMesh2d)) {
-    s.addImage({
-      path: ASSETS.straightMesh2d,
-      x: 0.82, y: 1.84, w: 5.71, h: 4.4
+  // 3 Step Columns: Challenge -> Investigation -> Solution (Solution Highlighted)
+  const steps = [
+    {
+      num: 'STEP 01',
+      title: 'The Challenge: 68% Tooth Depth Distortion',
+      badge: 'ROOT PROBLEM',
+      highlight: false,
+      content: [
+        { text: '• Radial Profile Stacking Flaw:\n', options: { bold: true, color: C.slateDark } },
+        { text: 'Initial V2 implementations stacked 2D involute slices radially outward along the Z axis, measuring addendum and dedendum in cylindrical coordinates.\n\n', options: { color: C.slateMuted } },
+        { text: '• Severe Ring Tooth Truncation:\n', options: { bold: true, color: '8B1E2E' } },
+        { text: 'Because the ring gear pitch cone angle is gamma_g = 71.57°, radial slicing scaled apparent depth by cos(71.57°) = 0.316. Measured depth was only 2.07 mm instead of the required 6.564 mm—a catastrophic 68% depth error that caused premature tooth disengagement.', options: { color: C.slateMuted } }
+      ]
+    },
+    {
+      num: 'STEP 02',
+      title: 'Investigation & Failed Iterations',
+      badge: 'DIAGNOSTIC PATH',
+      highlight: false,
+      content: [
+        { text: '• Hypothesis 1 (Artificial Scaling):\n', options: { bold: true, color: C.slateDark } },
+        { text: 'Attempted artificially increasing Gleason depth factor khw to 3.05. This restored outer crest height but created severe self-intersecting loops and spoke artifacts in SolidWorks lofting.\n\n', options: { color: C.slateMuted } },
+        { text: '• Hypothesis 2 (Clearance Boosting):\n', options: { bold: true, color: C.slateDark } },
+        { text: 'Tripling bottom clearance c produced hollow, knife-edge roots that failed FEA stress convergence.\n\n', options: { color: C.slateMuted } },
+        { text: '• Breakthrough Insight:\n', options: { bold: true, color: C.slateDark } },
+        { text: 'Tooth depth must be projected strictly orthogonal to the pitch cone surface generator, not in global cylindrical coordinates.', options: { color: C.slateMuted } }
+      ]
+    },
+    {
+      num: 'STEP 03',
+      title: 'The Solution: Normal Cone Vector Projection',
+      badge: 'VERIFIED SOLUTION',
+      highlight: true,
+      content: [
+        { text: '• Orthogonal Vector Formulation:\n', options: { bold: true, color: C.maroon } },
+        { text: 'r_3D = A · sin(gamma) + Delta_r · cos(gamma)\nz_3D = A · cos(gamma) - Delta_r · sin(gamma)\n\n', options: { fontFace: 'Consolas', bold: true, color: C.maroon } },
+        { text: '• 100% Depth Restoration:\n', options: { bold: true, color: C.slateDark } },
+        { text: 'Full 6.564 mm whole depth restored across entire face width (Ao = 75.89 mm down to Ai = 54.64 mm).\n\n', options: { color: C.slateMuted } },
+        { text: '• Watertight Euler Characteristic:\n', options: { bold: true, color: C.slateDark } },
+        { text: 'Replaced center-fan caps with polyshape Delaunay triangulation, verifying V - E + F = 2 (100% watertight STL/STEP export).', options: { color: C.slateMuted } }
+      ]
+    }
+  ];
+
+  steps.forEach((st, i) => {
+    const sx = 0.8 + i * 4.0;
+    
+    // Container Card (Solution gets Maroon border)
+    s.addShape(pres.ShapeType.roundRect, {
+      x: sx, y: 1.82, w: 3.75, h: 4.8, rectRadius: 0.08,
+      fill: { color: st.highlight ? C.white : C.cardAlt },
+      line: { color: st.highlight ? C.maroon : C.borderLight, width: st.highlight ? 1.5 : 1 }
     });
-  }
-  s.addText('Figure 7.1: 2D Diagnostic Mesh displaying Pitch Circles, Base Circles, & Line of Action (alpha = 20°)', {
-    x: 0.82, y: 6.3, w: 5.71, h: 0.25,
-    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
-    align: 'center', valign: 'middle'
+
+    // Top Stripe
+    s.addShape(pres.ShapeType.rect, {
+      x: sx, y: 1.82, w: 3.75, h: 0.04,
+      fill: { color: st.highlight ? C.maroon : (i === 0 ? '8B1E2E' : C.gold) },
+      line: { color: C.white, width: 0 }
+    });
+
+    // Step Number Pill
+    s.addShape(pres.ShapeType.roundRect, {
+      x: sx + 0.25, y: 2.05, w: 1.2, h: 0.22, rectRadius: 0.04,
+      fill: { color: st.highlight ? C.maroonTint : C.white },
+      line: { color: st.highlight ? C.maroonBorder : C.borderSlate, width: 0.8 }
+    });
+    s.addText(st.num, {
+      x: sx + 0.25, y: 2.05, w: 1.2, h: 0.22,
+      fontFace: 'Consolas', fontSize: 7.5, bold: true, color: st.highlight ? C.maroon : C.slateDark,
+      align: 'center', valign: 'middle'
+    });
+
+    s.addText(st.title, {
+      x: sx + 0.25, y: 2.38, w: 3.25, h: 0.5,
+      fontFace: 'Segoe UI', fontSize: 11, bold: true, color: C.slateDark
+    });
+
+    s.addText(st.content, {
+      x: sx + 0.25, y: 2.95, w: 3.25, h: 3.5,
+      fontFace: 'Segoe UI', fontSize: 9.2, lineSpacingMultiple: 1.15
+    });
   });
 
-  // Right Column: Tredgold Transformation & Conjugate Proof
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.82, w: 5.75, h: 4.8,
-    fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  s.addText('TREDGOLD SPHERICAL BACK-CONE TRANSFORMATION', {
-    x: 7.05, y: 2.05, w: 5.25, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
-  });
-  s.addText([
-    { text: 'Why Planar Projection Fails for Bevel Gears:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'Bevel teeth lie on a spherical surface centered at the apex. Projecting a 3D bevel cone directly onto a flat screen skews tooth curves and creates false visual interpenetration.\n\n', options: { color: C.slateMuted } },
-    { text: 'Tredgold Virtual Spur Equivalent Equations:\n', options: { bold: true, color: C.slateDark } },
-    { text: '• Virtual Pinion Teeth:   z_vp = N_p / cos(delta_p) = 16 / cos(18.435°) = 16.86\n• Virtual Gear Teeth:     z_vg = N_g / cos(delta_g) = 48 / cos(71.565°) = 151.79\n• Virtual Pitch Radii:    r_vp = r_p / cos(delta_p) = 24.0 / 0.9487 = 25.30 mm\n• Virtual Center Dist:    C_v  = r_vp + r_vg = 25.30 + 227.69 = 252.99 mm\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: 'Conjugate Action Verification:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'The pressure line of action is drawn exactly tangent to both virtual base circles (r_b = r_v * cos(20°)).\nDuring rotation, the contact point tracks along this line, proving:\n1. Constant angular velocity transmission ratio (i = 3.0).\n2. Continuous contact ratio (epsilon_alpha = 1.62 > 1.20 minimum standard).\n3. Zero tooth tip interference or root gouging during roll.', options: { color: C.slateMuted } }
-  ], {
-    x: 7.05, y: 2.45, w: 5.25, h: 4.0,
-    fontFace: 'Segoe UI', fontSize: 9.8, lineSpacingMultiple: 1.15
-  });
-
-  s.addNotes(`Slide 7: 2D Contact Diagnostics & Tredgold Back-Cone Kinematics
-"A critical mechanical challenge was verifying 2D conjugate meshing for bevel gears:
-In 3D, bevel teeth lie on spheres. Projecting them onto a 2D plane creates perspective distortion.
-We resolved this using the classical Tredgold Virtual Back-Cone Transformation:
-We calculate virtual tooth counts: z_vp = 16 / cos(18.43°) = 16.86 teeth, and z_vg = 151.79 teeth.
-This projects the true spherical tooth contact onto an equivalent planar rack and pinion conjugate pair.
-As seen in Figure 7.1, the line of action is drawn tangent to the base circles with a calculated transverse contact ratio of 1.62, proving smooth, non-interfering conjugate motion."`);
+  s.addNotes(`Slide 9: Technical Challenge Overcome: True Cone Projection
+"Slide 9 demonstrates a genuine mechanical engineering problem we encountered and resolved:
+When we first generated the 48-tooth ring bevel gear, the teeth looked strangely shallow—measuring only 2.07 mm deep instead of the 6.564 mm specified by Gleason standards. That was a 68% depth loss!
+We discovered that the initial code was stacking involute profiles radially outward in cylindrical coordinates. But bevel gear teeth exist on a cone surface tilted at 71.57 degrees. Slicing radially multiplied the true depth by cos(71.57°), shrinking it to less than a third.
+After rejecting ad-hoc scaling factors, we solved this from first principles: we formulated the exact coordinate transformation projecting points normal to the pitch cone generator.
+This restored the full 6.564 mm depth across the entire 21.25 mm face width and produced a verified watertight B-Rep solid with Euler characteristic V - E + F = 2."`);
 }
 
 // ==============================================================================
-// SLIDE 08: ISO 6336 & AGMA Stress Verification
+// SLIDE 10: Quantitative Results & Manufacturing Prototyping
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupMechanicalSlide(s, 8, 'STRESS & FATIGUE ANALYSIS', 'ISO 6336 Tooth Root Bending & Hertzian Contact Durability', 'Lewis bending rating, AGMA dynamic factor, surface pitting resistance, and material endurance limits');
+  setupMechanicalSlide(s, 10, 'QUANTITATIVE VALIDATION', 'Quantitative Results: Contact Ratio, Safety Margins & 3D Prototyping', 'Three key quantitative engineering achievements, ISO/Lewis stress safety factor, and PrintComp manufacturing validation');
 
-  // Left Column: Stress Formulations & Factor Breakdown
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 5.75, h: 4.8,
-    fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  s.addText('ISO 6336 METHOD B STRESS EQUATIONS', {
-    x: 1.05, y: 2.05, w: 5.25, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
-  });
-  s.addText([
-    { text: '1. Tooth Root Bending Stress (Lewis / ISO 6336):\n', options: { bold: true, color: C.slateDark } },
-    { text: 'sigma_F = (F_t / (b * m_n)) * Y_F * Y_S * Y_beta * K_A * K_V * K_Fbeta <= [sigma_FP]\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: '• Y_F = 2.45: ', options: { bold: true, color: C.slateDark } },
-    { text: 'Lewis Form Factor calculated from 30° tangent to root fillet.\n', options: { color: C.slateMuted } },
-    { text: '• Y_S = 1.72: ', options: { bold: true, color: C.slateDark } },
-    { text: 'Stress Concentration Factor at root trochoid radius.\n', options: { color: C.slateMuted } },
-    { text: '• K_V = 1.15: ', options: { bold: true, color: C.slateDark } },
-    { text: 'Dynamic factor accounting for pitch transmission error.\n\n', options: { color: C.slateMuted } },
-    { text: '2. Hertzian Surface Contact Stress (Pitting Resistance):\n', options: { bold: true, color: C.slateDark } },
-    { text: 'sigma_H = Z_H * Z_E * Z_eps * Z_beta * sqrt((F_t / (d1 * b)) * ((u+1)/u)) <= [sigma_HP]\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: '• Z_H = 2.495: Zone factor converting pitch geometry to equivalent cylinders.\n• Z_E = 189.8 MPa^0.5: Elasticity factor for mating Steel-on-Steel contact.\n• Z_eps = 0.88: Contact ratio factor accounting for load sharing.', options: { color: C.slateMuted } }
-  ], {
-    x: 1.05, y: 2.45, w: 5.25, h: 4.0,
-    fontFace: 'Segoe UI', fontSize: 9.5, lineSpacingMultiple: 1.15
+  // 3 Large Gold Stat Callout Cards
+  const statCards = [
+    {
+      stat: '1.642',
+      label: 'Transverse Contact Ratio',
+      sub: 'Threshold: CR >= 1.20',
+      desc: 'Guarantees continuous dual-tooth engagement, quiet operation, and zero loss of kinematic pitch synchronicity.'
+    },
+    {
+      stat: '46.4',
+      label: 'Minimum Bending Safety (SF)',
+      sub: 'Lewis Bending Stress: 5.39 MPa',
+      desc: 'Calculated against 250 MPa steel yield limit (SF = 46.4) and ~50 MPa for polymer prototypes (SF > 9.0).'
+    },
+    {
+      stat: '0 Non-Manifold',
+      label: 'Watertight CAD Geometry',
+      sub: 'Euler Metric: V - E + F = 2',
+      desc: '100% topologically closed 3D triangular surface meshes with zero boundary leaks or self-intersections.'
+    }
+  ];
+
+  statCards.forEach((sc, i) => {
+    const cx = 0.8 + i * 4.0;
+    s.addShape(pres.ShapeType.roundRect, {
+      x: cx, y: 1.82, w: 3.75, h: 2.1, rectRadius: 0.08,
+      fill: { color: C.cardBg },
+      line: { color: C.borderLight, width: 1 }
+    });
+    s.addShape(pres.ShapeType.rect, {
+      x: cx, y: 1.82, w: 3.75, h: 0.04,
+      fill: { color: C.gold },
+      line: { color: C.white, width: 0 }
+    });
+
+    s.addText(sc.stat, {
+      x: cx + 0.2, y: 1.95, w: 3.35, h: 0.55,
+      fontFace: 'Consolas', fontSize: 26, bold: true, color: C.gold
+    });
+    s.addText(sc.label, {
+      x: cx + 0.2, y: 2.5, w: 3.35, h: 0.28,
+      fontFace: 'Segoe UI', fontSize: 11, bold: true, color: C.slateDark
+    });
+    s.addText(sc.sub, {
+      x: cx + 0.2, y: 2.76, w: 3.35, h: 0.22,
+      fontFace: 'Consolas', fontSize: 8.5, bold: true, color: C.maroon
+    });
+    s.addText(sc.desc, {
+      x: cx + 0.2, y: 3.02, w: 3.35, h: 0.8,
+      fontFace: 'Segoe UI', fontSize: 8.8, color: C.slateMuted, lineSpacingMultiple: 1.15
+    });
   });
 
-  // Right Column: Material Library & Safety Factor Results
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.82, w: 5.75, h: 4.8,
+  // Bottom Half: PrintComp Manufacturing Compensation Table & Validation
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 4.1, w: 11.733, h: 2.55, rectRadius: 0.08,
     fill: { color: C.cardAlt },
-    line: { color: C.borderSlate, width: 1 }
+    line: { color: C.borderLight, width: 1 }
   });
-  s.addText('MATERIAL SELECTION & SAFETY FACTOR EVALUATION', {
-    x: 7.05, y: 2.05, w: 5.25, h: 0.3,
-    fontFace: 'Consolas', fontSize: 9.5, bold: true, color: C.slateDark
+  s.addText('PRINTCOMP MANUFACTURING COMPENSATION & PROTOTYPE TOLERANCES', {
+    x: 1.05, y: 4.25, w: 11.2, h: 0.25,
+    fontFace: 'Consolas', fontSize: 9, bold: true, color: C.maroon
   });
 
-  const stressTable = [
+  const mfgTable = [
     [
-      { text: 'Stress & Safety Metric', options: { bold: true, color: C.maroon, fill: C.white } },
-      { text: 'Calculated Value', options: { bold: true, fill: C.white } },
-      { text: 'Allowable Limit', options: { bold: true, fill: C.white } },
-      { text: 'Margin / Status', options: { bold: true, fill: C.white } }
+      { text: 'Material Parameter', options: { bold: true, color: C.maroon, fill: C.white } },
+      { text: 'PLA Polymer', options: { bold: true, fill: C.white } },
+      { text: 'PETG Technical', options: { bold: true, fill: C.white } },
+      { text: 'Steel (4140 / 8620)', options: { bold: true, fill: C.white } },
+      { text: 'Physical Function / Tolerance Effect', options: { bold: true, fill: C.white } }
     ],
     [
-      { text: 'Bending Stress (Pinion)', options: { bold: true } },
-      { text: '116.4 MPa', options: { fontFace: 'Consolas', bold: true } },
-      { text: '250.0 MPa (4140 Q&T)', options: { fontFace: 'Consolas' } },
-      { text: 'S_F = 2.15  [PASS]', options: { fontFace: 'Consolas', color: C.emerald, bold: true } }
+      { text: 'Thermal Shrinkage Factor', options: { bold: true } },
+      { text: '0.30% (Scale x1.003)', options: { fontFace: 'Consolas' } },
+      { text: '0.40% (Scale x1.004)', options: { fontFace: 'Consolas' } },
+      { text: '0.00% (CAD 1:1)', options: { fontFace: 'Consolas' } },
+      { text: 'Counters cooling contraction from nozzle to ambient' }
     ],
     [
-      { text: 'Bending Stress (Gear)', options: { bold: true } },
-      { text: '88.2 MPa', options: { fontFace: 'Consolas', bold: true } },
-      { text: '250.0 MPa (4140 Q&T)', options: { fontFace: 'Consolas' } },
-      { text: 'S_F = 2.83  [PASS]', options: { fontFace: 'Consolas', color: C.emerald, bold: true } }
+      { text: 'Backlash Flank Thinning', options: { bold: true } },
+      { text: '0.15 mm (Normal)', options: { fontFace: 'Consolas', bold: true } },
+      { text: '0.15 mm (Normal)', options: { fontFace: 'Consolas', bold: true } },
+      { text: '0.02 mm (Grinding)', options: { fontFace: 'Consolas' } },
+      { text: 'Prevents tooth binding; allows thermal expansion' }
     ],
     [
-      { text: 'Contact Pressure (Mesh)', options: { bold: true } },
-      { text: '675.8 MPa', options: { fontFace: 'Consolas', bold: true } },
-      { text: '1,000.0 MPa (Carb.)', options: { fontFace: 'Consolas' } },
-      { text: 'S_H = 1.48  [PASS]', options: { fontFace: 'Consolas', color: C.emerald, bold: true } }
+      { text: 'Print Tooth Thickness (p/g)', options: { bold: true } },
+      { text: '5.102 / 4.022 mm', options: { fontFace: 'Consolas', bold: true, color: C.maroon } },
+      { text: '5.102 / 4.022 mm', options: { fontFace: 'Consolas' } },
+      { text: '5.252 / 4.172 mm', options: { fontFace: 'Consolas' } },
+      { text: 'Normal thickness shifted to preserve conjugate roll' }
     ],
     [
-      { text: 'Carrier Pin Shear Stress', options: { bold: true } },
-      { text: '28.5 MPa', options: { fontFace: 'Consolas', bold: true } },
-      { text: '120.0 MPa (Shear)', options: { fontFace: 'Consolas' } },
-      { text: 'S_S = 4.21  [PASS]', options: { fontFace: 'Consolas', color: C.emerald, bold: true } }
+      { text: 'Print Clearance (c_print)', options: { bold: true } },
+      { text: '0.664 mm (+0.10 mm)', options: { fontFace: 'Consolas' } },
+      { text: '0.664 mm (+0.10 mm)', options: { fontFace: 'Consolas' } },
+      { text: '0.564 mm (Standard)', options: { fontFace: 'Consolas' } },
+      { text: 'Root fillet relief prevents nozzle bead accumulation' }
     ]
   ];
 
-  s.addTable(stressTable, {
-    x: 7.05, y: 2.45, w: 5.25, h: 2.3,
-    colW: [1.7, 1.15, 1.25, 1.15],
+  s.addTable(mfgTable, {
+    x: 1.05, y: 4.55, w: 11.2, h: 1.95,
+    colW: [2.3, 1.8, 1.8, 1.8, 3.5],
     fill: C.white,
-    border: { pt: 0.8, color: C.borderSlate },
+    border: { pt: 0.8, color: C.borderLight },
     fontFace: 'Segoe UI', fontSize: 8.5,
     align: 'left', valign: 'middle'
   });
 
-  // Material Callout Box
-  s.addShape(pres.ShapeType.rect, {
-    x: 7.05, y: 4.9, w: 5.25, h: 1.55,
-    fill: { color: C.white },
-    line: { color: C.maroonBorder, width: 1 }
-  });
-  s.addText('SELECTED MATERIAL: 4140 ALLOY STEEL (32–36 HRC)', {
-    x: 7.2, y: 5.02, w: 4.95, h: 0.25,
-    fontFace: 'Segoe UI', fontSize: 9.5, bold: true, color: C.maroon
-  });
-  s.addText([
-    { text: '• Core Toughness: ', options: { bold: true, color: C.slateDark } },
-    { text: 'Quenched and tempered 4140 provides high impact toughness against wind gust dynamic shock.\n', options: { color: C.slateMuted } },
-    { text: '• Case Hardening Option: ', options: { bold: true, color: C.slateDark } },
-    { text: '8620 carburized steel (58–62 HRC) modeled for heavy offshore applications, raising surface limit to 1,500 MPa.', options: { color: C.slateMuted } }
-  ], {
-    x: 7.2, y: 5.3, w: 4.95, h: 1.05,
-    fontFace: 'Segoe UI', fontSize: 8.5, lineSpacingMultiple: 1.15
-  });
-
-  s.addNotes(`Slide 8: ISO 6336 Tooth Root Bending & Hertzian Contact Durability
-"Slide 8 demonstrates our mechanical stress validation adhering strictly to ISO 6336 Method B:
-1. For tooth root bending, we calculate the Lewis form factor Y_F = 2.45 and stress concentration Y_S = 1.72, giving a nominal bending stress of 116.4 MPa against an allowable 250 MPa for 4140 steel—delivering a safety factor S_F = 2.15, well above the ISO 1.4 minimum.
-2. For surface contact, we compute the Hertzian contact pressure using zone factor Z_H and elasticity factor Z_E = 189.8, resulting in 675.8 MPa against 1,000 MPa allowable, yielding S_H = 1.48 (exceeding the ISO 1.2 minimum).
-This proves the pitch gearset will survive its 20-year design lifetime without pitting or fatigue fracture."`);
+  s.addNotes(`Slide 10: Quantitative Results & Manufacturing Prototyping
+"Slide 10 presents our quantitative validation:
+Look at the three primary metrics at the top:
+1. Contact Ratio: 1.642, comfortably above the 1.20 industrial minimum, ensuring uninterrupted conjugate motion.
+2. Bending Safety: Under 6.67 N·m mesh torque, tooth bending stress is only 5.39 MPa on the gear and 4.67 MPa on the pinion. For alloy steel this yields a massive safety factor of 46.4, and even for 3D printed polymer prototypes with 50 MPa yield, safety factor exceeds 9.
+3. Mesh Integrity: The output meshes possess zero non-manifold edges, satisfying the closed Euler polyhedron metric V - E + F = 2.
+At the bottom, our PrintComp algorithm applies material-calibrated shrinkage scaling (+0.3% for PLA) and 0.15 mm flank thinning, ensuring functional physical prototypes assemble smoothly without binding."`);
 }
 
 // ==============================================================================
-// SLIDE 09: Manufacturing Tolerancing, Backlash & Physical 3D Prototyping
+// SLIDE 11: Conclusions, Competencies Mastered & Defense Q&A
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupMechanicalSlide(s, 9, 'MANUFACTURING & TOLERANCES', 'Backlash Tolerancing, PrintComp Offsets & Prototype Validation', 'Thermal shrinkage compensation, operating backlash allocation, bearing press-fits, and slicer validation');
-
-  // Left Column: Backlash Physics & PrintComp Algorithm
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 5.75, h: 4.8,
-    fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  s.addText('PRINTCOMP ALGORITHMIC COMPENSATION', {
-    x: 1.05, y: 2.05, w: 5.25, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
-  });
-  s.addText([
-    { text: 'Polymer Thermal Shrinkage Physics:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'In rapid prototyping (FDM printing in PETG / PLA-CF), cooling from 230°C to ambient causes 0.4%–0.7% radial thermal contraction, and molten bead convex bulging causes gears to bind tightly if printed from nominal CAD models.\n\n', options: { color: C.slateMuted } },
-    { text: 'PrintComp Geometric Offsetting Equations:\n', options: { bold: true, color: C.slateDark } },
-    { text: '• Tooth Normal Thinning:  s_offset = s_nom - Delta_shrink - Delta_backlash\n• Flank Thinning Offset:  Delta_s = 0.10 mm to 0.15 mm along profile normal\n• Bore Dilation Offset:   d_bore = d_shaft + 0.15 mm (608-2RS bearing fit)\n\n', options: { fontFace: 'Consolas', color: C.maroon, bold: true } },
-    { text: 'Manufacturing Backlash Allocation:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'Normal backlash j_n = 0.08 mm to 0.12 mm is designed into the tooth flanks to accommodate thermal expansion across operating temperature ranges (-20°C to +45°C) and lubricant film thickness.', options: { color: C.slateMuted } }
-  ], {
-    x: 1.05, y: 2.45, w: 5.25, h: 4.0,
-    fontFace: 'Segoe UI', fontSize: 9.8, lineSpacingMultiple: 1.15
-  });
-
-  // Right Column: Physical Prototype & Manufacturing Verification
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.82, w: 5.75, h: 2.5,
-    fill: { color: '000000' },
-    line: { color: C.borderSlate, width: 1 }
-  });
-  if (fs.existsSync(ASSETS.cadToast)) {
-    s.addImage({
-      path: ASSETS.cadToast,
-      x: 6.8, y: 1.84, w: 5.71, h: 2.15
-    });
-  }
-  s.addText('Figure 9.1: Direct In-Memory STEP AP214 B-Rep CAD Export for CNC Machining Toolpaths', {
-    x: 6.8, y: 4.05, w: 5.71, h: 0.22,
-    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
-    align: 'center', valign: 'middle'
-  });
-
-  // 3 Manufacturing Metrics
-  const mfgMetrics = [
-    { num: '0.10 mm', label: 'Flank Thinning', desc: 'Calibrated backlash preventing mesh binding' },
-    { num: '+0.15 mm', label: 'Bore Expansion', desc: 'Slip-fit seating for 608-2RS bearings' },
-    { num: '0 Non-Manifold', label: 'Mesh Topology', desc: '100% watertight STL slicer verification' }
-  ];
-
-  mfgMetrics.forEach((m, i) => {
-    const mx = 6.78 + i * 1.95;
-    s.addShape(pres.ShapeType.rect, {
-      x: mx, y: 4.4, w: 1.85, h: 2.22,
-      fill: { color: C.cardAlt },
-      line: { color: C.borderSlate, width: 1 }
-    });
-    s.addShape(pres.ShapeType.rect, {
-      x: mx, y: 4.4, w: 1.85, h: 0.03,
-      fill: { color: C.maroon },
-      line: { color: C.maroon, width: 0 }
-    });
-    s.addText(m.num, {
-      x: mx + 0.05, y: 4.6, w: 1.75, h: 0.35,
-      fontFace: 'Consolas', fontSize: 13, bold: true, color: C.maroon,
-      align: 'center'
-    });
-    s.addText(m.label, {
-      x: mx + 0.05, y: 5.0, w: 1.75, h: 0.28,
-      fontFace: 'Segoe UI', fontSize: 9.5, bold: true, color: C.slateDark,
-      align: 'center'
-    });
-    s.addText(m.desc, {
-      x: mx + 0.05, y: 5.35, w: 1.75, h: 1.1,
-      fontFace: 'Segoe UI', fontSize: 8.5, color: C.slateMuted,
-      align: 'center', lineSpacingMultiple: 1.1
-    });
-  });
-
-  s.addNotes(`Slide 9: Backlash Tolerancing, PrintComp Offsets & Prototype Validation
-"To bridge theory and manufacturing, Slide 9 explains our PrintComp compensation pipeline:
-When 3D printing gears in polymers like PETG or PLA, cooling shrinkage of 0.5% and nozzle bead expansion cause teeth to bind tightly if printed to nominal CAD dimensions.
-Our PrintComp algorithm applies two offsets:
-1. Normal tooth thinning of 0.10 to 0.15 mm to guarantee running backlash (jn = 0.08–0.12 mm) across -20°C to +45°C wind turbine operating conditions.
-2. Bore expansion of +0.15 mm so that 608 ball bearings slip-fit perfectly without lathe reaming.
-Finally, Figure 9.1 shows our direct ISO 10303-21 STEP B-Rep export, which feeds directly into SolidWorks and CNC CAM software."`);
-}
-
-// ==============================================================================
-// SLIDE 10: Conclusions, Mechanical Competencies Mastered & Acknowledgments
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupMechanicalSlide(s, 10, 'DEFENSE CONCLUSION', 'Conclusions, Mechanical Competencies Mastered & Acknowledgments', 'Synthesis of machine design theory, industrial gear standards, and academic appreciation');
+  setupMechanicalSlide(s, 11, 'DEFENSE CONCLUSION', 'Conclusions, Mechanical Competencies Mastered & Acknowledgments', 'Synthesis of machine design theory, future engineering roadmap, and academic appreciation');
 
   // Left Column: Key Mechanical Deliverables
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.82, w: 5.75, h: 4.15,
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 1.82, w: 5.75, h: 4.15, rectRadius: 0.08,
     fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
+    line: { color: C.borderLight, width: 1 }
   });
   s.addShape(pres.ShapeType.rect, {
     x: 0.8, y: 1.82, w: 5.75, h: 0.04,
     fill: { color: C.maroon },
-    line: { color: C.maroon, width: 0 }
+    line: { color: C.white, width: 0 }
   });
-  s.addText('MECHANICAL ENGINEERING CONTRIBUTIONS', {
+  s.addText('CORE MECHANICAL ENGINEERING DELIVERABLES', {
     x: 1.05, y: 2.05, w: 5.25, h: 0.3,
     fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
   });
@@ -975,21 +1211,21 @@ Finally, Figure 9.1 shows our direct ISO 10303-21 STEP B-Rep export, which feeds
     { text: '• Formulated 7 Pitch Gear Architectures:\n', options: { bold: true, color: C.slateDark } },
     { text: 'Derived exact analytical kinematics for Zerol bevels, straight bevels, spiral bevels, planetary drives, helical, and annular slewing rings.\n\n', options: { color: C.slateMuted } },
     { text: '• Gleason Zerol & Tredgold Kinematics:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'Successfully eliminated gearbox axial thrust forces (Fa = 0) and mapped 3D conical spherical contact to 2D line-of-action conjugate diagnostics.\n\n', options: { color: C.slateMuted } },
-    { text: '• ISO 6336 Mechanical Stress Verification:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'Demonstrated bending safety SF = 2.15 and pitting resistance SH = 1.48, guaranteeing 20-year structural fatigue life.\n\n', options: { color: C.slateMuted } },
-    { text: '• Physical Prototype Fabrication:\n', options: { bold: true, color: C.slateDark } },
-    { text: 'Validated PrintComp shrinkage compensation, producing functional, non-binding physical prototypes.', options: { color: C.slateMuted } }
+    { text: 'Successfully eliminated gearbox axial thrust forces (Fa = 0) and mapped 3D conical spherical contact to 2D line-of-action conjugate diagnostics (CR = 1.642).\n\n', options: { color: C.slateMuted } },
+    { text: '• Gleason 60/40 Addendum System:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Completely eliminated pinion undercutting on 16T pinions with a 0.180·m tooth thickness shift, maximizing fatigue durability.\n\n', options: { color: C.slateMuted } },
+    { text: '• Manufacturing Tolerancing & Software Suite:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Built PrintComp shrinkage algorithms and an accessible engineering design suite allowing any user to configure and export custom gears to SolidWorks.', options: { color: C.slateMuted } }
   ], {
     x: 1.05, y: 2.45, w: 5.25, h: 3.3,
-    fontFace: 'Segoe UI', fontSize: 9.5, lineSpacingMultiple: 1.15
+    fontFace: 'Segoe UI', fontSize: 9.2, lineSpacingMultiple: 1.15
   });
 
   // Right Column: Professional Competencies & Acknowledgments
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.82, w: 5.75, h: 4.15,
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 6.78, y: 1.82, w: 5.75, h: 4.15, rectRadius: 0.08,
     fill: { color: C.cardBg },
-    line: { color: C.borderSlate, width: 1 }
+    line: { color: C.borderLight, width: 1 }
   });
   s.addShape(pres.ShapeType.rect, {
     x: 6.78, y: 1.82, w: 5.75, h: 0.04,
@@ -1002,17 +1238,19 @@ Finally, Figure 9.1 shows our direct ISO 10303-21 STEP B-Rep export, which feeds
   });
   s.addText([
     { text: 'Core Machine Design Competencies Mastered:\n', options: { bold: true, color: C.maroon } },
-    { text: '1. Advanced Involute & Bevel Gear Kinematics (Gleason, Willis, Tredgold).\n2. ISO 6336 & AGMA Stress Calculation (Lewis factor, Hertz contact pressure).\n3. Drivetrain Load Allocation & Dynamic Torque Reversals in Wind Turbines.\n4. Precision Backlash Tolerancing & Additive Manufacturing Compensation.\n5. SolidWorks B-Rep Parametric CAD Modeling & STEP AP214 Data Exchange.\n\n', options: { color: C.slateMuted } },
+    { text: '1. Advanced Involute & Bevel Kinematics (Gleason, Willis, Tredgold).\n2. Drivetrain Load Sharing & Dynamic Pitch Regulation in Wind Turbines.\n3. Precision Backlash Tolerancing & Additive Manufacturing Compensation.\n4. SolidWorks B-Rep Parametric CAD Modeling & STEP AP214 Data Exchange.\n5. Full-Stack Engineering Tool Development for CAD Workflow Automation.\n\n', options: { color: C.slateMuted } },
+    { text: 'Future Engineering Roadmap:\n', options: { bold: true, color: C.slateDark } },
+    { text: '• Full ISO 6336 contact stress rating with oil film EHL elastohydrodynamics.\n• Physical dynamometer test bench validation of 3D printed prototype gearboxes.\n\n', options: { color: C.slateMuted } },
     { text: 'Academic & Professional Appreciation:\n', options: { bold: true, color: C.maroon } },
-    { text: 'Sincere gratitude to my academic supervisors at Universiti Teknologi Malaysia (UTM) and industry mentors for their continuous technical guidance throughout this internship.', options: { color: C.slateMuted } }
+    { text: 'Sincere gratitude to my academic supervisors at Universiti Teknologi Malaysia (UTM) and industry mentors for their continuous technical guidance.', options: { color: C.slateMuted } }
   ], {
     x: 7.05, y: 2.45, w: 5.25, h: 3.3,
-    fontFace: 'Segoe UI', fontSize: 9.2, lineSpacingMultiple: 1.15
+    fontFace: 'Segoe UI', fontSize: 8.8, lineSpacingMultiple: 1.15
   });
 
   // Dark Maroon Footer Banner with Candidate Info & Defense Opening
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 6.15, w: 11.733, h: 0.65,
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.8, y: 6.15, w: 11.733, h: 0.65, rectRadius: 0.06,
     fill: { color: C.maroon },
     line: { color: C.gold, width: 1 }
   });
@@ -1027,11 +1265,12 @@ Finally, Figure 9.1 shows our direct ISO 10303-21 STEP B-Rep export, which feeds
     align: 'right', valign: 'middle'
   });
 
-  s.addNotes(`Slide 10: Conclusions, Mechanical Competencies Mastered & Acknowledgments
-"In conclusion, this internship provided deep, practical mastery of mechanical machine design and gear engineering:
-We derived the mathematics of 7 gear architectures, proved Gleason Zerol axial thrust cancellation, modeled Willis planetary kinematics, and validated safety margins under ISO 6336.
-Most importantly, we verified that the synthesized gears can be manufactured and assembled with zero binding.
-I want to express my sincere appreciation to Universiti Teknologi Malaysia (UTM), my academic supervisors, and mentors for their guidance.
+  s.addNotes(`Slide 11: Conclusions, Competencies Mastered & Acknowledgments
+"In conclusion, this internship provided comprehensive, practical mastery of mechanical machine design, precision gear kinematics, and software automation:
+From early 3D printer calibration and casing design, through analytical Gleason equations and True Cone projection fixes, to a deployable universal CAD software suite.
+We proved Gleason Zerol axial thrust cancellation, eliminated pinion undercutting, modeled Willis planetary kinematics, and validated safety margins.
+Most importantly, we verified that the synthesized gears can be manufactured with zero binding.
+I want to express my sincere appreciation to Universiti Teknologi Malaysia (UTM), my academic supervisors, and mentors for their guidance throughout this journey.
 Thank you for your time. The floor is now open for technical questions and discussion."`);
 }
 
@@ -1040,12 +1279,15 @@ Thank you for your time. The floor is now open for technical questions and discu
 // ==============================================================================
 const rootOutPath = path.join(__dirname, '..', 'Wind_Turbine_Pitch_Control_System_Internship_Presentation.pptx');
 const localOutPath = path.join(__dirname, 'Wind_Turbine_Pitch_Control_System_Internship_Presentation.pptx');
+const rootAltPath = path.join(__dirname, '..', 'Wind_Turbine_Pitch_Control_System_Mechanical_Engineering_Presentation.pptx');
 
 pres.writeFile({ fileName: rootOutPath })
   .then(() => {
     console.log(`Mechanical Engineering PPTX exported successfully to root: ${rootOutPath}`);
     fs.copyFileSync(rootOutPath, localOutPath);
     console.log(`Mechanical Engineering PPTX copy saved to: ${localOutPath}`);
+    fs.copyFileSync(rootOutPath, rootAltPath);
+    console.log(`Alternative naming copy saved to: ${rootAltPath}`);
   })
   .catch(err => {
     console.error('Error exporting PPTX:', err);
