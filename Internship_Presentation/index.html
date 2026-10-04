@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internship Engineering Defense — Wind Turbine Pitch Control System</title>
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(17, 24, 39, 0.75);
+      --bg-card-border: rgba(56, 189, 248, 0.2);
+      --bg-glass: rgba(15, 23, 42, 0.85);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-indigo: #6366f1;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg-dark: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-card-border: rgba(14, 165, 233, 0.25);
+      --bg-glass: rgba(241, 245, 249, 0.92);
+      --accent-cyan: #0284c7;
+      --accent-blue: #2563eb;
+      --accent-indigo: #4f46e5;
+      --accent-emerald: #059669;
+      --accent-amber: #d97706;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Ambient engineering grid background */
+    .grid-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Top presentation control bar */
+    .pres-header {
+      position: relative;
+      z-index: 20;
+      height: 48px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--bg-card-border);
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: var(--accent-cyan);
+      stroke-width: 2;
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-header {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .btn-header svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Main presentation stage */
+    .deck-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 32px 16px 32px;
+      z-index: 10;
+    }
+
+    /* 16:9 Aspect Ratio Frame */
+    .slide-frame {
+      width: 100%;
+      max-width: 1400px;
+      aspect-ratio: 16 / 9;
+      max-height: calc(100vh - 120px);
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 14px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 40px 48px;
+      display: none;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(12px) scale(0.99);
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      z-index: 2;
+    }
+
+    /* Slide Header */
+    .slide-header {
+      margin-bottom: 24px;
+      flex-shrink: 0;
+    }
+
+    .slide-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-cyan);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slide-tag::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    .slide-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slide-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Slide Body Layouts */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .grid-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      height: 100%;
+    }
+
+    .grid-4col {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    /* Cards & Containers */
+    .eng-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    [data-theme="light"] .eng-card {
+      background: rgba(0, 0, 0, 0.02);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .eng-card.highlight {
+      border-color: rgba(56, 189, 248, 0.35);
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--accent-cyan);
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .card-content {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .feature-list li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .feature-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-cyan);
+      border-radius: 2px;
+    }
+
+    .feature-list li strong {
+      color: var(--text-main);
+    }
+
+    /* Image Preview Container */
+    .media-box {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--bg-card-border);
+      background: #000;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      height: 100%;
+      min-height: 220px;
+    }
+
+    .media-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: zoom-in;
+      transition: transform 0.3s ease;
+    }
+
+    .media-box img:hover {
+      transform: scale(1.02);
+    }
+
+    .media-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 6px 12px;
+      background: rgba(9, 13, 22, 0.85);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Engineering Spec Tables */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: var(--font-sans);
+    }
+
+    .spec-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: rgba(56, 189, 248, 0.08);
+      color: var(--accent-cyan);
+      font-weight: 600;
+      border-bottom: 1px solid var(--bg-card-border);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    .spec-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    [data-theme="light"] .spec-table td {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .spec-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-main);
+    }
+
+    .spec-table .mono {
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    /* Math Formula Block */
+    .math-pill {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #7dd3fc;
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    [data-theme="light"] .math-pill {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #bae6fd;
+    }
+
+    /* Badges & Metrics */
+    .badge-metric {
+      display: inline-flex;
+      flex-direction: column;
+      padding: 10px 14px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+    }
+
+    .badge-val {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+    }
+
+    .badge-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    /* Bottom Status Bar */
+    .pres-footer {
+      position: relative;
+      z-index: 20;
+      height: 44px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--bg-card-border);
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .progress-bar-wrap {
+      flex: 1;
+      max-width: 320px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 0 16px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-nav {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+      background: var(--accent-cyan);
+      color: #000;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-nav svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    /* Speaker Notes Modal / Drawer */
+    .notes-drawer {
+      position: fixed;
+      bottom: 44px;
+      right: 24px;
+      width: 420px;
+      max-height: 400px;
+      background: rgba(13, 19, 33, 0.95);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 10px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    [data-theme="light"] .notes-drawer {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: var(--accent-blue);
+    }
+
+    .notes-drawer.open {
+      display: flex;
+    }
+
+    .notes-header {
+      padding: 10px 16px;
+      background: rgba(56, 189, 248, 0.1);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .notes-body {
+      padding: 16px;
+      overflow-y: auto;
+      font-size: 13px;
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    .notes-body p {
+      margin-bottom: 10px;
+    }
+
+    .notes-body strong {
+      color: var(--accent-cyan);
+    }
+
+    /* Overview Grid Modal */
+    .overview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(6, 9, 15, 0.96);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      padding: 40px;
+    }
+
+    .overview-modal.open {
+      display: flex;
+    }
+
+    .overview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      overflow-y: auto;
+      flex: 1;
+      padding-right: 12px;
+    }
+
+    .overview-thumb {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .overview-thumb:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.2);
+    }
+
+    .overview-thumb.active {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.1);
+      box-shadow: 0 0 0 2px var(--accent-cyan);
+    }
+
+    .thumb-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    .thumb-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    /* Print to PDF Styling */
+    @media print {
+      body {
+        overflow: visible !important;
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .pres-header, .pres-footer, .grid-bg, .notes-drawer, .overview-modal {
+        display: none !important;
+      }
+      .deck-container {
+        padding: 0 !important;
+        display: block !important;
+      }
+      .slide-frame {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: none !important;
+        max-height: none !important;
+        aspect-ratio: auto !important;
+      }
+      .slide {
+        display: flex !important;
+        opacity: 1 !important;
+        transform: none !important;
+        position: relative !important;
+        page-break-after: always !important;
+        height: 100vh !important;
+        padding: 40px !important;
+        border-bottom: 1px solid #ccc;
+      }
+      .eng-card {
+        border-color: #ddd !important;
+        background: #f9f9f9 !important;
+      }
+    }
+
+    /* Keyframe Animations */
+    @keyframes pulseCyan {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="grid-bg"></div>
+
+  <!-- Top Engineering Header -->
+  <header class="pres-header">
+    <div class="brand-cluster">
+      <svg class="brand-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+      <span class="brand-title">Internship Technical Review</span>
+      <span class="brand-sub">Wind Turbine Pitch Control System</span>
+    </div>
+
+    <div class="header-controls">
+      <button class="btn-header" id="btn-theme" title="Toggle Light/Dark Theme">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        Theme
+      </button>
+      <button class="btn-header" id="btn-notes" title="Presenter Notes (N)">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Notes
+      </button>
+      <button class="btn-header" id="btn-overview" title="Slide Overview (Esc / O)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Grid
+      </button>
+      <button class="btn-header" id="btn-pdf" title="Export to PDF (Ctrl+P)" onclick="window.print()">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        PDF
+      </button>
+      <button class="btn-header" id="btn-fullscreen" title="Toggle Fullscreen (F)">
+        <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+        Fullscreen
+      </button>
+    </div>
+  </header>
+
+  <!-- Presentation Viewport -->
+  <main class="deck-container">
+    <div class="slide-frame" id="slide-frame">
+
+      <!-- SLIDE 1: Title & Executive Overview -->
+      <section class="slide active" data-slide="1" data-title="Executive Overview">
+        <div class="slide-header">
+          <div class="slide-tag">Final Internship Project Defense</div>
+          <h1 class="slide-title">Wind Turbine Pitch Control System</h1>
+          <p class="slide-subtitle">Multi-Architecture Gear Engineering Studio, Kinematic Simulation Engine & In-Browser CAD Exporter Suite</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div class="eng-card highlight" style="flex: 1; margin-bottom: 16px;">
+                <div class="card-title">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  Internship Project Scope & Ownership
+                </div>
+                <div class="card-content">
+                  <p style="margin-bottom: 12px;"><strong>Candidate:</strong> Ahmed Majdy Ahmed</p>
+                  <p style="margin-bottom: 12px;"><strong>Focus Area:</strong> Mechanical Drive Design, Aerodynamic Pitch Regulation, Computational Kinematics & Client-Side CAD Kernel Automation</p>
+                  <p><strong>Deliverables Completed:</strong> Complete dual-platform software ecosystem featuring 7 gear architectures, native MATLAB ISO 6336 calculation engines, a standalone Three.js WebGL CAD Studio, and client-side STEP/STL/IGES B-Rep exporters.</p>
+                </div>
+              </div>
+              <div class="grid-3col" style="height: auto;">
+                <div class="badge-metric">
+                  <span class="badge-val">7</span>
+                  <span class="badge-lbl">Gear Architectures</span>
+                </div>
+                <div class="badge-metric">
+                  <span class="badge-val">100%</span>
+                  <span class="badge-lbl">Client-Side CAD</span>
+                </div>
+                <div class="badge-metric">
+                  <span class="badge-val">&lt; 0.2s</span>
+                  <span class="badge-lbl">Synthesis Latency</span>
+                </div>
+              </div>
+            </div>
+            <div class="media-box">
+              <img src="assets/planetary_overview.png" alt="Planetary Gear CAD View">
+              <div class="media-caption">
+                <span>Figure 1.1: Web CAD Studio Core Interface (Three.js WebGL)</span>
+                <span>Release v3.0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: Problem Statement & Engineering Context -->
+      <section class="slide" data-slide="2" data-title="Engineering Problem">
+        <div class="slide-header">
+          <div class="slide-tag">Background & Motivation</div>
+          <h2 class="slide-title">Wind Turbine Pitch Actuation Challenges</h2>
+          <p class="slide-subtitle">Electromechanical torque demands, cyclic fatigue, and nacelle spatial constraints</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-3col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                Aerodynamic Pitch Regulation
+              </div>
+              <div class="card-content">
+                <p>Wind turbine blades (up to 80m+) require continuous micro-pitching to optimize power coefficient ($C_p$) across varying wind velocities (Cut-in: 3 m/s, Rated: 11.5 m/s, Cut-out: 25 m/s).</p>
+                <div class="math-pill">P_{aero} = \frac{1}{2} \rho A V^3 C_p(\lambda, \beta_{pitch})</div>
+                <p>System must execute rapid 90° full-feather braking in storm emergencies (&lt; 5s) under high aerodynamic braking torque.</p>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Severe Mechanical Demands
+              </div>
+              <div class="card-content">
+                <ul class="feature-list">
+                  <li><strong>Cyclic Fatigue:</strong> Gravitational & turbulence bending moment reversals during each rotor revolution.</li>
+                  <li><strong>Zero/Low Backlash:</strong> Micro-flutter prevents aerodynamic stall control if drive play exceeds 0.05 mm.</li>
+                  <li><strong>High Transmission Ratios:</strong> Servomotor speed reduction from 3000 RPM down to 0.5–2 RPM pitch rate ($i \approx 50:1 - 150:1$).</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                Engineering Mission
+              </div>
+              <div class="card-content">
+                <p>Prior to this project, designing specialized pitch gearboxes required slow, fragmented workflows across proprietary CAD software and external calculation spreadsheets.</p>
+                <div class="math-pill" style="margin-top: 16px;">Objective: Instantaneous, mathematically rigorous gear synthesis + 3D kinematic simulation + direct CAD export in one open platform.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: System Evolution & Chronology -->
+      <section class="slide" data-slide="3" data-title="System Evolution">
+        <div class="slide-header">
+          <div class="slide-tag">Project Milestones</div>
+          <h2 class="slide-title">Development Chronology & Architecture Stages</h2>
+          <p class="slide-subtitle">Three progressive phases from analytical MATLAB formulations to an in-browser WebGL CAD suite</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-3col">
+            <div class="eng-card">
+              <div class="card-title">
+                <span style="font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 700;">Phase 1</span>
+                Analytical Math Foundations
+              </div>
+              <div class="card-content">
+                <p style="margin-bottom: 8px;"><strong>Focus:</strong> Gleason Zerol bevel tooth flank equations, spherical geometry, and root fillet generation.</p>
+                <ul class="feature-list">
+                  <li>Formulated Gleason circular cutter radius mathematics ($r_c = \frac{A_0 \sin\gamma}{\sin\delta}$).</li>
+                  <li>Involute profile generation via differential roll-angle coordinates.</li>
+                  <li>Direct SolidWorks VBA macro curve generators (`.bas`).</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <span style="font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 700;">Phase 2</span>
+                Multi-Gear MATLAB Suites
+              </div>
+              <div class="card-content">
+                <p style="margin-bottom: 8px;"><strong>Focus:</strong> Expanding to 6 distinct modular engineering suites with native App Designer GUI.</p>
+                <ul class="feature-list">
+                  <li>ISO 6336 bending & Hertzian contact stress calculators.</li>
+                  <li>Modular pipeline: `Core/`, `Viz/`, `Export/`, and `PrintComp/`.</li>
+                  <li>Additive manufacturing shrinkage compensation for FDM/SLA prototypes.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <span style="font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 700;">Phase 3</span>
+                WebGL CAD Studio (`Web_App`)
+              </div>
+              <div class="card-content">
+                <p style="margin-bottom: 8px;"><strong>Focus:</strong> Zero-install, high-performance browser application with universal CAD exports.</p>
+                <ul class="feature-list">
+                  <li>Three.js dynamic parametric 3D mesh rendering & multi-body kinematics.</li>
+                  <li>Pure JavaScript ISO 10303-21 STEP B-Rep and IEEE 754 Binary STL generation.</li>
+                  <li>Precision 2D dynamic contact and line-of-action diagnostic engine.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4: Mathematical & Theoretical Foundations -->
+      <section class="slide" data-slide="4" data-title="Mathematical Theory">
+        <div class="slide-header">
+          <div class="slide-tag">Engineering Rigor</div>
+          <h2 class="slide-title">Mathematical & Kinematic Formulations</h2>
+          <p class="slide-subtitle">Rigorous analytical models governing tooth profile geometry and planetary drive ratios</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                Involute & Gleason Geometry Equations
+              </div>
+              <div class="card-content">
+                <p><strong>Parametric Involute Function:</strong></p>
+                <div class="math-pill">
+                  x(\theta) = r_b \cdot (\cos\theta + \theta \cdot \sin\theta) \\
+                  y(\theta) = r_b \cdot (\sin\theta - \theta \cdot \cos\theta)
+                </div>
+                <p><strong>Gleason Zerol Bevel (Zero Spiral Angle at Midface):</strong></p>
+                <div class="math-pill">
+                  \beta_m = 0^\circ \implies F_{axial} \approx 0 \quad (\text{Pure radial thrust}) \\
+                  r_{cutter} = \frac{A_0 \cdot \sin\delta_2}{\cos\delta_1}
+                </div>
+                <p>Yields the localized elliptical tooth contact patch of spiral bevels without inducing axial gearbox thrust loads.</p>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path></svg>
+                Planetary Willis Kinematics & Stress Ratings
+              </div>
+              <div class="card-content">
+                <p><strong>Willis Relative Speed Relationship:</strong></p>
+                <div class="math-pill">
+                  i_0 = \frac{\omega_s - \omega_c}{\omega_r - \omega_c} = -\frac{N_r}{N_s} \\
+                  \text{Fixed Ring: } i = 1 + \frac{N_r}{N_s} \quad (\text{Coaxial condition: } N_r = N_s + 2N_p)
+                </div>
+                <p><strong>ISO 6336 Bending Stress ($\sigma_F$) & Contact Stress ($\sigma_H$):</strong></p>
+                <div class="math-pill">
+                  \sigma_F = \frac{F_t}{b \cdot m_n} \cdot Y_F \cdot Y_S \cdot K_A \cdot K_V \le \sigma_{FP} \\
+                  \sigma_H = Z_H \cdot Z_E \cdot Z_\epsilon \cdot \sqrt{\frac{F_t}{d_1 \cdot b} \cdot \frac{u+1}{u}} \le \sigma_{HP}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: 7 Supported Gear Architectures Matrix -->
+      <section class="slide" data-slide="5" data-title="Gear Architectures">
+        <div class="slide-header">
+          <div class="slide-tag">System Capabilities</div>
+          <h2 class="slide-title">Multi-Gear Architecture Matrix</h2>
+          <p class="slide-subtitle">Analytical modeling and CAD generation across all pitch actuation configurations</p>
+        </div>
+        <div class="slide-body">
+          <div style="overflow-x: auto; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--bg-card-border);">
+            <table class="spec-table">
+              <thead>
+                <tr>
+                  <th>Architecture</th>
+                  <th>Kinematics</th>
+                  <th>Contact Mechanics</th>
+                  <th>Primary Wind Turbine Function</th>
+                  <th>Validation Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Zerol Bevel Gear</strong></td>
+                  <td class="mono">&Sigma; = 90&deg;, &beta;m = 0&deg;</td>
+                  <td>Gleason curved flank, localized contact ellipse</td>
+                  <td>Right-angle pitch motor bevel box (zero axial load)</td>
+                  <td><span style="color: var(--accent-emerald);">&check; ISO Verified</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Straight Bevel Gear</strong></td>
+                  <td class="mono">&Sigma; = 90&deg;, straight cone</td>
+                  <td>Tredgold spherical back-cone projection</td>
+                  <td>Compact right-angle auxiliary emergency actuators</td>
+                  <td><span style="color: var(--accent-emerald);">&check; ISO Verified</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Spiral Bevel Gear</strong></td>
+                  <td class="mono">&Sigma; = 90&deg;, &beta;m = 35&deg;</td>
+                  <td>Curved circular spiral, high overlap (&epsilon;&beta; &gt; 2.0)</td>
+                  <td>High-torque heavy-duty offshore pitch drives</td>
+                  <td><span style="color: var(--accent-emerald);">&check; ISO Verified</span></td>
+                </tr>
+                <tr>
+                  <td><strong>External Involute Spur</strong></td>
+                  <td class="mono">&Sigma; = 0&deg;, parallel</td>
+                  <td>True involute with trochoidal root fillet</td>
+                  <td>Multi-pinion load-sharing pitch reducer drives</td>
+                  <td><span style="color: var(--accent-emerald);">&check; ISO Verified</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Internal Spur Ring Gear</strong></td>
+                  <td class="mono">&Sigma; = 0&deg;, annular internal</td>
+                  <td>Internal involute, root tip clearance correction</td>
+                  <td>Direct blade bearing slewing ring drive gear</td>
+                  <td><span style="color: var(--accent-emerald);">&check; ISO Verified</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Helical Gear</strong></td>
+                  <td class="mono">&Sigma; = 0&deg;, &beta; = 15&deg;&ndash;25&deg;</td>
+                  <td>Smooth progressive engagement, overlap contact</td>
+                  <td>Ultra-quiet multi-stage reduction planetary stages</td>
+                  <td><span style="color: var(--accent-emerald);">&check; ISO Verified</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Epicyclic Planetary Gear</strong></td>
+                  <td class="mono">Coaxial Sun-Planet-Ring</td>
+                  <td>Willis kinematics, multi-contact load sharing</td>
+                  <td>High-ratio compact nacelle pitch gearboxes</td>
+                  <td><span style="color: var(--accent-emerald);">&check; ISO Verified</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 6: Native MATLAB Computational Suite & App Designer GUI -->
+      <section class="slide" data-slide="6" data-title="MATLAB Suites">
+        <div class="slide-header">
+          <div class="slide-tag">Engineering Calculation Engines</div>
+          <h2 class="slide-title">Modular MATLAB Computational Suite & Native GUI</h2>
+          <p class="slide-subtitle">High-precision numerical solvers, stress safety factors, and direct CAD translators</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                Native MATLAB App Designer GUI (`zerol_bevel_gui.m`)
+              </div>
+              <div class="card-content">
+                <p>Designed a standalone desktop GUI for engineers to explore design spaces with live feedback:</p>
+                <ul class="feature-list" style="margin: 12px 0;">
+                  <li><strong>Real-time Stress Gauges:</strong> Live updates of Lewis bending stress ($\sigma_b$) and Hertz surface contact stress ($\sigma_c$).</li>
+                  <li><strong>Material Library Integration:</strong> Presets for 4140 Alloy Steel, 8620 Carburized Steel, Bronze, and high-strength Polymers (PLA/Nylon).</li>
+                  <li><strong>Automated Disk CAD Export:</strong> One-click output to SolidWorks `.bas` macros and sliced STL models directly from MATLAB memory.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                Clean Modular Architecture Pattern
+              </div>
+              <div class="card-content">
+                <p>Standardized directory structure adopted across all 6 MATLAB suites:</p>
+                <div class="math-pill" style="font-size: 11px;">
+                  Matlab_&lt;GearType&gt;/<br>
+                  ├── Core/      &rarr; Kinematic equations & 3D coordinate matrices<br>
+                  ├── Viz/       &rarr; 2D tooth mesh & 3D surface plotters<br>
+                  ├── Export/    &rarr; STEP, STL, IGES & SolidWorks macro exporters<br>
+                  └── PrintComp/ &rarr; Shrinkage offsets & FDM tolerance tuning
+                </div>
+                <p>Enables total code reusability and isolated unit testing of kinematic solvers.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 7: Web CAD Studio Architecture (`Web_App`) -->
+      <section class="slide" data-slide="7" data-title="Web CAD Studio">
+        <div class="slide-header">
+          <div class="slide-tag">Software Engineering</div>
+          <h2 class="slide-title">Interactive Web CAD Studio Architecture</h2>
+          <p class="slide-subtitle">100% client-side zero-backend design using Vite, Three.js WebGL, and Vanilla JavaScript</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-3col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                Zero-Backend Client Execution
+              </div>
+              <div class="card-content">
+                <ul class="feature-list">
+                  <li><strong>Zero Cloud Dependency:</strong> Operates 100% locally in any browser with zero server computing required.</li>
+                  <li><strong>Instant Response:</strong> Geometry regenerates in &lt; 200ms upon slider movement.</li>
+                  <li><strong>Data Confidentiality:</strong> Proprietary wind turbine pitch designs never leave the engineer's device.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                Modular System Decoupling
+              </div>
+              <div class="card-content">
+                <ul class="feature-list">
+                  <li><strong>`gearGeometry.js`:</strong> Pure analytical math engine generating 3D vertices, UVs, and normals.</li>
+                  <li><strong>`viewer3d.js`:</strong> Three.js scene graph, custom PBR shaders, dynamic lighting, and kinematic loop.</li>
+                  <li><strong>`plot2d.js`:</strong> Dynamic 2D canvas with pitch points, lines of action, and Tredgold profiles.</li>
+                  <li><strong>`cadExporters.js`:</strong> STEP AP214 B-Rep generator, binary STL builder, and SolidWorks VBA scripts.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Dual Resizable Workspace
+              </div>
+              <div class="card-content">
+                <p>Engineered an interactive split-view container with a draggable divider:</p>
+                <p style="margin-top: 8px;">Allows user to dynamically expand the 2D Diagnostic Mesh panel or the 3D Kinematics viewport according to inspection needs, with automatic aspect-ratio recomputation.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 8: 3D Kinematics & WebGL Visualization Engine -->
+      <section class="slide" data-slide="8" data-title="3D Kinematics">
+        <div class="slide-header">
+          <div class="slide-tag">Visualization & Simulation</div>
+          <h2 class="slide-title">Real-Time 3D Kinematics & WebGL Engine</h2>
+          <p class="slide-subtitle">Multi-pinion synchronous drive, planetary orbiting, and advanced shading modes</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="media-box">
+              <img src="assets/zerol_bevel_3d.png" alt="Zerol Bevel 3D WebGL View">
+              <div class="media-caption">
+                <span>Figure 8.1: Zerol Bevel Gear 3D Mesh in Three.js</span>
+                <span>Orthogonal &Sigma; = 90&deg;</span>
+              </div>
+            </div>
+
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Core Kinematic Capabilities
+              </div>
+              <div class="card-content">
+                <ul class="feature-list" style="margin-bottom: 16px;">
+                  <li><strong>True Epicyclic Kinematics:</strong> In planetary mode, planets synchronously rotate on their own needle bearings while orbiting the central sun at precise Willis carrier speed $\omega_c = \omega_s / (1 + N_r / N_s)$.</li>
+                  <li><strong>Multi-Pinion Spacing:</strong> Models 3-pinion spur drive spaced at exactly 120° around the blade root ring gear with correct phase tooth engagement.</li>
+                  <li><strong>Multi-Mode Shading:</strong>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <span class="brand-sub">Smooth Metal</span>
+                      <span class="brand-sub">Wireframe Overlay</span>
+                      <span class="brand-sub">Pitch Cone Ghosting</span>
+                    </div>
+                  </li>
+                  <li><strong>Interactive Controls:</strong> Live rotation speed slider, reverse direction, pause/resume, and free orbit camera.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 9: 2D Meshing & Contact Mechanics Diagnostic View -->
+      <section class="slide" data-slide="9" data-title="2D Meshing Diagnostics">
+        <div class="slide-header">
+          <div class="slide-tag">Contact Mechanics</div>
+          <h2 class="slide-title">2D Meshing & Line-of-Action Diagnostics</h2>
+          <p class="slide-subtitle">Precision HTML5 Canvas visualizer with dynamic pitch point and virtual Tredgold projection</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="media-box">
+              <img src="assets/straight_bevel_mesh2d.png" alt="2D Meshing Diagnostic Canvas">
+              <div class="media-caption">
+                <span>Figure 9.1: 2D Line of Action & Virtual Tredgold Conjugate Profiles</span>
+                <span>Zoom &amp; Pan Enabled</span>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                Key Diagnostic Capabilities
+              </div>
+              <div class="card-content">
+                <ul class="feature-list">
+                  <li><strong>Virtual Tredgold Approximation:</strong> For straight and spiral bevel gears, calculates virtual tooth numbers $z_v = z / \cos\delta$ and virtual pitch radii $r_v = r / \cos\delta$ to project true spherical tooth engagement onto the 2D plane.</li>
+                  <li><strong>Line of Action &amp; Pitch Point:</strong> Clearly visualizes the pressure angle line ($\alpha = 20^\circ$) tangent to both base circles ($r_b = r \cdot \cos\alpha$).</li>
+                  <li><strong>Kinematic Engagement Tracking:</strong> Real-time animated contact point traveling along the active line of action, proving non-interference and conjugate action.</li>
+                  <li><strong>Canvas Navigation:</strong> Smooth mouse-wheel zooming, click-drag panning, and reset view button.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 10: In-Browser Direct CAD Exporters (STEP, STL, IGES) -->
+      <section class="slide" data-slide="10" data-title="CAD Exporters">
+        <div class="slide-header">
+          <div class="slide-tag">Engineering Interoperability</div>
+          <h2 class="slide-title">In-Browser Direct CAD Exporters Suite</h2>
+          <p class="slide-subtitle">Generating ISO 10303-21 STEP B-Rep, binary STL, and SolidWorks macros without a CAD kernel</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Zero-Kernel Client-Side CAD Generation
+              </div>
+              <div class="card-content">
+                <p>Engineered pure JavaScript algorithmic format serializers that generate industry-standard CAD files directly in RAM:</p>
+                <ul class="feature-list" style="margin: 12px 0;">
+                  <li><strong>ISO 10303-21 STEP AP214:</strong> Constructs full Boundary Representation (B-Rep) topological entities (`MANIFOLD_SOLID_BREP`, `ADVANCED_FACE`, `CARTESIAN_POINT`) for direct import into SolidWorks, CATIA, and Siemens NX.</li>
+                  <li><strong>Binary IEEE 754 STL:</strong> Calculates 50-byte facet headers and outward normal vectors for high-precision 3D slicing.</li>
+                  <li><strong>IGES 5.3:</strong> Outputs surface entities (Entity 128 B-Spline, Entity 144 Trimmed Surface) for legacy aerospace pipelines.</li>
+                  <li><strong>SolidWorks VBA (`.bas`) &amp; CATIA (`.catvbs`):</strong> Procedural macro generators modeling exact equation curves.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="media-box">
+              <img src="assets/planetary_dropdown_options.png" alt="Planetary Component CAD Options">
+              <div class="media-caption">
+                <span>Figure 10.1: Granular Component Download Selector</span>
+                <span>Sun, Planet, Ring &amp; Assembly</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 11: Granular Component Isolation & Planetary Downloads -->
+      <section class="slide" data-slide="11" data-title="Component Isolation">
+        <div class="slide-header">
+          <div class="slide-tag">Manufacturing Readiness</div>
+          <h2 class="slide-title">Granular Component Isolation & Multi-Part CAD</h2>
+          <p class="slide-subtitle">Individual export capabilities for planetary sun, planet, ring gears, and pinions</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-3col">
+            <div class="media-box" style="height: auto;">
+              <img src="assets/planetary_sun_isolated.png" alt="Isolated Sun Gear">
+              <div class="media-caption">
+                <span>Figure 11.1: Sun Gear Isolated</span>
+                <span>Z = 18, Module 5mm</span>
+              </div>
+            </div>
+
+            <div class="media-box" style="height: auto;">
+              <img src="assets/planetary_planet_isolated.png" alt="Isolated Planet Gear">
+              <div class="media-caption">
+                <span>Figure 11.2: Planet Gear Isolated</span>
+                <span>Z = 27, Needle Bore</span>
+              </div>
+            </div>
+
+            <div class="eng-card highlight" style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="card-title">
+                  <svg viewBox="0 0 24 24"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v1"></path><path d="M18 8h4a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-4"></path><circle cx="8" cy="12" r="2"></circle></svg>
+                  Why Isolation Matters for Manufacturing
+                </div>
+                <div class="card-content">
+                  <p>In physical fabrication (CNC hobbing, wire EDM, or 3D printing), machining the complete assembly as a single file is impossible.</p>
+                  <ul class="feature-list" style="margin-top: 12px;">
+                    <li><strong>Individual CNC Toolpaths:</strong> Generate separate G-code per part.</li>
+                    <li><strong>Unique Tolerancing:</strong> Sun gear requires motor shaft press-fit, while planets require needle bearing slip-fit.</li>
+                    <li><strong>One-Click ZIP Bundle:</strong> Exports all individual parts + assembly in a single organized archive.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="badge-metric" style="margin-top: 12px;">
+                <span class="badge-val">4x Formats</span>
+                <span class="badge-lbl">STEP &bull; STL &bull; IGES &bull; SolidWorks</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 12: Additive Manufacturing & Print Compensation -->
+      <section class="slide" data-slide="12" data-title="Additive Manufacturing">
+        <div class="slide-header">
+          <div class="slide-tag">Physical Prototyping</div>
+          <h2 class="slide-title">Additive Manufacturing & Print Compensation</h2>
+          <p class="slide-subtitle">Bridging mathematical CAD geometry to real-world FDM/SLA tolerance shrinkage</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
+                `PrintComp` Algorithmic Offsets
+              </div>
+              <div class="card-content">
+                <p>Polymer 3D printing (PLA, PETG, Nylon) suffers from radial thermal shrinkage ($0.3\% - 0.8\%$) and nozzle bead expansion, which causes pitch gears to bind if printed from nominal CAD.</p>
+                <div class="math-pill">
+                  s_{offset} = s_0 - \Delta_{thermal} - \Delta_{backlash} \\
+                  d_{bore, adjusted} = d_{shaft} + \delta_{clearance} \quad (\approx +0.15 \text{ mm})
+                </div>
+                <ul class="feature-list">
+                  <li><strong>Tooth Thickness Thinning:</strong> Programmatic dedendum thinning ($0.08 - 0.15\text{ mm}$) to guarantee operating backlash.</li>
+                  <li><strong>Bore Compensation:</strong> Automatic diametral expansion for motor shaft press-fits without manual reaming.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Physical Prototype Validation
+              </div>
+              <div class="card-content">
+                <p>Validated the generated STL meshes through physical slicer tests and 3D printing:</p>
+                <ul class="feature-list" style="margin: 12px 0;">
+                  <li><strong>Watertight Topology:</strong> Generated meshes are verified manifold with zero non-planar non-manifold edges.</li>
+                  <li><strong>Consistent Layer Deposition:</strong> Involute curvature discretized with optimal chordal error (&le; 0.01 mm) for smooth tooth surface finish.</li>
+                  <li><strong>Smooth Mechanical Meshing:</strong> Printed test pairs exhibited smooth hand-cranked mesh without tooth tip binding.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 13: UI/UX Modernization & Professional Standards -->
+      <section class="slide" data-slide="13" data-title="UI/UX Modernization">
+        <div class="slide-header">
+          <div class="slide-tag">Human-Computer Interaction</div>
+          <h2 class="slide-title">UI/UX Modernization & Professional Design</h2>
+          <p class="slide-subtitle">Transforming the interface into a sleek, engineering-grade CAD tool</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-3col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Vector CAD Iconography
+              </div>
+              <div class="card-content">
+                <p>Replaced casual icons and emojis with custom, precision SVG vector CAD symbols (gears, calipers, download vectors, and eye toggles) aligned with ISO software design standards.</p>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                Dark Glassmorphism System
+              </div>
+              <div class="card-content">
+                <p>Engineered a high-contrast dark theme utilizing HSL CSS custom properties, backdrop blur filters, and subtle cyan accents to eliminate eye fatigue during extended engineering sessions.</p>
+              </div>
+            </div>
+
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                Draggable Resizable Panels
+              </div>
+              <div class="card-content">
+                <p>Implemented a zero-dependency draggable split gutter between the 2D Diagnostic Canvas and 3D Kinematics Viewport, giving engineers full control over their visual real estate.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 14: Technical Hurdles & Engineering Solutions -->
+      <section class="slide" data-slide="14" data-title="Technical Hurdles">
+        <div class="slide-header">
+          <div class="slide-tag">Problem Solving</div>
+          <h2 class="slide-title">Key Technical Hurdles & Engineering Solutions</h2>
+          <p class="slide-subtitle">Overcoming computational, geometric, and format constraints</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                Hurdle 1: Gleason Surface in Pure JS
+              </div>
+              <div class="card-content">
+                <p><strong>The Challenge:</strong> Gleason circular face-milling equations produce non-uniform 3D spiral flanks normally calculated using dedicated CAD kernel APIs.</p>
+                <p><strong>The Solution:</strong> Formulated a parametric circular cutting path generator that sweeps the cutter radius along the pitch cone, producing mathematically exact normals and vertices with sub-millimeter precision.</p>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                Hurdle 2: 2D Bevel Gear Meshing Representation
+              </div>
+              <div class="card-content">
+                <p><strong>The Challenge:</strong> Bevel gears mesh in 3D along intersecting cones; projecting them directly onto a flat 2D plane caused severe distortion and false tooth interpenetration.</p>
+                <p><strong>The Solution:</strong> Implemented the <em>Tredgold Spherical Back-Cone</em> transformation in `plot2d.js`, mapping 3D conical kinematics to an equivalent 2D virtual spur gear pair.</p>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                Hurdle 3: Direct STEP B-Rep Serialization
+              </div>
+              <div class="card-content">
+                <p><strong>The Challenge:</strong> Writing an ISO 10303-21 text file from scratch requires strict topological syntax (`CLOSED_SHELL`, `ORIENTED_EDGE`, `EDGE_LOOP`).</p>
+                <p><strong>The Solution:</strong> Built a custom topological graph serializer in JavaScript that automatically tracks vertex indices and assigns correct surface normals.</p>
+              </div>
+            </div>
+
+            <div class="eng-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                Hurdle 4: Planetary Component Extraction
+              </div>
+              <div class="card-content">
+                <p><strong>The Challenge:</strong> Users needed individual Sun, Planet, and Ring gears for fabrication, but the scene was rendered as a single monolithic Three.js group.</p>
+                <p><strong>The Solution:</strong> Refactored `cadExporters.js` with component isolation flags, allowing on-the-fly extraction of individual parts or complete ZIP packages.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 15: Quantitative Impact & Before/After Comparison -->
+      <section class="slide" data-slide="15" data-title="Quantitative Impact">
+        <div class="slide-header">
+          <div class="slide-tag">Performance Metrics</div>
+          <h2 class="slide-title">Quantitative Impact & Productivity Transformation</h2>
+          <p class="slide-subtitle">Benchmarking the new Gear Design Studio against legacy engineering workflows</p>
+        </div>
+        <div class="slide-body">
+          <div style="background: var(--bg-card); border-radius: 8px; border: 1px solid var(--bg-card-border); overflow: hidden; margin-bottom: 20px;">
+            <table class="spec-table">
+              <thead>
+                <tr>
+                  <th>Performance Metric</th>
+                  <th>Legacy Workflow</th>
+                  <th>New Gear Design Studio</th>
+                  <th>Improvement Factor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Gearset Design Iteration</strong></td>
+                  <td>2 &ndash; 4 Hours (Manual recalculations)</td>
+                  <td class="mono" style="color: var(--accent-cyan); font-weight: 700;">&lt; 100 Milliseconds (Live sliders)</td>
+                  <td><span style="color: var(--accent-emerald); font-weight: 700;">~1000x Faster</span></td>
+                </tr>
+                <tr>
+                  <td><strong>CAD Model Generation</strong></td>
+                  <td>1 &ndash; 3 Days (Complex CAD CAD tooth drafting)</td>
+                  <td class="mono" style="color: var(--accent-cyan); font-weight: 700;">&lt; 2 Seconds (Instant STEP/STL)</td>
+                  <td><span style="color: var(--accent-emerald); font-weight: 700;">Instantaneous</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Software Licensing Cost</strong></td>
+                  <td>$5,000+ / seat (CAD/FEA packages)</td>
+                  <td class="mono" style="color: var(--accent-cyan); font-weight: 700;">$0 (Open-Source Client-Side Web)</td>
+                  <td><span style="color: var(--accent-emerald); font-weight: 700;">100% Cost Reduction</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Cross-Platform Accessibility</strong></td>
+                  <td>Windows workstation only with CAD installed</td>
+                  <td class="mono" style="color: var(--accent-cyan); font-weight: 700;">Any Modern Browser (Zero install)</td>
+                  <td><span style="color: var(--accent-emerald); font-weight: 700;">Universal Portability</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="grid-3col">
+            <div class="badge-metric">
+              <span class="badge-val">7 / 7</span>
+              <span class="badge-lbl">Architectures Supported</span>
+            </div>
+            <div class="badge-metric">
+              <span class="badge-val">4 Formats</span>
+              <span class="badge-lbl">STEP &bull; STL &bull; IGES &bull; SolidWorks</span>
+            </div>
+            <div class="badge-metric">
+              <span class="badge-val">0 KB</span>
+              <span class="badge-lbl">Server Overhead</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 16: Conclusion & Professional Reflection -->
+      <section class="slide" data-slide="16" data-title="Conclusion & Defense">
+        <div class="slide-header">
+          <div class="slide-tag">Summary & Next Steps</div>
+          <h2 class="slide-title">Conclusion, Skills Acquired & Q&amp;A</h2>
+          <p class="slide-subtitle">Summary of internship contributions to wind turbine drive engineering</p>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2col">
+            <div class="eng-card highlight">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Key Achievements Summary
+              </div>
+              <div class="card-content">
+                <p>Throughout this internship, I successfully engineered an enterprise-ready gear design ecosystem:</p>
+                <ul class="feature-list" style="margin-top: 12px;">
+                  <li>Formulated mathematical models for 7 gear architectures with ISO 6336 stress validation.</li>
+                  <li>Built native MATLAB computational suites and interactive GUI tools.</li>
+                  <li>Engineered a high-performance WebGL CAD Studio with real-time 3D kinematics and 2D meshing diagnostics.</li>
+                  <li>Authored pure client-side STEP, STL, and IGES exporters eliminating reliance on expensive CAD software.</li>
+                  <li>Bridged virtual CAD design with physical 3D printing shrinkage compensation.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div class="eng-card" style="flex: 1; margin-bottom: 16px;">
+                <div class="card-title">
+                  <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  Professional Competencies Acquired
+                </div>
+                <div class="card-content">
+                  <ul class="feature-list">
+                    <li>Advanced Mechanical Kinematics &amp; ISO 6336 Gear Stress Standards</li>
+                    <li>Computational Geometry &amp; Involute/Gleason Flank Discretization</li>
+                    <li>3D Computer Graphics (WebGL, Three.js, Shaders, Scene Graphs)</li>
+                    <li>CAD File Standards (ISO 10303-21 STEP, IGES 5.3, IEEE 754 STL)</li>
+                    <li>Full-Stack Mechanical Software Architecture &amp; Clean Git Version Control</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="eng-card" style="background: rgba(56, 189, 248, 0.08); border-color: var(--accent-cyan); text-align: center; padding: 16px;">
+                <h3 style="color: var(--text-main); font-size: 16px; margin-bottom: 4px;">Thank you for your guidance &amp; mentorship</h3>
+                <p style="color: var(--accent-cyan); font-size: 13px; font-weight: 600;">The floor is now open for questions and technical discussion.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Bottom Navigation & Status Bar -->
+  <footer class="pres-footer">
+    <div class="footer-left">
+      <span class="slide-counter" id="slide-counter">01 / 16</span>
+      <span id="current-slide-title" style="font-weight: 500; color: var(--text-main);">Executive Overview</span>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn-nav" id="btn-prev" title="Previous Slide (← / PageUp)">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <button class="btn-nav" id="btn-next" title="Next Slide (→ / Space / PageDown)">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Presenter Notes Drawer (Press 'N') -->
+  <div class="notes-drawer" id="notes-drawer">
+    <div class="notes-header">
+      <span>PRESENTER NOTES</span>
+      <button style="background: none; border: none; color: inherit; cursor: pointer;" onclick="toggleNotes()">✕</button>
+    </div>
+    <div class="notes-body" id="notes-content">
+      <!-- Injected dynamically based on active slide -->
+    </div>
+  </div>
+
+  <!-- Slide Overview Grid Modal (Press 'O' or 'Esc') -->
+  <div class="overview-modal" id="overview-modal">
+    <div class="overview-header">
+      <h2 style="color: var(--text-main); font-size: 20px;">Slide Overview (Select to Jump)</h2>
+      <button class="btn-header" onclick="toggleOverview()">Close (Esc)</button>
+    </div>
+    <div class="overview-grid" id="overview-grid">
+      <!-- Generated dynamically -->
+    </div>
+  </div>
+
+  <!-- Image Lightbox Modal -->
+  <div id="img-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:2000; align-items:center; justify-content:center; cursor:zoom-out;" onclick="this.style.display='none'">
+    <img id="img-modal-target" src="" style="max-width:92%; max-height:92%; border-radius:8px; box-shadow:0 12px 48px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.2);">
+  </div>
+
+  <script>
+    // Speaker Notes Data
+    const speakerNotes = {
+      1: `<strong>Slide 1: Executive Overview</strong>
+<p>Welcome the panel and committee. State your name (Ahmed Majdy Ahmed) and express appreciation for the internship experience.</p>
+<p><strong>Key Message:</strong> This project represents a complete, synchronized engineering suite designed to solve the critical challenges of wind turbine blade pitch actuation—spanning deep mathematical foundations, native MATLAB tools, and an innovative, zero-backend WebGL CAD Studio.</p>`,
+      
+      2: `<strong>Slide 2: Wind Turbine Pitch Actuation Challenges</strong>
+<p>Explain the physical wind turbine context. Why is pitch control so critical? Explain aerodynamic power regulation $C_p(\lambda, \beta)$ and storm braking emergency feathering (90° in &lt; 5s).</p>
+<p>Highlight cyclic aerodynamic moments, extreme cyclic fatigue, zero-backlash needs, and space constraints inside the blade root and nacelle.</p>`,
+
+      3: `<strong>Slide 3: Development Chronology & Architecture Stages</strong>
+<p>Walk the panel through your 3 developmental milestones:</p>
+<p>1. Phase 1: Pure analytical derivation of Gleason cutter geometry and involute tooth generation.</p>
+<p>2. Phase 2: Expanding into 6 modular MATLAB suites with stress checks and desktop App Designer GUI.</p>
+<p>3. Phase 3: Transitioning to the interactive WebGL CAD Studio (<code>Web_App</code>), enabling real-time 3D simulation and direct client-side CAD export.</p>`,
+
+      4: `<strong>Slide 4: Mathematical & Kinematic Formulations</strong>
+<p>Demonstrate your mathematical competence. Walk through the parametric involute equation and highlight Gleason Zerol geometry where spiral angle $\beta_m = 0^\circ$ at midface.</p>
+<p>Explain why Zerol bevels are ideal for pitch actuators: they give the smooth, elliptical localized contact of spiral gears without generating axial thrust that damages bearings.</p>
+<p>Present Willis planetary kinematics and ISO 6336 bending & surface contact stress criteria.</p>`,
+
+      5: `<strong>Slide 5: Multi-Gear Architecture Matrix</strong>
+<p>Summarize the breadth of the suite: all 7 gear architectures used in wind turbine pitch & yaw systems.</p>
+<p>Point out how each gear serves a distinct wind turbine subsystem: Zerol for orthogonal bevel drives, Involute Spur for multi-pinion clusters, Internal Spur for the slewing ring, and Epicyclic Planetary for high-reduction nacelle gearboxes.</p>`,
+
+      6: `<strong>Slide 6: Modular MATLAB Computational Suite & Native GUI</strong>
+<p>Explain the native MATLAB environment. Demonstrate how you built <code>zerol_bevel_gui.m</code> using App Designer with interactive dials and gauges for real-time stress validation.</p>
+<p>Highlight the modular directory architecture (<code>Core/</code>, <code>Viz/</code>, <code>Export/</code>, <code>PrintComp/</code>), which enforces software engineering clean architecture principles.</p>`,
+
+      7: `<strong>Slide 7: Interactive Web CAD Studio Architecture</strong>
+<p>Discuss the software architecture of <code>Web_App</code>. Emphasize that it is 100% client-side: no server latency, zero cloud costs, and proprietary CAD data never leaves the engineer's browser.</p>
+<p>Highlight the resizable dual-panel workspace allowing engineers to customize their visual canvas.</p>`,
+
+      8: `<strong>Slide 8: Real-Time 3D Kinematics & WebGL Engine</strong>
+<p>Point to Figure 8.1. Describe how Three.js dynamic buffer geometry was synthesized from parametric equations.</p>
+<p>Explain the synchronized kinematics: planets orbit at exact Willis carrier velocity while rotating about their own centers; orthogonal bevels mesh with zero penetration.</p>`,
+
+      9: `<strong>Slide 9: 2D Meshing & Line-of-Action Diagnostics</strong>
+<p>Explain the 2D HTML5 canvas diagnostic tool. Highlight the virtual Tredgold back-cone transformation that projects 3D bevel cones onto a flat 2D plane without geometric distortion.</p>
+<p>Explain the line of action tangent to the base circles and how animated contact points verify conjugate action.</p>`,
+
+      10: `<strong>Slide 10: In-Browser Direct CAD Exporters Suite</strong>
+<p>Highlight this as one of your standout technical breakthroughs: generating CAD files completely client-side in JavaScript without requiring a CAD kernel or server backend.</p>
+<p>Explain the four export standards: ISO 10303-21 STEP AP214 B-Rep, Binary IEEE 754 STL, IGES 5.3 surfaces, and SolidWorks VBA macros.</p>`,
+
+      11: `<strong>Slide 11: Granular Component Isolation & Multi-Part CAD</strong>
+<p>Point out the new individual component download feature: Sun gear alone, Planet gear alone, Ring gear alone, and Carrier assembly.</p>
+<p>Explain the manufacturing reality: CNC machine tools and 3D printers require isolated component G-codes with individual tolerancing.</p>`,
+
+      12: `<strong>Slide 12: Additive Manufacturing & Print Compensation</strong>
+<p>Demonstrate your understanding of physical fabrication. Explain the <code>PrintComp</code> module: polymer cooling shrinkage causes binding if printed from nominal CAD.</p>
+<p>Explain programmatic tooth thinning ($0.08 - 0.15\\text{ mm}$) and bore clearance offsets ($+0.15\\text{ mm}$) to ensure parts fit off the print bed without post-machining.</p>`,
+
+      13: `<strong>Slide 13: UI/UX Modernization & Professional Standards</strong>
+<p>Showcase the transition to a formal, modern engineering interface: vector CAD iconography, dark glassmorphism system, and draggable split panels.</p>`,
+
+      14: `<strong>Slide 14: Key Technical Hurdles & Engineering Solutions</strong>
+<p>Discuss the four hardest technical challenges you overcame: Gleason 3D surfaces in WebGL, 2D bevel meshing via Tredgold, writing ISO 10303-21 STEP B-Rep text entities in JavaScript, and multi-component planetary extraction.</p>`,
+
+      15: `<strong>Slide 15: Quantitative Impact & Productivity Transformation</strong>
+<p>Review the before-and-after table: design iterations cut from hours to milliseconds; CAD generation reduced from days of manual drafting to a 2-second client-side download; 100% cost reduction in CAD licensing.</p>`,
+
+      16: `<strong>Slide 16: Conclusion, Skills Acquired & Q&A</strong>
+<p>Recap the project accomplishments and articulate the professional engineering skills acquired during the internship. Invite the panel to ask questions and suggest live demonstrations.</p>`
+    };
+
+    // State
+    let currentSlide = 1;
+    const totalSlides = 16;
+    const slides = document.querySelectorAll('.slide');
+    const counterEl = document.getElementById('slide-counter');
+    const titleEl = document.getElementById('current-slide-title');
+    const progressEl = document.getElementById('progress-bar');
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    const notesContent = document.getElementById('notes-content');
+    const notesDrawer = document.getElementById('notes-drawer');
+    const overviewModal = document.getElementById('overview-modal');
+    const overviewGrid = document.getElementById('overview-grid');
+
+    // Populate Overview Grid
+    slides.forEach((slide, idx) => {
+      const num = idx + 1;
+      const title = slide.getAttribute('data-title') || `Slide ${num}`;
+      const thumb = document.createElement('div');
+      thumb.className = `overview-thumb ${num === 1 ? 'active' : ''}`;
+      thumb.id = `thumb-${num}`;
+      thumb.innerHTML = `
+        <span class="thumb-num">${String(num).padStart(2, '0')}</span>
+        <span class="thumb-title">${title}</span>
+        <span style="font-size: 11px; color: var(--text-dim); font-family: var(--font-mono);">Click to view</span>
+      `;
+      thumb.onclick = () => {
+        goToSlide(num);
+        toggleOverview();
+      };
+      overviewGrid.appendChild(thumb);
+    });
+
+    function updateSlide() {
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx + 1 === currentSlide);
+      });
+
+      const activeSlide = document.querySelector(`.slide[data-slide="${currentSlide}"]`);
+      const title = activeSlide ? activeSlide.getAttribute('data-title') : '';
+      
+      counterEl.textContent = `${String(currentSlide).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}`;
+      titleEl.textContent = title;
+      progressEl.style.width = `${((currentSlide - 1) / (totalSlides - 1)) * 100}%`;
+
+      prevBtn.disabled = currentSlide === 1;
+      nextBtn.disabled = currentSlide === totalSlides;
+
+      // Update notes
+      notesContent.innerHTML = speakerNotes[currentSlide] || `<p>No notes for this slide.</p>`;
+
+      // Update overview thumb active state
+      document.querySelectorAll('.overview-thumb').forEach((t, i) => {
+        t.classList.toggle('active', i + 1 === currentSlide);
+      });
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlides) {
+        currentSlide = n;
+        updateSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function toggleNotes() {
+      notesDrawer.classList.toggle('open');
+    }
+
+    function toggleOverview() {
+      overviewModal.classList.toggle('open');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        document.exitFullscreen().catch(err => console.log(err));
+      }
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+    }
+
+    // Attach Header Listeners
+    document.getElementById('btn-notes').onclick = toggleNotes;
+    document.getElementById('btn-overview').onclick = toggleOverview;
+    document.getElementById('btn-fullscreen').onclick = toggleFullscreen;
+    document.getElementById('btn-theme').onclick = toggleTheme;
+    prevBtn.onclick = prevSlide;
+    nextBtn.onclick = nextSlide;
+
+    // Keyboard Navigation
+    window.addEventListener('keydown', (e) => {
+      // Don't trigger if inside input
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      switch(e.key) {
+        case 'ArrowRight':
+        case 'PageDown':
+        case ' ':
+          e.preventDefault();
+          nextSlide();
+          break;
+        case 'ArrowLeft':
+        case 'PageUp':
+        case 'Backspace':
+          e.preventDefault();
+          prevSlide();
+          break;
+        case 'Home':
+          e.preventDefault();
+          goToSlide(1);
+          break;
+        case 'End':
+          e.preventDefault();
+          goToSlide(totalSlides);
+          break;
+        case 'n':
+        case 'N':
+          e.preventDefault();
+          toggleNotes();
+          break;
+        case 'o':
+        case 'O':
+        case 'Escape':
+          e.preventDefault();
+          toggleOverview();
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+      }
+    });
+
+    // Image Zoom Modal
+    document.querySelectorAll('.media-box img').forEach(img => {
+      img.addEventListener('click', (e) => {
+        const modal = document.getElementById('img-modal');
+        const target = document.getElementById('img-modal-target');
+        target.src = img.src;
+        modal.style.display = 'flex';
+      });
+    });
+
+    // Initial render
+    updateSlide();
+  </script>
+</body>
+</html>
