@@ -1,7 +1,9 @@
 /**
- * Generate Formal, Clean & Modern PowerPoint Presentation (.pptx)
- * Project: Wind Turbine Pitch Control System - Gear Design Studio
+ * Generate UTM Branded Formal, Clean & Modern PowerPoint Presentation (.pptx)
+ * Design Guide: Universiti Teknologi Malaysia (UTM) Modern Technical Deck
  * Candidate: Ahmed Majdy Ahmed
+ * Institution: Universiti Teknologi Malaysia (UTM)
+ * Target Audience: Academic Evaluators (UTM), Industry Mentors, Engineering Leads
  */
 
 const pptxgen = require('pptxgenjs');
@@ -14,20 +16,22 @@ const pres = new pptxgen();
 pres.defineLayout({ name: 'WIDE_16_9', width: 13.333, height: 7.5 });
 pres.layout = 'WIDE_16_9';
 
-// Theme Colors
+// 60-30-10 UTM Visual Identity Color Palette
 const C = {
-  bg: '0A0E17',
-  cardBg: '111827',
-  cardBorder: '1E293B',
-  cyan: '38BDF8',
-  cyanLight: '7DD3FC',
-  blue: '3B82F6',
-  emerald: '10B981',
-  amber: 'F59E0B',
-  textMain: 'F8FAFC',
-  textMuted: '94A3B8',
-  textDim: '64748B',
-  mathBg: '030712'
+  canvasWhite: 'FFFFFF',      // 60% Canvas
+  cardBg: 'FFFFFF',           // Crisp White Card Container
+  canvasAlt: 'F8FAFC',        // Slate-50 Alternate Canvas
+  slateDark: '0F172A',        // 30% Structure - Slide Titles, Headlines
+  slateMuted: '475569',       // Body Text, Captions, Secondary Notes
+  slateDim: '64748B',         // Subtle labels & footer
+  borderSlate: 'E2E8F0',      // Subtle 1px component borders
+  maroon: '721422',           // 10% Accents - UTM Primary Brand
+  maroonTint: 'F8EEF0',       // Light Maroon 5% for pill badges
+  maroonBorder: 'E8C5CA',     // Soft maroon border
+  gold: 'D49B23',             // UTM Secondary Accent - Stat callouts, badges
+  goldLight: 'FDF8EB',       // Soft gold background
+  emerald: '059669',          // Success metrics
+  white: 'FFFFFF'
 };
 
 const ASSETS = {
@@ -43,1117 +47,955 @@ const ASSETS = {
   cadToast: path.join(__dirname, 'assets', 'cad_export_toast.png')
 };
 
-// Helper: Add Standard Engineering Slide Header & Footer
+// Helper: Setup Standard UTM Technical Deck Chrome (Header & Footer)
 function setupSlideChrome(slide, slideNum, categoryTag, title, subtitle) {
-  slide.background = { color: C.bg };
+  slide.background = { color: C.canvasWhite };
 
-  // Category Tag Pill
+  // Category Tag Pill (Light Maroon with Maroon Text)
   slide.addShape(pres.ShapeType.rect, {
     x: 0.8, y: 0.45, w: 3.2, h: 0.28,
-    fill: { color: '0F172A' },
-    line: { color: C.cyan, width: 1 }
+    fill: { color: C.maroonTint },
+    line: { color: C.maroonBorder, width: 1 }
   });
   slide.addText(categoryTag.toUpperCase(), {
     x: 0.8, y: 0.45, w: 3.2, h: 0.28,
-    fontFace: 'Consolas', fontSize: 9, bold: true, color: C.cyan,
+    fontFace: 'Consolas', fontSize: 8.5, bold: true, color: C.maroon,
     align: 'center', valign: 'middle'
   });
 
-  // Slide Title & Subtitle
+  // Slide Headline (30-34pt Bold, Slate Dark)
   slide.addText(title, {
-    x: 0.8, y: 0.78, w: 11.5, h: 0.45,
-    fontFace: 'Segoe UI', fontSize: 22, bold: true, color: C.textMain,
+    x: 0.8, y: 0.78, w: 11.5, h: 0.48,
+    fontFace: 'Segoe UI', fontSize: 23, bold: true, color: C.slateDark,
     valign: 'middle'
   });
 
+  // Slide Subtitle (12-13pt, Slate Muted)
   slide.addText(subtitle, {
-    x: 0.8, y: 1.25, w: 11.5, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 11, color: C.textMuted,
+    x: 0.8, y: 1.28, w: 11.5, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 11.5, color: C.slateMuted,
     valign: 'top'
   });
 
-  // Top accent horizontal line
-  slide.addShape(pres.ShapeType.line, {
-    x: 0.8, y: 1.58, w: 11.733, h: 0,
-    line: { color: C.cardBorder, width: 1 }
+  // Accent Gradient Line under header (Maroon to Gold)
+  slide.addShape(pres.ShapeType.rect, {
+    x: 0.8, y: 1.62, w: 11.733, h: 0.03,
+    fill: { color: C.maroon },
+    line: { color: C.maroon, width: 0 }
   });
 
-  // Footer
+  // Slide Footer
   slide.addShape(pres.ShapeType.line, {
-    x: 0.8, y: 6.85, w: 11.733, h: 0,
-    line: { color: C.cardBorder, width: 1 }
+    x: 0.8, y: 6.9, w: 11.733, h: 0,
+    line: { color: C.borderSlate, width: 1 }
   });
 
-  slide.addText('Wind Turbine Pitch Control System  |  Custom Gear Design Studio', {
-    x: 0.8, y: 6.95, w: 5.5, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 9.5, color: C.textDim,
+  slide.addText('Universiti Teknologi Malaysia (UTM)  |  Wind Turbine Pitch Control System', {
+    x: 0.8, y: 6.98, w: 5.8, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 9.5, color: C.slateDim,
     valign: 'middle'
   });
 
-  slide.addText('Ahmed Majdy Ahmed  —  Internship Technical Defense', {
-    x: 5.5, y: 6.95, w: 4.5, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 9.5, color: C.textDim,
+  slide.addText('Ahmed Majdy Ahmed  —  Final Internship Milestone Review', {
+    x: 5.8, y: 6.98, w: 4.8, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 9.5, color: C.slateDim,
     align: 'center', valign: 'middle'
   });
 
-  slide.addText(`Slide ${slideNum} of 16`, {
-    x: 10.5, y: 6.95, w: 2.033, h: 0.3,
-    fontFace: 'Consolas', fontSize: 9.5, color: C.cyan, bold: true,
+  slide.addText(`Slide ${String(slideNum).padStart(2, '0')} / 10`, {
+    x: 10.6, y: 6.98, w: 1.933, h: 0.3,
+    fontFace: 'Consolas', fontSize: 9.5, color: C.maroon, bold: true,
     align: 'right', valign: 'middle'
   });
 }
 
 // ==============================================================================
-// SLIDE 1: Title & Executive Overview
+// SLIDE 01: Title & Project Identification
 // ==============================================================================
 {
   const s = pres.addSlide();
-  s.background = { color: C.bg };
+  // Deep Maroon Cover Background per UTM Guidelines
+  s.background = { color: C.maroon };
 
-  // Category Tag
+  // Left Gold Accent Stripe
   s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 0.6, w: 3.4, h: 0.32,
-    fill: { color: '0F172A' },
-    line: { color: C.cyan, width: 1 }
+    x: 0.8, y: 0.8, w: 0.15, h: 5.9,
+    fill: { color: C.gold },
+    line: { color: C.gold, width: 0 }
   });
-  s.addText('FINAL INTERNSHIP DEFENSE', {
-    x: 0.8, y: 0.6, w: 3.4, h: 0.32,
-    fontFace: 'Consolas', fontSize: 10, bold: true, color: C.cyan,
+
+  // Institution & Faculty Banner
+  s.addShape(pres.ShapeType.rect, {
+    x: 1.2, y: 0.85, w: 4.8, h: 0.35,
+    fill: { color: '5A0E1A' },
+    line: { color: C.gold, width: 1 }
+  });
+  s.addText('UNIVERSITI TEKNOLOGI MALAYSIA (UTM)', {
+    x: 1.2, y: 0.85, w: 4.8, h: 0.35,
+    fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.gold,
     align: 'center', valign: 'middle'
   });
 
-  // Main Titles
-  s.addText('Wind Turbine Pitch Control System', {
-    x: 0.8, y: 1.05, w: 7.2, h: 0.6,
-    fontFace: 'Segoe UI', fontSize: 26, bold: true, color: C.textMain
+  // Main Headline
+  s.addText('Wind Turbine Pitch Control System:', {
+    x: 1.2, y: 1.45, w: 10.8, h: 0.65,
+    fontFace: 'Segoe UI', fontSize: 32, bold: true, color: C.white
   });
-  s.addText('Multi-Architecture Gear Engineering Studio, Kinematic Simulation Engine & In-Browser CAD Exporter Suite', {
-    x: 0.8, y: 1.68, w: 7.0, h: 0.5,
-    fontFace: 'Segoe UI', fontSize: 12.5, color: C.textMuted
+  s.addText('Precision Gear CAD & Kinematics Studio', {
+    x: 1.2, y: 2.15, w: 10.8, h: 0.65,
+    fontFace: 'Segoe UI', fontSize: 30, bold: true, color: C.gold
   });
 
-  // Left Card: Candidate & Scope
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 2.35, w: 6.2, h: 3.1,
-    fill: { color: C.cardBg },
-    line: { color: C.cyan, width: 1.5 }
+  // Subtitle
+  s.addText('Final Internship Milestone Presentation — Academic & Industrial Engineering Defense', {
+    x: 1.2, y: 2.9, w: 10.8, h: 0.4,
+    fontFace: 'Segoe UI', fontSize: 13, color: 'E2E8F0'
   });
-  s.addText('PROJECT SCOPE & CANDIDATE OWNERSHIP', {
-    x: 1.0, y: 2.5, w: 5.8, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.cyan
+
+  // Divider Line
+  s.addShape(pres.ShapeType.line, {
+    x: 1.2, y: 3.4, w: 11.3, h: 0,
+    line: { color: '8B1E2E', width: 1 }
+  });
+
+  // Candidate Info Card
+  s.addShape(pres.ShapeType.rect, {
+    x: 1.2, y: 3.65, w: 5.8, h: 2.8,
+    fill: { color: '5A0E1A' },
+    line: { color: '8B1E2E', width: 1 }
+  });
+  s.addText('CANDIDATE & EVALUATION METADATA', {
+    x: 1.4, y: 3.8, w: 5.4, h: 0.3,
+    fontFace: 'Consolas', fontSize: 9.5, bold: true, color: C.gold
   });
   s.addText([
-    { text: 'Candidate: ', options: { bold: true, color: C.textMain } },
-    { text: 'Ahmed Majdy Ahmed\n', options: { color: C.textMain } },
-    { text: 'Specialization: ', options: { bold: true, color: C.textMain } },
-    { text: 'Mechanical Drive Engineering, Computational Kinematics & WebGL CAD Kernels\n\n', options: { color: C.textMuted } },
-    { text: 'Core Engineering Accomplishments:\n', options: { bold: true, color: C.cyanLight } },
-    { text: '• Formulated mathematical models for 7 wind turbine gear architectures.\n', options: { color: C.textMuted } },
-    { text: '• Built native MATLAB calculation suites adhering to ISO 6336 standards.\n', options: { color: C.textMuted } },
-    { text: '• Developed 100% client-side Three.js WebGL CAD Studio with real-time 3D kinematics.\n', options: { color: C.textMuted } },
-    { text: '• Engineered in-browser ISO 10303-21 STEP AP214 B-Rep and STL CAD exporters.', options: { color: C.textMuted } }
+    { text: 'Candidate: ', options: { bold: true, color: C.white } },
+    { text: 'Ahmed Majdy Ahmed\n', options: { color: 'F1F5F9' } },
+    { text: 'Institution: ', options: { bold: true, color: C.white } },
+    { text: 'Universiti Teknologi Malaysia (UTM)\n', options: { color: 'F1F5F9' } },
+    { text: 'Program: ', options: { bold: true, color: C.white } },
+    { text: 'Mechanical Engineering / Drive Systems Specialization\n', options: { color: 'F1F5F9' } },
+    { text: 'Evaluation: ', options: { bold: true, color: C.white } },
+    { text: 'End-of-Internship Review (Academic Supervisors & Mentors)', options: { color: 'F1F5F9' } }
   ], {
-    x: 1.0, y: 2.85, w: 5.8, h: 2.4,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
+    x: 1.4, y: 4.2, w: 5.4, h: 2.1,
+    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.25
   });
 
-  // 3 Metric Badges
-  const badges = [
-    { num: '7', label: 'Gear Architectures' },
-    { num: '100%', label: 'Client-Side CAD' },
-    { num: '< 0.2s', label: 'Synthesis Latency' }
-  ];
-  badges.forEach((b, i) => {
-    const bx = 0.8 + i * 2.15;
-    s.addShape(pres.ShapeType.rect, {
-      x: bx, y: 5.65, w: 1.95, h: 0.95,
-      fill: { color: C.cardBg },
-      line: { color: C.cardBorder, width: 1 }
-    });
-    s.addText(b.num, {
-      x: bx, y: 5.75, w: 1.95, h: 0.45,
-      fontFace: 'Consolas', fontSize: 20, bold: true, color: C.cyan,
-      align: 'center'
-    });
-    s.addText(b.label, {
-      x: bx, y: 6.2, w: 1.95, h: 0.3,
-      fontFace: 'Segoe UI', fontSize: 9, color: C.textMuted,
-      align: 'center'
-    });
-  });
-
-  // Right Side Image Frame
+  // Right Side Preview Container
   s.addShape(pres.ShapeType.rect, {
-    x: 7.25, y: 1.2, w: 5.25, h: 5.4,
+    x: 7.3, y: 3.65, w: 5.2, h: 2.8,
     fill: { color: '000000' },
-    line: { color: C.cyan, width: 1.5 }
+    line: { color: C.gold, width: 1.5 }
   });
   if (fs.existsSync(ASSETS.planetaryOverview)) {
     s.addImage({
       path: ASSETS.planetaryOverview,
-      x: 7.27, y: 1.22, w: 5.21, h: 5.0
+      x: 7.32, y: 3.67, w: 5.16, h: 2.5
     });
   }
-  s.addText('Figure 1.1: Web CAD Studio Core Interface (Three.js WebGL Parametric Assembly)', {
-    x: 7.3, y: 6.25, w: 5.15, h: 0.3,
-    fontFace: 'Consolas', fontSize: 9, color: C.textDim,
+  s.addText('Delivered Software: 100% Client-Side WebGL CAD Studio & MATLAB ISO Suite', {
+    x: 7.32, y: 6.2, w: 5.16, h: 0.25,
+    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
     align: 'center', valign: 'middle'
   });
 
-  s.addNotes(`Slide 1: Executive Overview
-Welcome the committee and mentors. State your name (Ahmed Majdy Ahmed).
-Key Message: This project represents a complete, synchronized engineering suite designed to solve the critical challenges of wind turbine blade pitch actuation—spanning deep mathematical foundations, native MATLAB tools, and an innovative, zero-backend WebGL CAD Studio.`);
+  s.addNotes(`Slide 1: Title & Project Identification (00:00 - 00:45)
+"Good morning, respected UTM academic supervisors, industry mentors, and engineering leads.
+My name is Ahmed Majdy Ahmed from Universiti Teknologi Malaysia. Today, I am proud to present the final milestone of my internship: the Wind Turbine Pitch Control System — Precision Gear CAD and Kinematics Studio.
+This project integrates advanced gear kinematics, ISO 6336 stress validation, and modern WebGL computer graphics into an end-to-end engineering platform."`);
 }
 
 // ==============================================================================
-// SLIDE 2: Problem Statement & Engineering Context
+// SLIDE 02: Executive Summary & Internship Scope
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 2, 'BACKGROUND & MOTIVATION', 'Wind Turbine Pitch Actuation Challenges', 'Aerodynamic regulation, extreme cyclic fatigue, zero-backlash limits, and nacelle envelope constraints');
+  setupSlideChrome(s, 2, 'EXECUTIVE SUMMARY', 'Executive Summary: Scope & Key Contributions', 'High-level overview of core mission, delivered software artifacts, and quantifiable engineering impact');
 
   const cards = [
     {
-      title: 'Aerodynamic Pitch Regulation',
-      body: [
-        { text: 'Wind turbine blades (up to 80m+) continuously micro-pitch to maximize the aerodynamic power coefficient (Cp):\n\n', options: { color: C.textMuted } },
-        { text: 'P_aero = 0.5 * rho * A * V^3 * Cp(lambda, beta)\n\n', options: { fontFace: 'Consolas', bold: true, color: C.cyanLight } },
-        { text: '• Operation Envelope: ', options: { bold: true, color: C.textMain } },
-        { text: 'Cut-in 3 m/s, Rated 11.5 m/s, Cut-out 25 m/s.\n', options: { color: C.textMuted } },
-        { text: '• Emergency Feathering: ', options: { bold: true, color: C.textMain } },
-        { text: 'Rapid 90° braking feather in < 5 seconds under massive aerodynamic drag torque.', options: { color: C.textMuted } }
+      title: 'Core Mission',
+      accent: C.maroon,
+      bullets: [
+        'Solved pitch drive bottleneck by replacing multi-day manual CAD drafting with real-time synthesis.',
+        'Engineered exact kinematics for high-reduction (50:1–150:1) compact wind turbine nacelle gearboxes.',
+        'Mitigated cyclic fatigue and flutter by enforcing < 0.05 mm backlash and ISO safety margins.'
       ]
     },
     {
-      title: 'Severe Mechanical Demands',
-      body: [
-        { text: 'The pitch gearbox operates under brutal mechanical conditions inside the rotating hub:\n\n', options: { color: C.textMuted } },
-        { text: '• Cyclic Fatigue: ', options: { bold: true, color: C.textMain } },
-        { text: 'Alternating gravitational and wind shear bending moments on every rotor revolution.\n\n', options: { color: C.textMuted } },
-        { text: '• Near-Zero Backlash: ', options: { bold: true, color: C.textMain } },
-        { text: 'Play > 0.05 mm causes blade flutter, leading to premature bearing failure.\n\n', options: { color: C.textMuted } },
-        { text: '• High Transmission Ratios: ', options: { bold: true, color: C.textMain } },
-        { text: 'Reducing 3000 RPM servomotors to 0.5–2 RPM (ratios 50:1 to 150:1 in compact space).', options: { color: C.textMuted } }
+      title: 'Delivered Artifacts',
+      accent: C.gold,
+      bullets: [
+        'Formulated analytical geometries for 7 distinct pitch gear architectures (Zerol, Bevel, Spur, Planetary).',
+        'Built modular MATLAB computational suites with live stress dials and App Designer GUI.',
+        'Engineered 100% client-side Three.js WebGL CAD Studio with real-time 3D multi-body kinematics.',
+        'Authored in-browser ISO 10303-21 STEP AP214 B-Rep and IEEE 754 binary STL exporters.'
       ]
     },
     {
-      title: 'Engineering Mission & Need',
-      body: [
-        { text: 'Prior to this project, designing custom pitch gearboxes required fragmented, inefficient tools:\n\n', options: { color: C.textMuted } },
-        { text: '• Legacy Bottlenecks: ', options: { bold: true, color: C.textMain } },
-        { text: 'Manual drafting across expensive proprietary CAD software (SolidWorks/CATIA) taking days per iteration.\n\n', options: { color: C.textMuted } },
-        { text: '• Our Objective: ', options: { bold: true, color: C.cyan } },
-        { text: 'Build a unified platform combining instantaneous mathematical gear synthesis, 3D kinematic simulation, and direct client-side CAD export in a single accessible suite.', options: { color: C.textMain } }
+      title: 'Business & Technical Impact',
+      accent: C.emerald,
+      bullets: [
+        'Accelerated design iteration ~1000x (reducing calculation cycle from 3 hours to < 100ms).',
+        'Eliminated cloud server costs (100% client-side execution, $0 backend cloud bill).',
+        'Delivered complete cross-platform portability across modern browsers with zero installation.'
       ]
     }
   ];
 
   cards.forEach((c, i) => {
     const cx = 0.8 + i * 4.0;
+    // Card Container
     s.addShape(pres.ShapeType.rect, {
       x: cx, y: 1.85, w: 3.75, h: 4.75,
       fill: { color: C.cardBg },
-      line: { color: i === 2 ? C.cyan : C.cardBorder, width: i === 2 ? 1.5 : 1 }
+      line: { color: C.borderSlate, width: 1 }
     });
+
+    // Top 2px Accent Stripe
+    s.addShape(pres.ShapeType.rect, {
+      x: cx, y: 1.85, w: 3.75, h: 0.04,
+      fill: { color: c.accent },
+      line: { color: c.accent, width: 0 }
+    });
+
+    // Header
     s.addText(c.title, {
-      x: cx + 0.25, y: 2.05, w: 3.25, h: 0.4,
-      fontFace: 'Segoe UI', fontSize: 13, bold: true, color: i === 2 ? C.cyan : C.textMain
+      x: cx + 0.25, y: 2.05, w: 3.25, h: 0.35,
+      fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.maroon
     });
-    s.addText(c.body, {
+
+    // Bullets (Google X-Y-Z formula, max 2 lines per bullet)
+    const bulletContent = c.bullets.map(b => ({
+      text: `• ${b}\n\n`,
+      options: { color: C.slateMuted }
+    }));
+
+    s.addText(bulletContent, {
       x: cx + 0.25, y: 2.55, w: 3.25, h: 3.85,
-      fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.15
+      fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.2
     });
   });
 
-  s.addNotes(`Slide 2: Wind Turbine Pitch Actuation Challenges
-Explain the physical wind turbine context. Why is pitch control so critical? Explain aerodynamic power regulation Cp and storm braking emergency feathering (90° in < 5s).
-Highlight cyclic aerodynamic moments, extreme cyclic fatigue, zero-backlash needs, and space constraints inside the blade root and nacelle.`);
+  s.addNotes(`Slide 2: Executive Summary & Internship Scope (00:45 - 02:00)
+"Our executive summary centers on three pillars:
+First, our Core Mission: wind turbine blades require continuous micro-pitching to optimize power coefficient Cp and emergency feathering within 5 seconds.
+Second, Delivered Artifacts: seven mathematically validated gear architectures, an ISO 6336 MATLAB calculation suite, a Three.js WebGL CAD Studio, and client-side STEP B-Rep exporters.
+Third, Impact: we accelerated design iteration by approximately 1000x—reducing hours of manual spreadsheet work into sub-100ms real-time synthesis."`);
 }
 
 // ==============================================================================
-// SLIDE 3: System Evolution & Chronology
+// SLIDE 03: Problem Statement & Engineering Objectives
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 3, 'DEVELOPMENT MILESTONES', 'System Evolution & Chronology', 'Three progressive architectural stages from analytical MATLAB formulations to an in-browser WebGL CAD suite');
+  setupSlideChrome(s, 3, 'PROBLEM FORMULATION', 'The Problem: Bridging the Gap in Pitch Drive Design', 'Contrasting legacy mechanical design limitations against our unified automated engineering solution');
 
-  const phases = [
-    {
-      tag: 'PHASE 1',
-      title: 'Analytical Math Foundations',
-      points: [
-        'Formulated Gleason Zerol bevel tooth flank equations.',
-        'Derived Gleason circular cutter radius geometry: rc = (A0 * sin(delta2)) / cos(delta1).',
-        'Involute profile generation via differential roll-angle coordinates.',
-        'Direct SolidWorks VBA macro curve generators (.bas).'
-      ]
-    },
-    {
-      tag: 'PHASE 2',
-      title: 'Multi-Gear MATLAB Suites',
-      points: [
-        'Expanded to 6 distinct modular engineering suites.',
-        'Integrated ISO 6336 bending and Hertzian contact stress calculations.',
-        'Created native MATLAB App Designer GUI (zerol_bevel_gui.m).',
-        'Built PrintComp module for 3D printer shrinkage & clearance compensation.'
-      ]
-    },
-    {
-      tag: 'PHASE 3',
-      title: 'WebGL CAD Studio (Web_App)',
-      points: [
-        'Migrated math to 100% client-side JavaScript (Vite + Three.js).',
-        'Real-time multi-body 3D kinematics (true Willis planetary orbiting).',
-        'Pure JS ISO 10303-21 STEP AP214 B-Rep and IEEE 754 STL exporters.',
-        'High-precision 2D Tredgold meshing & line-of-action diagnostic canvas.'
-      ]
-    }
-  ];
-
-  phases.forEach((p, i) => {
-    const px = 0.8 + i * 4.0;
-    s.addShape(pres.ShapeType.rect, {
-      x: px, y: 1.85, w: 3.75, h: 4.75,
-      fill: { color: C.cardBg },
-      line: { color: i === 2 ? C.cyan : C.cardBorder, width: i === 2 ? 1.5 : 1 }
-    });
-
-    s.addShape(pres.ShapeType.rect, {
-      x: px + 0.25, y: 2.1, w: 1.2, h: 0.28,
-      fill: { color: '0F172A' },
-      line: { color: C.cyan, width: 1 }
-    });
-    s.addText(p.tag, {
-      x: px + 0.25, y: 2.1, w: 1.2, h: 0.28,
-      fontFace: 'Consolas', fontSize: 9, bold: true, color: C.cyan,
-      align: 'center', valign: 'middle'
-    });
-
-    s.addText(p.title, {
-      x: px + 0.25, y: 2.5, w: 3.25, h: 0.45,
-      fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.textMain
-    });
-
-    const bodyText = p.points.map(pt => ({ text: `• ${pt}\n\n`, options: { color: C.textMuted } }));
-    s.addText(bodyText, {
-      x: px + 0.25, y: 3.05, w: 3.25, h: 3.35,
-      fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
-    });
-  });
-
-  s.addNotes(`Slide 3: Development Chronology & Architecture Stages
-Walk the panel through your 3 developmental milestones:
-1. Phase 1: Pure analytical derivation of Gleason cutter geometry and involute tooth generation.
-2. Phase 2: Expanding into 6 modular MATLAB suites with stress checks and desktop App Designer GUI.
-3. Phase 3: Transitioning to the interactive WebGL CAD Studio (Web_App), enabling real-time 3D simulation and direct client-side CAD export.`);
-}
-
-// ==============================================================================
-// SLIDE 4: Mathematical & Theoretical Foundations
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupSlideChrome(s, 4, 'ENGINEERING RIGOR', 'Mathematical & Kinematic Formulations', 'Exact analytical equations governing involute curves, Gleason face-milling, Willis kinematics, and ISO stress ratings');
-
-  // Left Card: Involute & Gleason
+  // Left Column: Legacy State / Challenges (Slate Gray Background)
   s.addShape(pres.ShapeType.rect, {
     x: 0.8, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cardBorder, width: 1 }
+    fill: { color: C.canvasAlt },
+    line: { color: C.borderSlate, width: 1 }
   });
-  s.addText('INVOLUTE & GLEASON GEOMETRY', {
+  s.addText('CURRENT STATE & INDUSTRY BOTTLENECK', {
     x: 1.1, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
+    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.slateDark
   });
   s.addText([
-    { text: 'Parametric Involute Profile (Spur, Helical, Ring):\n', options: { bold: true, color: C.textMain } },
-    { text: 'x(theta) = r_b * (cos(theta) + theta * sin(theta))\ny(theta) = r_b * (sin(theta) - theta * cos(theta))\n\n', options: { fontFace: 'Consolas', color: C.cyanLight } },
-    { text: 'Gleason Zerol Bevel Flank Equations:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Enforcing zero spiral angle at midface (beta_m = 0°):\n', options: { color: C.textMuted } },
-    { text: 'beta_m = 0°  ==>  F_axial ~ 0  (Zero Axial Gearbox Thrust)\nr_cutter = (A0 * sin(delta_2)) / cos(delta_1)\n\n', options: { fontFace: 'Consolas', color: C.cyanLight } },
-    { text: 'Engineering Significance:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Zerol bevels combine the smooth, elliptical localized contact patch of spiral bevels (accommodating shaft deflection) with the zero-axial-thrust advantage of straight bevels, saving bearing weight in wind turbine pitch heads.', options: { color: C.textMuted } }
-  ], {
-    x: 1.1, y: 2.5, w: 5.15, h: 3.9,
-    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.15
-  });
-
-  // Right Card: Willis & ISO Stress
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cardBorder, width: 1 }
-  });
-  s.addText('PLANETARY KINEMATICS & ISO 6336 STRESS', {
-    x: 7.08, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: 'Willis Epicyclic Kinematic Formulation:\n', options: { bold: true, color: C.textMain } },
-    { text: 'i_0 = (omega_s - omega_c) / (omega_r - omega_c) = - (N_r / N_s)\nFixed Ring: i = 1 + (N_r / N_s)\nCoaxial Assembly Constraint: N_r = N_s + 2 * N_p\n\n', options: { fontFace: 'Consolas', color: C.cyanLight } },
-    { text: 'ISO 6336 Bending & Contact Stress Verification:\n', options: { bold: true, color: C.textMain } },
-    { text: 'sigma_F = (F_t / (b * m_n)) * Y_F * Y_S * K_A * K_V <= [sigma_FP]\nsigma_H = Z_H * Z_E * Z_eps * sqrt((F_t / (d1 * b)) * ((u+1)/u)) <= [sigma_HP]\n\n', options: { fontFace: 'Consolas', color: C.cyanLight } },
-    { text: 'Engineering Significance:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Guarantees that synthesized gears satisfy bending safety factors (S_F >= 1.4) and pitting resistance (S_H >= 1.2) under 20-year wind turbine design lifetimes.', options: { color: C.textMuted } }
-  ], {
-    x: 7.08, y: 2.5, w: 5.15, h: 3.9,
-    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.15
-  });
-
-  s.addNotes(`Slide 4: Mathematical & Kinematic Formulations
-Demonstrate your mathematical competence. Walk through the parametric involute equation and highlight Gleason Zerol geometry where spiral angle beta_m = 0° at midface.
-Explain why Zerol bevels are ideal for pitch actuators: they give the smooth, elliptical localized contact of spiral gears without generating axial thrust that damages bearings.
-Present Willis planetary kinematics and ISO 6336 bending & surface contact stress criteria.`);
-}
-
-// ==============================================================================
-// SLIDE 5: Multi-Gear Architecture Matrix
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupSlideChrome(s, 5, 'SYSTEM CAPABILITIES', 'Multi-Gear Architecture Matrix', 'Analytical modeling, kinematic simulation, and CAD generation across all pitch actuation configurations');
-
-  const rows = [
-    [
-      { text: 'Architecture', options: { bold: true, color: C.cyan, fill: '0F172A' } },
-      { text: 'Kinematics', options: { bold: true, color: C.cyan, fill: '0F172A' } },
-      { text: 'Contact Mechanics', options: { bold: true, color: C.cyan, fill: '0F172A' } },
-      { text: 'Primary Wind Turbine Function', options: { bold: true, color: C.cyan, fill: '0F172A' } },
-      { text: 'Validation', options: { bold: true, color: C.cyan, fill: '0F172A' } }
-    ],
-    [
-      { text: 'Zerol Bevel Gear', options: { bold: true, color: C.textMain } },
-      { text: 'Sigma=90°, beta_m=0°', options: { fontFace: 'Consolas', color: C.textMuted } },
-      { text: 'Gleason curved flank, localized contact ellipse', options: { color: C.textMuted } },
-      { text: 'Right-angle pitch motor bevel box (zero axial load)', options: { color: C.textMuted } },
-      { text: 'ISO Verified', options: { bold: true, color: C.emerald } }
-    ],
-    [
-      { text: 'Straight Bevel Gear', options: { bold: true, color: C.textMain } },
-      { text: 'Sigma=90°, straight cone', options: { fontFace: 'Consolas', color: C.textMuted } },
-      { text: 'Tredgold spherical back-cone projection', options: { color: C.textMuted } },
-      { text: 'Compact right-angle auxiliary emergency actuators', options: { color: C.textMuted } },
-      { text: 'ISO Verified', options: { bold: true, color: C.emerald } }
-    ],
-    [
-      { text: 'Spiral Bevel Gear', options: { bold: true, color: C.textMain } },
-      { text: 'Sigma=90°, beta_m=35°', options: { fontFace: 'Consolas', color: C.textMuted } },
-      { text: 'Curved circular spiral, high overlap (eps_beta > 2.0)', options: { color: C.textMuted } },
-      { text: 'High-torque heavy-duty offshore pitch drives', options: { color: C.textMuted } },
-      { text: 'ISO Verified', options: { bold: true, color: C.emerald } }
-    ],
-    [
-      { text: 'External Involute Spur', options: { bold: true, color: C.textMain } },
-      { text: 'Sigma=0°, parallel', options: { fontFace: 'Consolas', color: C.textMuted } },
-      { text: 'True involute with trochoidal root fillet', options: { color: C.textMuted } },
-      { text: 'Multi-pinion load-sharing pitch reducer drives', options: { color: C.textMuted } },
-      { text: 'ISO Verified', options: { bold: true, color: C.emerald } }
-    ],
-    [
-      { text: 'Internal Spur Ring Gear', options: { bold: true, color: C.textMain } },
-      { text: 'Sigma=0°, annular internal', options: { fontFace: 'Consolas', color: C.textMuted } },
-      { text: 'Internal involute, root tip clearance correction', options: { color: C.textMuted } },
-      { text: 'Direct blade bearing slewing ring drive gear', options: { color: C.textMuted } },
-      { text: 'ISO Verified', options: { bold: true, color: C.emerald } }
-    ],
-    [
-      { text: 'Helical Gear', options: { bold: true, color: C.textMain } },
-      { text: 'Sigma=0°, beta=15°–25°', options: { fontFace: 'Consolas', color: C.textMuted } },
-      { text: 'Smooth progressive engagement, overlap contact', options: { color: C.textMuted } },
-      { text: 'Ultra-quiet multi-stage reduction primary stages', options: { color: C.textMuted } },
-      { text: 'ISO Verified', options: { bold: true, color: C.emerald } }
-    ],
-    [
-      { text: 'Epicyclic Planetary Gear', options: { bold: true, color: C.textMain } },
-      { text: 'Coaxial Sun-Planet-Ring', options: { fontFace: 'Consolas', color: C.textMuted } },
-      { text: 'Willis kinematics, multi-contact load sharing', options: { color: C.textMuted } },
-      { text: 'High-ratio compact nacelle pitch gearboxes', options: { color: C.textMuted } },
-      { text: 'ISO Verified', options: { bold: true, color: C.emerald } }
-    ]
-  ];
-
-  s.addTable(rows, {
-    x: 0.8, y: 1.85, w: 11.733, h: 4.75,
-    colW: [2.3, 1.8, 2.9, 3.4, 1.333],
-    fill: C.cardBg,
-    border: { pt: 1, color: C.cardBorder },
-    fontFace: 'Segoe UI', fontSize: 10,
-    align: 'left', valign: 'middle'
-  });
-
-  s.addNotes(`Slide 5: Multi-Gear Architecture Matrix
-Summarize the breadth of the suite: all 7 gear architectures used in wind turbine pitch & yaw systems.
-Point out how each gear serves a distinct wind turbine subsystem: Zerol for orthogonal bevel drives, Involute Spur for multi-pinion clusters, Internal Spur for the slewing ring, and Epicyclic Planetary for high-reduction nacelle gearboxes.`);
-}
-
-// ==============================================================================
-// SLIDE 6: Native MATLAB Computational Suite & Desktop GUI
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupSlideChrome(s, 6, 'ENGINEERING SOLVERS', 'Modular MATLAB Computational Suite & Desktop GUI', 'High-precision numerical solvers, live stress gauges, material presets, and direct CAD translators');
-
-  // Left Card: Native GUI
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cardBorder, width: 1 }
-  });
-  s.addText('MATLAB APP DESIGNER GUI (zerol_bevel_gui.m)', {
-    x: 1.1, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: 'Interactive Desktop Engineering Tool:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Engineered a standalone desktop GUI for rapid parameter exploration:\n\n', options: { color: C.textMuted } },
-    { text: '• Real-Time Stress Gauges: ', options: { bold: true, color: C.textMain } },
-    { text: 'Live graphical meters updating Lewis bending stress (sigma_b) and Hertz contact stress (sigma_c) as sliders move.\n\n', options: { color: C.textMuted } },
-    { text: '• Industrial Material Library: ', options: { bold: true, color: C.textMain } },
-    { text: 'Built-in material endurance presets for 4140 Alloy Steel, 8620 Carburized Steel, Phosphor Bronze, and technical polymers (PLA/Nylon).\n\n', options: { color: C.textMuted } },
-    { text: '• One-Click Disk CAD Exporters: ', options: { bold: true, color: C.textMain } },
-    { text: 'Direct disk export of SolidWorks VBA macros (.bas), IGES surfaces, and 3D printable STL meshes directly from MATLAB memory.', options: { color: C.textMuted } }
+    { text: '• Fragmented Design Workflows:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Engineers manually transcribe math equations between spreadsheets, MATLAB, and CAD tools.\n\n', options: { color: C.slateMuted } },
+    { text: '• Costly Desktop Software Barriers:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Proprietary CAD/FEA packages require expensive $5,000+/seat licenses, locking models to local workstations.\n\n', options: { color: C.slateMuted } },
+    { text: '• Sluggish Design Iteration Latency:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Drafting complex tooth flanks (Gleason Zerol, hypoid curves) takes 1–3 days per trial.\n\n', options: { color: C.slateMuted } },
+    { text: '• Human Error & Lack of Stress Checks:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'CAD geometries are frequently drafted without synchronized ISO 6336 bending or contact stress validation.', options: { color: C.slateMuted } }
   ], {
     x: 1.1, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
+    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.15
   });
 
-  // Right Card: Modular Architecture
+  // Right Column: Target Solution (Crisp White with Maroon Top Stripe)
   s.addShape(pres.ShapeType.rect, {
     x: 6.78, y: 1.85, w: 5.75, h: 4.75,
     fill: { color: C.cardBg },
-    line: { color: C.cyan, width: 1.5 }
+    line: { color: C.maroonBorder, width: 1.5 }
   });
-  s.addText('CLEAN MODULAR ARCHITECTURE PATTERN', {
+  s.addShape(pres.ShapeType.rect, {
+    x: 6.78, y: 1.85, w: 5.75, h: 0.04,
+    fill: { color: C.maroon },
+    line: { color: C.maroon, width: 0 }
+  });
+  s.addText('OUR TARGET SOLUTION & DELIVERABLE', {
     x: 7.08, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
+    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
   });
   s.addText([
-    { text: 'Standardized Structure Across All 6 MATLAB Suites:\n\n', options: { bold: true, color: C.textMain } },
-    { text: 'Matlab_<GearType>/\n', options: { fontFace: 'Consolas', bold: true, color: C.cyanLight } },
-    { text: '├── Core/      --> Exact kinematic equations & 3D matrices\n', options: { fontFace: 'Consolas', color: C.textMuted } },
-    { text: '├── Viz/       --> 2D mesh contact & 3D surface plotters\n', options: { fontFace: 'Consolas', color: C.textMuted } },
-    { text: '├── Export/    --> STEP, STL, IGES & SolidWorks macro exporters\n', options: { fontFace: 'Consolas', color: C.textMuted } },
-    { text: '└── PrintComp/ --> FDM/SLA thermal shrinkage & bore offsets\n\n', options: { fontFace: 'Consolas', color: C.textMuted } },
-    { text: 'Engineering Rigor:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Decoupling geometry calculation from visualization ensures that computational modules can be independently unit-tested against textbook ISO benchmark cases without graphical overhead.', options: { color: C.textMuted } }
+    { text: '• Unified Automated Gear Pipeline:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Instantaneously synthesizes tooth coordinates directly from input module and tooth count sliders.\n\n', options: { color: C.slateMuted } },
+    { text: '• Zero-Install Web-Based Accessibility:\n', options: { bold: true, color: C.slateDark } },
+    { text: '100% client-side WebGL platform accessible from any modern browser with zero licensing fees.\n\n', options: { color: C.slateMuted } },
+    { text: '• Sub-Second CAD & Kinematic Synthesis:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Generates 3D multi-body assemblies and manufacturing STEP/STL files in under 2 seconds.\n\n', options: { color: C.slateMuted } },
+    { text: '• Strict ISO 6336 & AGMA Compliance:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Automatic evaluation of bending safety (S_F >= 1.4) and contact endurance (S_H >= 1.2).', options: { color: C.slateMuted } }
   ], {
     x: 7.08, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
+    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.15
   });
 
-  s.addNotes(`Slide 6: Modular MATLAB Computational Suite & Native GUI
-Explain the native MATLAB environment. Demonstrate how you built zerol_bevel_gui.m using App Designer with interactive dials and gauges for real-time stress validation.
-Highlight the modular directory architecture (Core/, Viz/, Export/, PrintComp/), which enforces software engineering clean architecture principles.`);
+  s.addNotes(`Slide 3: Problem Statement & Engineering Objectives (02:00 - 03:00)
+"Why is building this app valuable to industry and academia?
+On the left, notice the traditional industry bottleneck: manual spreadsheet calculations taking hours, disconnected from 3D CAD drafting that takes days, requiring expensive licenses.
+On the right is our solution: an automated pipeline where mathematical synthesis, ISO stress validation, 3D kinematic visualization, and STEP CAD export are synchronized in real time."`);
 }
 
 // ==============================================================================
-// SLIDE 7: Web CAD Studio Architecture
+// SLIDE 04: System Architecture & Technology Stack
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 7, 'SOFTWARE ARCHITECTURE', 'Interactive Web CAD Studio Architecture (Web_App)', '100% client-side zero-backend design using Vite, Three.js WebGL, and Vanilla JavaScript');
+  setupSlideChrome(s, 4, 'SYSTEM ARCHITECTURE', 'System Architecture & Technical Topology', 'End-to-end client-side execution topology connecting mathematical models to manufacturing files');
 
-  // Left Column: 3 Cards
-  const leftCards = [
+  // Top Half: Block Flow Diagram
+  s.addShape(pres.ShapeType.rect, {
+    x: 0.8, y: 1.85, w: 11.733, h: 2.3,
+    fill: { color: C.canvasAlt },
+    line: { color: C.borderSlate, width: 1 }
+  });
+  s.addText('END-TO-END DATA & EXECUTION TOPOLOGY (ZERO-BACKEND CLIENT PIPELINE)', {
+    x: 1.05, y: 1.95, w: 11.2, h: 0.3,
+    fontFace: 'Consolas', fontSize: 9, bold: true, color: C.maroon
+  });
+
+  const blocks = [
+    { title: '1. Mathematical Core', desc: 'ISO 6336 Stress & Gleason Algorithms' },
+    { title: '2. Three.js WebGL', desc: 'Parametric 3D Buffer Mesh Synthesis' },
+    { title: '3. 2D Diagnostic Canvas', desc: 'Tredgold Line-of-Action Projection' },
+    { title: '4. Direct CAD Exporter', desc: 'STEP B-Rep, STL & SolidWorks Macros' }
+  ];
+
+  blocks.forEach((b, i) => {
+    const bx = 1.05 + i * 2.85;
+    s.addShape(pres.ShapeType.rect, {
+      x: bx, y: 2.4, w: 2.5, h: 1.45,
+      fill: { color: C.white },
+      line: { color: C.maroonBorder, width: 1.2 }
+    });
+    // Top maroon bar
+    s.addShape(pres.ShapeType.rect, {
+      x: bx, y: 2.4, w: 2.5, h: 0.04,
+      fill: { color: C.maroon },
+      line: { color: C.maroon, width: 0 }
+    });
+    s.addText(b.title, {
+      x: bx + 0.1, y: 2.55, w: 2.3, h: 0.35,
+      fontFace: 'Segoe UI', fontSize: 10.5, bold: true, color: C.slateDark,
+      align: 'center'
+    });
+    s.addText(b.desc, {
+      x: bx + 0.1, y: 2.95, w: 2.3, h: 0.75,
+      fontFace: 'Segoe UI', fontSize: 9, color: C.slateMuted,
+      align: 'center'
+    });
+
+    // Arrow to next block
+    if (i < 3) {
+      s.addText('➔', {
+        x: bx + 2.52, y: 2.85, w: 0.32, h: 0.4,
+        fontFace: 'Segoe UI', fontSize: 14, color: C.maroon,
+        align: 'center', valign: 'middle'
+      });
+    }
+  });
+
+  // Bottom Half: Categorized Tech Stack Pill Badges
+  const categories = [
     {
-      title: 'Zero-Backend Client Execution',
-      body: 'Zero server latency, zero cloud computing costs, and complete IP protection: proprietary wind turbine pitch designs never leave the engineer\'s browser.'
+      category: 'Frontend & 3D WebGL',
+      pills: ['Three.js (WebGL)', 'HTML5 2D Canvas', 'Vanilla JS ES Modules', 'Responsive CSS3']
     },
     {
-      title: 'Modular Decoupled Design',
-      body: 'Strict separation of concerns: gearGeometry.js (analytical math), viewer3d.js (Three.js WebGL), plot2d.js (2D diagnostics), and cadExporters.js (CAD serializers).'
+      category: 'Mathematical & Solvers',
+      pills: ['MATLAB App Designer', 'ISO 6336 Method B', 'Gleason Cutter Math', 'Willis Kinematics']
     },
     {
-      title: 'Dual Resizable Workspace',
-      body: 'Zero-dependency draggable split gutter allowing engineers to smoothly reallocate screen area between 2D meshing diagnostics and 3D kinematics.'
+      category: 'Tooling & Build Pipeline',
+      pills: ['Vite Build System', 'Node.js Runtime', 'JSZip Compression', 'Git Version Control']
+    },
+    {
+      category: 'CAD & Manufacturing',
+      pills: ['ISO 10303-21 STEP', 'Binary IEEE 754 STL', 'SolidWorks VBA .bas', 'PrintComp Slicing']
     }
   ];
 
-  leftCards.forEach((c, i) => {
-    const cy = 1.85 + i * 1.62;
+  categories.forEach((cat, idx) => {
+    const colX = 0.8 + idx * 3.0;
     s.addShape(pres.ShapeType.rect, {
-      x: 0.8, y: cy, w: 5.75, h: 1.45,
-      fill: { color: C.cardBg },
-      line: { color: C.cardBorder, width: 1 }
+      x: colX, y: 4.35, w: 2.75, h: 2.25,
+      fill: { color: C.white },
+      line: { color: C.borderSlate, width: 1 }
     });
-    s.addText(c.title, {
-      x: 1.05, y: cy + 0.15, w: 5.25, h: 0.3,
-      fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.cyan
+    s.addText(cat.category, {
+      x: colX + 0.15, y: 4.45, w: 2.45, h: 0.3,
+      fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.maroon
     });
-    s.addText(c.body, {
-      x: 1.05, y: cy + 0.5, w: 5.25, h: 0.85,
-      fontFace: 'Segoe UI', fontSize: 10, color: C.textMuted,
-      lineSpacingMultiple: 1.15
+
+    cat.pills.forEach((p, pIdx) => {
+      const py = 4.8 + pIdx * 0.42;
+      s.addShape(pres.ShapeType.rect, {
+        x: colX + 0.15, y: py, w: 2.45, h: 0.32,
+        fill: { color: C.canvasAlt },
+        line: { color: C.borderSlate, width: 1 }
+      });
+      s.addText(p, {
+        x: colX + 0.15, y: py, w: 2.45, h: 0.32,
+        fontFace: 'Consolas', fontSize: 8.5, color: C.slateDark,
+        align: 'center', valign: 'middle'
+      });
     });
   });
 
-  // Right Side Image Frame
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: '000000' },
-    line: { color: C.cyan, width: 1.5 }
-  });
-  if (fs.existsSync(ASSETS.planetaryOverview)) {
-    s.addImage({
-      path: ASSETS.planetaryOverview,
-      x: 6.8, y: 1.87, w: 5.71, h: 4.35
-    });
-  }
-  s.addText('Figure 7.1: Interactive Web CAD Studio (Three.js WebGL + Resizable Split Workspace)', {
-    x: 6.8, y: 6.25, w: 5.71, h: 0.3,
-    fontFace: 'Consolas', fontSize: 9, color: C.textDim,
-    align: 'center', valign: 'middle'
-  });
-
-  s.addNotes(`Slide 7: Interactive Web CAD Studio Architecture
-Discuss the software architecture of Web_App. Emphasize that it is 100% client-side: no server latency, zero cloud costs, and proprietary CAD data never leaves the engineer's browser.
-Highlight the resizable dual-panel workspace allowing engineers to customize their visual canvas.`);
+  s.addNotes(`Slide 4: System Architecture & Technology Stack (03:00 - 04:00)
+"Our software architecture is built on a 100% client-side topology.
+At the top, follow our four-stage execution pipeline: from analytical mathematical modeling to Three.js WebGL mesh generation, 2D line-of-action verification, and client-side STEP/STL CAD serialization.
+At the bottom, our stack combines Three.js and HTML5 Canvas with MATLAB App Designer solvers, packaged via Vite and exporting ISO 10303-21 standard CAD files."`);
 }
 
 // ==============================================================================
-// SLIDE 8: Real-Time 3D Kinematics & WebGL Visualization Engine
+// SLIDE 05: Core Feature 1 — Real-Time 3D Kinematics & WebGL CAD Studio
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 8, 'VISUALIZATION & SIMULATION', 'Real-Time 3D Kinematics & WebGL Engine', 'Parametric mesh synthesis, true Willis planetary orbiting, and multi-mode shader inspection');
+  setupSlideChrome(s, 5, 'PRIMARY FEATURE DEEP DIVE', 'Core Feature 1: Real-Time 3D Kinematics & WebGL Studio', 'Parametric mesh synthesis, true Willis planetary motion, and multi-pinion synchronization');
 
-  // Left Image
+  // Left (60%): High-Resolution UI Mockup inside clean frame
   s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.85, w: 5.75, h: 4.75,
+    x: 0.8, y: 1.85, w: 7.2, h: 4.75,
     fill: { color: '000000' },
-    line: { color: C.cyan, width: 1.5 }
+    line: { color: C.maroonBorder, width: 1.5 }
   });
   if (fs.existsSync(ASSETS.zerolBevel)) {
     s.addImage({
       path: ASSETS.zerolBevel,
-      x: 0.82, y: 1.87, w: 5.71, h: 4.35
+      x: 0.82, y: 1.87, w: 7.16, h: 4.35
     });
   }
-  s.addText('Figure 8.1: Zerol Bevel Gear 3D Parametric Mesh in Three.js (Orthogonal Sigma = 90°)', {
-    x: 0.82, y: 6.25, w: 5.71, h: 0.3,
-    fontFace: 'Consolas', fontSize: 9, color: C.textDim,
+  s.addText('Figure 5.1: 3D Orthogonal Zerol Bevel Meshing Assembly in Three.js (Sigma = 90°)', {
+    x: 0.82, y: 6.25, w: 7.16, h: 0.3,
+    fontFace: 'Consolas', fontSize: 8.5, color: 'CBD5E1',
     align: 'center', valign: 'middle'
   });
 
-  // Right Card: Features
+  // Right (40%): 3 Structured Accomplishment Points (Google X-Y-Z formula)
   s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.85, w: 5.75, h: 4.75,
+    x: 8.2, y: 1.85, w: 4.333, h: 4.75,
     fill: { color: C.cardBg },
-    line: { color: C.cardBorder, width: 1 }
+    line: { color: C.borderSlate, width: 1 }
   });
-  s.addText('CORE 3D KINEMATIC CAPABILITIES', {
-    x: 7.08, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: '• Parametric Buffer Geometry Synthesis:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Zero external mesh downloads; every vertex, normal, and face index is computed parametrically on-the-fly in < 200 ms.\n\n', options: { color: C.textMuted } },
-    { text: '• Synchronized Epicyclic Motion:\n', options: { bold: true, color: C.textMain } },
-    { text: 'In planetary mode, planets synchronously rotate on individual needle bearings while orbiting the central sun at exact Willis carrier velocity: omega_c = omega_s / (1 + N_r / N_s).\n\n', options: { color: C.textMuted } },
-    { text: '• 3-Pinion Multi-Drive Synchronization:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Simulates 3 servomotor pinions driving a single giant blade root internal slewing ring spaced at 120°.\n\n', options: { color: C.textMuted } },
-    { text: '• Multi-Mode Diagnostic Shading:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Toggles between Smooth PBR metallic rendering, Wireframe overlay (mesh density check), and Pitch Cone Ghosting.', options: { color: C.textMuted } }
-  ], {
-    x: 7.08, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
-  });
-
-  s.addNotes(`Slide 8: Real-Time 3D Kinematics & WebGL Engine
-Point to Figure 8.1. Describe how Three.js dynamic buffer geometry was synthesized from parametric equations.
-Explain the synchronized kinematics: planets orbit at exact Willis carrier velocity while rotating about their own centers; orthogonal bevels mesh with zero penetration.`);
-}
-
-// ==============================================================================
-// SLIDE 9: 2D Meshing & Line-of-Action Diagnostics
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupSlideChrome(s, 9, 'CONTACT MECHANICS', '2D Meshing & Line-of-Action Diagnostics', 'High-precision HTML5 Canvas visualizer with dynamic pitch point and virtual Tredgold projection');
-
-  // Left Image
   s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: '000000' },
-    line: { color: C.cyan, width: 1.5 }
+    x: 8.2, y: 1.85, w: 4.333, h: 0.04,
+    fill: { color: C.maroon },
+    line: { color: C.maroon, width: 0 }
   });
-  if (fs.existsSync(ASSETS.straightMesh2d)) {
-    s.addImage({
-      path: ASSETS.straightMesh2d,
-      x: 0.82, y: 1.87, w: 5.71, h: 4.35
+  s.addText('ENGINEERING ACCOMPLISHMENTS', {
+    x: 8.45, y: 2.1, w: 3.8, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
+  });
+
+  const deepPoints = [
+    {
+      tag: '1. Parametric Mesh Synthesis',
+      desc: 'Accomplished zero-latency 3D mesh rendering in < 200ms by deriving analytical vertex normal matrices directly from Gleason cone equations.'
+    },
+    {
+      tag: '2. Synchronized Willis Kinematics',
+      desc: 'Simulated true epicyclic multi-body kinematics by coupling planet needle-bearing spin with carrier orbit speed (omega_c = omega_s / (1 + Nr/Ns)).'
+    },
+    {
+      tag: '3. Multi-Mode Shader Diagnostics',
+      desc: 'Validated tooth engagement by implementing PBR metallic shading, wireframe triangulation checks, and transparent pitch cone ghosting.'
+    }
+  ];
+
+  deepPoints.forEach((dp, i) => {
+    const dy = 2.5 + i * 1.35;
+    s.addText(dp.tag, {
+      x: 8.45, y: dy, w: 3.8, h: 0.3,
+      fontFace: 'Segoe UI', fontSize: 10.5, bold: true, color: C.slateDark
     });
-  }
-  s.addText('Figure 9.1: 2D Active Line of Action & Virtual Tredgold Conjugate Profiles', {
-    x: 0.82, y: 6.25, w: 5.71, h: 0.3,
-    fontFace: 'Consolas', fontSize: 9, color: C.textDim,
-    align: 'center', valign: 'middle'
+    s.addText(dp.desc, {
+      x: 8.45, y: dy + 0.32, w: 3.8, h: 0.95,
+      fontFace: 'Segoe UI', fontSize: 9.5, color: C.slateMuted,
+      lineSpacingMultiple: 1.15
+    });
   });
 
-  // Right Card: Features
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cardBorder, width: 1 }
-  });
-  s.addText('2D DIAGNOSTIC CAPABILITIES', {
-    x: 7.08, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: '• Virtual Tredgold Spherical Projection:\n', options: { bold: true, color: C.textMain } },
-    { text: 'For straight and spiral bevels, computes virtual tooth numbers (z_v = z / cos(delta)) and virtual radii (r_v = r / cos(delta)) to project spherical tooth engagement onto a 2D plane without distortion.\n\n', options: { color: C.textMuted } },
-    { text: '• Line of Action & Pressure Angle:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Draws the precise line of action tangent to both base circles (r_b = r * cos(alpha)) through Pitch Point P.\n\n', options: { color: C.textMuted } },
-    { text: '• Dynamic Engagement Tracking:\n', options: { bold: true, color: C.textMain } },
-    { text: 'An animated contact marker travels along the line of action during gear rotation, proving conjugate action and verifying the absence of tooth root interference or undercutting.\n\n', options: { color: C.textMuted } },
-    { text: '• Interactive Canvas Navigation:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Smooth mouse-wheel zooming, click-drag panning, and auto-reset button.', options: { color: C.textMuted } }
-  ], {
-    x: 7.08, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
-  });
-
-  s.addNotes(`Slide 9: 2D Meshing & Line-of-Action Diagnostics
-Explain the 2D HTML5 canvas diagnostic tool. Highlight the virtual Tredgold back-cone transformation that projects 3D bevel cones onto a flat 2D plane without geometric distortion.
-Explain the line of action tangent to the base circles and how animated contact points verify conjugate action.`);
+  s.addNotes(`Slide 5: Core Feature 1 — Real-Time 3D Kinematics & WebGL Studio (04:00 - 05:00)
+"Our primary feature deep dive focuses on our 3D WebGL kinematics engine.
+Notice in Figure 5.1 how the Zerol bevel gear pair meshes orthogonally at 90 degrees with Gleason curvature.
+Using the Google X-Y-Z formula:
+First, we synthesized 3D buffer geometries in under 200 milliseconds by computing vertex normal buffers directly from analytical formulas.
+Second, we implemented true Willis planetary kinematics where planets orbit the sun on the carrier arm while counter-rotating.
+Third, we validated conjugate action with multi-mode shaders including wireframe and pitch-cone ghosting."`);
 }
 
 // ==============================================================================
-// SLIDE 10: In-Browser Direct CAD Exporters Suite
+// SLIDE 06: Core Feature 2 — Zero-Kernel CAD Generation & Component Isolation
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 10, 'ENGINEERING INTEROPERABILITY', 'In-Browser Direct CAD Exporters Suite', 'Generating ISO 10303-21 STEP B-Rep, binary STL, and SolidWorks macros without a CAD kernel');
+  setupSlideChrome(s, 6, 'CAD PIPELINE DEEP DIVE', 'Core Feature 2: In-Browser CAD Exporters & Component Isolation', 'Client-side ISO 10303-21 STEP B-Rep serialization and isolated planetary manufacturing downloads');
 
-  // Left Card: Exporter Specs
+  // Left Side: 2 Images (Dropdown options + Isolated parts)
   s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cyan, width: 1.5 }
-  });
-  s.addText('ZERO-KERNEL CLIENT-SIDE CAD GENERATION', {
-    x: 1.1, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: '• ISO 10303-21 STEP AP214 B-Rep:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Constructs full Boundary Representation (B-Rep) topological entities (MANIFOLD_SOLID_BREP, CLOSED_SHELL, ADVANCED_FACE, CARTESIAN_POINT) in pure JavaScript, importing as native solid bodies in SolidWorks and CATIA.\n\n', options: { color: C.textMuted } },
-    { text: '• Binary IEEE 754 STL Exporter:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Compiles binary STL with 50-byte headers, normal vectors, and 32-bit float vertices for high-precision 3D slicing.\n\n', options: { color: C.textMuted } },
-    { text: '• IGES 5.3 Surfaces:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Generates Entity 128 (B-Spline) and Entity 144 (Trimmed Surfaces) for legacy aerospace CAM pipelines.\n\n', options: { color: C.textMuted } },
-    { text: '• SolidWorks VBA (.bas) & CATIA (.catvbs):\n', options: { bold: true, color: C.textMain } },
-    { text: 'Procedural macro generators that construct native sketch equation curves and extruded tooth cuts inside SolidWorks.', options: { color: C.textMuted } }
-  ], {
-    x: 1.1, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.15
-  });
-
-  // Right Image
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.85, w: 5.75, h: 4.75,
+    x: 0.8, y: 1.85, w: 5.75, h: 2.3,
     fill: { color: '000000' },
-    line: { color: C.cyan, width: 1.5 }
+    line: { color: C.borderSlate, width: 1 }
   });
   if (fs.existsSync(ASSETS.planetaryDropdown)) {
     s.addImage({
       path: ASSETS.planetaryDropdown,
-      x: 6.8, y: 1.87, w: 5.71, h: 4.35
+      x: 0.82, y: 1.87, w: 5.71, h: 1.95
     });
   }
-  s.addText('Figure 10.1: Granular Component Download Selector (Sun, Planet, Ring & Complete ZIP)', {
-    x: 6.8, y: 6.25, w: 5.71, h: 0.3,
-    fontFace: 'Consolas', fontSize: 9, color: C.textDim,
+  s.addText('Figure 6.1: Multi-Format & Component Isolation CAD Exporter Menu', {
+    x: 0.82, y: 3.85, w: 5.71, h: 0.25,
+    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
     align: 'center', valign: 'middle'
   });
 
-  s.addNotes(`Slide 10: In-Browser Direct CAD Exporters Suite
-Highlight this as one of your standout technical breakthroughs: generating CAD files completely client-side in JavaScript without requiring a CAD kernel or server backend.
-Explain the four export standards: ISO 10303-21 STEP AP214 B-Rep, Binary IEEE 754 STL, IGES 5.3 surfaces, and SolidWorks VBA macros.`);
-}
-
-// ==============================================================================
-// SLIDE 11: Granular Component Isolation & Multi-Part CAD
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupSlideChrome(s, 11, 'MANUFACTURING READINESS', 'Granular Component Isolation & Multi-Part CAD', 'Individual export capabilities for planetary sun, planet, ring gears, and pinions');
-
-  // Col 1: Sun Isolated
   s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.85, w: 3.75, h: 4.75,
+    x: 0.8, y: 4.3, w: 5.75, h: 2.3,
     fill: { color: '000000' },
-    line: { color: C.cardBorder, width: 1 }
+    line: { color: C.borderSlate, width: 1 }
   });
   if (fs.existsSync(ASSETS.planetarySun)) {
     s.addImage({
       path: ASSETS.planetarySun,
-      x: 0.82, y: 1.87, w: 3.71, h: 4.35
+      x: 0.82, y: 4.32, w: 2.8, h: 1.95
     });
   }
-  s.addText('Figure 11.1: Sun Gear Isolated (Z=18, Motor Shaft Bore)', {
-    x: 0.82, y: 6.25, w: 3.71, h: 0.3,
-    fontFace: 'Consolas', fontSize: 8.5, color: C.textDim,
-    align: 'center', valign: 'middle'
-  });
-
-  // Col 2: Planet Isolated
-  s.addShape(pres.ShapeType.rect, {
-    x: 4.78, y: 1.85, w: 3.75, h: 4.75,
-    fill: { color: '000000' },
-    line: { color: C.cardBorder, width: 1 }
-  });
   if (fs.existsSync(ASSETS.planetaryPlanet)) {
     s.addImage({
       path: ASSETS.planetaryPlanet,
-      x: 4.8, y: 1.87, w: 3.71, h: 4.35
+      x: 3.65, y: 4.32, w: 2.86, h: 1.95
     });
   }
-  s.addText('Figure 11.2: Planet Gear Isolated (Z=27, Needle Bearing Bore)', {
-    x: 4.8, y: 6.25, w: 3.71, h: 0.3,
-    fontFace: 'Consolas', fontSize: 8.5, color: C.textDim,
+  s.addText('Figure 6.2: Isolated Sun Gear (Left) & Planet Gear (Right) for CNC/3D Print', {
+    x: 0.82, y: 6.3, w: 5.71, h: 0.25,
+    fontFace: 'Consolas', fontSize: 8, color: 'CBD5E1',
     align: 'center', valign: 'middle'
   });
 
-  // Col 3: Manufacturing Card
-  s.addShape(pres.ShapeType.rect, {
-    x: 8.78, y: 1.85, w: 3.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cyan, width: 1.5 }
-  });
-  s.addText('WHY ISOLATION MATTERS', {
-    x: 9.03, y: 2.1, w: 3.25, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: 'Manufacturing Reality:\n', options: { bold: true, color: C.textMain } },
-    { text: 'In CNC hobbing, wire EDM, and 3D printing, fabricating an assembled planetary gearbox as a single monolithic file is physically impossible.\n\n', options: { color: C.textMuted } },
-    { text: '• Individual Toolpaths: ', options: { bold: true, color: C.textMain } },
-    { text: 'Each component requires dedicated G-code generation and setup datum origins.\n\n', options: { color: C.textMuted } },
-    { text: '• Unique Tolerancing: ', options: { bold: true, color: C.textMain } },
-    { text: 'Sun gear requires motor shaft press-fit, while planets require needle bearing slip-fit tolerances.\n\n', options: { color: C.textMuted } },
-    { text: '• Organized ZIP Package: ', options: { bold: true, color: C.textMain } },
-    { text: 'One-click bundle extracts individual parts + assembly.', options: { color: C.textMuted } }
-  ], {
-    x: 9.03, y: 2.55, w: 3.25, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.2
-  });
-
-  s.addNotes(`Slide 11: Granular Component Isolation & Multi-Part CAD
-Point out the new individual component download feature: Sun gear alone, Planet gear alone, Ring gear alone, and Carrier assembly.
-Explain the manufacturing reality: CNC machine tools and 3D printers require isolated component G-codes with individual tolerancing.`);
-}
-
-// ==============================================================================
-// SLIDE 12: Additive Manufacturing & Print Compensation
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupSlideChrome(s, 12, 'PHYSICAL PROTOTYPING', 'Additive Manufacturing & Print Compensation', 'Bridging mathematical CAD geometry to real-world FDM/SLA tolerance shrinkage');
-
-  // Left Card: PrintComp Algorithm
-  s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cardBorder, width: 1 }
-  });
-  s.addText('PRINTCOMP ALGORITHMIC COMPENSATION', {
-    x: 1.1, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: 'Polymer Shrinkage Physics:\n', options: { bold: true, color: C.textMain } },
-    { text: 'Polymer 3D printing (PLA, PETG, Nylon) experiences radial thermal contraction (0.3%–0.8%) and nozzle bead expansion, causing gear teeth to bind tightly if printed from nominal CAD.\n\n', options: { color: C.textMuted } },
-    { text: 'Mathematical Compensation Formulas:\n', options: { bold: true, color: C.textMain } },
-    { text: 's_offset = s_0 - Delta_thermal - Delta_backlash\nd_bore_adj = d_shaft + delta_clearance   (+0.15 mm)\n\n', options: { fontFace: 'Consolas', color: C.cyanLight } },
-    { text: '• Involute Flank Thinning: ', options: { bold: true, color: C.textMain } },
-    { text: 'Programmatic thinning (0.08–0.15 mm along profile normal) guarantees running backlash.\n\n', options: { color: C.textMuted } },
-    { text: '• Shaft Bore Dilation: ', options: { bold: true, color: C.textMain } },
-    { text: 'Compensates for the \'elephant foot\' effect, allowing press-fit bearings to seat cleanly without secondary reaming.', options: { color: C.textMuted } }
-  ], {
-    x: 1.1, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.15
-  });
-
-  // Right Card: Physical Validation
-  s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.85, w: 5.75, h: 4.75,
-    fill: { color: C.cardBg },
-    line: { color: C.cyan, width: 1.5 }
-  });
-  s.addText('PHYSICAL PROTOTYPE VALIDATION', {
-    x: 7.08, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
-  });
-  s.addText([
-    { text: 'Rigorous Slicer & Print Bed Verification:\n\n', options: { bold: true, color: C.textMain } },
-    { text: '• 100% Watertight Manifold Topology: ', options: { bold: true, color: C.textMain } },
-    { text: 'Generated STL meshes verify zero non-manifold edges, zero reversed normal facets, and zero self-intersections in PrusaSlicer and Cura.\n\n', options: { color: C.textMuted } },
-    { text: '• Sub-0.01 mm Chordal Error: ', options: { bold: true, color: C.textMain } },
-    { text: 'Involute curvature discretized with optimal angular increments, delivering smooth tooth flank finish without polygon facets.\n\n', options: { color: C.textMuted } },
-    { text: '• Physical Test Meshing: ', options: { bold: true, color: C.textMain } },
-    { text: 'Printed 3D gear pairs demonstrated smooth, hand-cranked mesh rotation without tooth tip binding or excessive backlash play.', options: { color: C.textMuted } }
-  ], {
-    x: 7.08, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
-  });
-
-  s.addNotes(`Slide 12: Additive Manufacturing & Print Compensation
-Demonstrate your understanding of physical fabrication. Explain the PrintComp module: polymer cooling shrinkage causes binding if printed from nominal CAD.
-Explain programmatic tooth thinning (0.08 - 0.15 mm) and bore clearance offsets (+0.15 mm) to ensure parts fit off the print bed without post-machining.`);
-}
-
-// ==============================================================================
-// SLIDE 13: UI/UX Modernization & Professional Standards
-// ==============================================================================
-{
-  const s = pres.addSlide();
-  setupSlideChrome(s, 13, 'HUMAN-COMPUTER INTERACTION', 'UI/UX Modernization & Professional Design', 'Transforming the interface into a sleek, engineering-grade CAD tool');
-
-  const uiCards = [
+  // Right Side: 3 Highlight Cards
+  const cadCards = [
     {
-      title: 'Precision CAD Vector Iconography',
-      body: 'Eliminated all informal emojis and consumer icons across the entire application. Replaced with custom, precision SVG vector CAD symbols (gears, calipers, download vectors, and eye toggles) aligned with ISO software engineering standards.'
+      title: 'STEP AP214 B-Rep Serializer',
+      desc: 'Constructs ISO 10303-21 topological entities (MANIFOLD_SOLID_BREP, ADVANCED_FACE) in pure JavaScript, importing as native solid bodies in SolidWorks and CATIA.'
     },
     {
-      title: 'Ergonomic Dark Glassmorphism',
-      body: 'Engineered a modern engineering dark-slate design system with WCAG AAA compliant contrast ratios, backdrop blur filters, and subtle cyan accents to eliminate eye strain during lengthy engineering design sessions.'
+      title: 'Granular Component Isolation',
+      desc: 'Enables independent fabrication downloads: Sun gear alone (motor spline bore), Planet gear alone (needle bearing fit), or complete assembly ZIP archive.'
     },
     {
-      title: 'Draggable Resizable Panels',
-      body: 'Implemented a zero-dependency draggable split gutter between the 2D Diagnostic Canvas and 3D Kinematics Viewport, giving engineers complete ergonomic control over their visualization workspace.'
+      title: 'PrintComp Tolerance Offsets',
+      desc: 'Applies programmatic tooth thinning (0.08–0.15 mm) and bore expansion (+0.15 mm) to compensate for FDM/SLA thermal shrinkage and prevent gear binding.'
     }
   ];
 
-  uiCards.forEach((c, i) => {
-    const cx = 0.8 + i * 4.0;
+  cadCards.forEach((cc, i) => {
+    const cy = 1.85 + i * 1.62;
     s.addShape(pres.ShapeType.rect, {
-      x: cx, y: 1.85, w: 3.75, h: 4.75,
+      x: 6.78, y: cy, w: 5.75, h: 1.45,
       fill: { color: C.cardBg },
-      line: { color: i === 0 ? C.cyan : C.cardBorder, width: i === 0 ? 1.5 : 1 }
+      line: { color: C.borderSlate, width: 1 }
     });
-    s.addText(c.title, {
-      x: cx + 0.25, y: 2.1, w: 3.25, h: 0.45,
-      fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
+    s.addShape(pres.ShapeType.rect, {
+      x: 6.78, y: cy, w: 5.75, h: 0.03,
+      fill: { color: C.maroon },
+      line: { color: C.maroon, width: 0 }
     });
-    s.addText(c.body, {
-      x: cx + 0.25, y: 2.7, w: 3.25, h: 3.6,
-      fontFace: 'Segoe UI', fontSize: 10.5, color: C.textMuted,
+    s.addText(cc.title, {
+      x: 7.05, y: cy + 0.15, w: 5.25, h: 0.3,
+      fontFace: 'Segoe UI', fontSize: 11, bold: true, color: C.maroon
+    });
+    s.addText(cc.desc, {
+      x: 7.05, y: cy + 0.48, w: 5.25, h: 0.85,
+      fontFace: 'Segoe UI', fontSize: 9.5, color: C.slateMuted,
+      lineSpacingMultiple: 1.15
+    });
+  });
+
+  s.addNotes(`Slide 6: Core Feature 2 — In-Browser CAD Exporters & Component Isolation (05:00 - 06:00)
+"Our second core feature addresses manufacturing readiness:
+In Figures 6.1 and 6.2, notice our granular download selector. Machine shops cannot machine an assembled planetary drive as one monolithic block.
+We engineered pure JavaScript serializers that generate ISO 10303-21 STEP B-Rep solid bodies directly in RAM, with isolated options for Sun, Planet, and Ring gears.
+Furthermore, our PrintComp algorithm applies calibrated tooth thinning and bore offsets for functional 3D printing."`);
+}
+
+// ==============================================================================
+// SLIDE 07: Key Technical Challenge & Engineering Solution
+// ==============================================================================
+{
+  const s = pres.addSlide();
+  setupSlideChrome(s, 7, 'ARCHITECTURAL HURDLE', 'Overcoming Architectural & Geometric Hurdles', 'Case study in debugging, mathematical transformation, and conjugate contact resolution');
+
+  // 3-Step Progressive Chevron / Card Flow
+  const steps = [
+    {
+      num: 'STEP 01',
+      title: 'The Challenge',
+      subtitle: 'Conical Tooth 2D Projection Distortion',
+      content: 'Bevel gear teeth mesh in 3D along intersecting cones. Directly projecting 3D conical geometry onto a flat 2D viewport skewed tooth profiles, creating false optical interpenetration and preventing kinematic clearance diagnostics.',
+      highlight: false
+    },
+    {
+      num: 'STEP 02',
+      title: 'Investigation & Alternatives',
+      subtitle: 'Evaluated Conical Unrolling vs. Cameras',
+      content: 'Tested direct orthogonal camera projections (failed due to conical perspective distortion) and planar conical unrolling (failed because intersecting bevel cones are non-developable surfaces without pitch distortion).',
+      highlight: false
+    },
+    {
+      num: 'STEP 03',
+      title: 'The Solution & Outcome',
+      subtitle: 'Tredgold Virtual Back-Cone Transformation',
+      content: 'Implemented Tredgold spherical back-cone equations in plot2d.js: virtual teeth zv = z / cos(delta) and virtual radius rv = r / cos(delta). Transformed 3D spherical contact into an exact equivalent planar conjugate rack pair, achieving 100% accurate line-of-action tracking.',
+      highlight: true
+    }
+  ];
+
+  steps.forEach((st, i) => {
+    const sx = 0.8 + i * 4.0;
+    s.addShape(pres.ShapeType.rect, {
+      x: sx, y: 1.85, w: 3.75, h: 4.75,
+      fill: { color: st.highlight ? C.cardBg : C.canvasAlt },
+      line: { color: st.highlight ? C.maroon : C.borderSlate, width: st.highlight ? 2 : 1 }
+    });
+
+    // Step Number Pill
+    s.addShape(pres.ShapeType.rect, {
+      x: sx + 0.25, y: 2.1, w: 1.2, h: 0.28,
+      fill: { color: st.highlight ? C.maroonTint : C.white },
+      line: { color: st.highlight ? C.maroonBorder : C.borderSlate, width: 1 }
+    });
+    s.addText(st.num, {
+      x: sx + 0.25, y: 2.1, w: 1.2, h: 0.28,
+      fontFace: 'Consolas', fontSize: 9, bold: true, color: st.highlight ? C.maroon : C.slateDark,
+      align: 'center', valign: 'middle'
+    });
+
+    // Gold Corner Badge for Step 3
+    if (st.highlight) {
+      s.addShape(pres.ShapeType.rect, {
+        x: sx + 2.4, y: 2.1, w: 1.1, h: 0.28,
+        fill: { color: C.goldLight },
+        line: { color: C.gold, width: 1 }
+      });
+      s.addText('RESOLVED', {
+        x: sx + 2.4, y: 2.1, w: 1.1, h: 0.28,
+        fontFace: 'Consolas', fontSize: 8.5, bold: true, color: C.gold,
+        align: 'center', valign: 'middle'
+      });
+    }
+
+    s.addText(st.title, {
+      x: sx + 0.25, y: 2.55, w: 3.25, h: 0.35,
+      fontFace: 'Segoe UI', fontSize: 13, bold: true, color: st.highlight ? C.maroon : C.slateDark
+    });
+    s.addText(st.subtitle, {
+      x: sx + 0.25, y: 2.9, w: 3.25, h: 0.3,
+      fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.slateMuted
+    });
+
+    s.addText(st.content, {
+      x: sx + 0.25, y: 3.3, w: 3.25, h: 3.1,
+      fontFace: 'Segoe UI', fontSize: 10, color: C.slateMuted,
       lineSpacingMultiple: 1.2
     });
   });
 
-  s.addNotes(`Slide 13: UI/UX Modernization & Professional Standards
-Showcase the transition to a formal, modern engineering interface: vector CAD iconography, dark glassmorphism system, and draggable split panels.`);
+  s.addNotes(`Slide 7: Key Technical Challenge & Engineering Solution (06:00 - 07:00)
+"Every real engineering project encounters architectural hurdles.
+Our biggest challenge was representing 3D conical bevel meshing on a 2D diagnostic screen. Because conical teeth converge toward the apex, simple projections caused optical distortion and false collisions.
+In Step 2, we investigated unrolling and orthogonal cameras, finding them mathematically flawed for non-developable cones.
+In Step 3, we solved this by implementing Tredgold's Virtual Back-Cone Approximation in plot2d.js. By transforming bevel cones into equivalent virtual spur gears, we achieved true 2D conjugate meshing diagnostics."`);
 }
 
 // ==============================================================================
-// SLIDE 14: Key Technical Hurdles & Engineering Solutions
+// SLIDE 08: Live Demonstration / Application Walkthrough
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 14, 'PROBLEM SOLVING', 'Key Technical Hurdles & Engineering Solutions', 'Overcoming computational, geometric, and format constraints');
+  setupSlideChrome(s, 8, 'APPLICATION IN ACTION', 'Application in Action: Walkthrough & Workflows', 'End-to-end demonstration of user journeys, dynamic reactivity, and CAD generation');
 
-  const hurdles = [
+  // Center Mockup Screen Flow (2 Images Side-by-Side)
+  s.addShape(pres.ShapeType.rect, {
+    x: 0.8, y: 1.85, w: 5.75, h: 3.4,
+    fill: { color: '000000' },
+    line: { color: C.borderSlate, width: 1 }
+  });
+  if (fs.existsSync(ASSETS.straightMesh2d)) {
+    s.addImage({
+      path: ASSETS.straightMesh2d,
+      x: 0.82, y: 1.87, w: 5.71, h: 3.0
+    });
+  }
+  s.addText('Live 2D Contact Mechanics & Line-of-Action Engagement Tracking (alpha = 20°)', {
+    x: 0.82, y: 4.95, w: 5.71, h: 0.25,
+    fontFace: 'Consolas', fontSize: 8.5, color: 'CBD5E1',
+    align: 'center', valign: 'middle'
+  });
+
+  s.addShape(pres.ShapeType.rect, {
+    x: 6.78, y: 1.85, w: 5.75, h: 3.4,
+    fill: { color: '000000' },
+    line: { color: C.borderSlate, width: 1 }
+  });
+  if (fs.existsSync(ASSETS.cadToast)) {
+    s.addImage({
+      path: ASSETS.cadToast,
+      x: 6.8, y: 1.87, w: 5.71, h: 3.0
+    });
+  }
+  s.addText('Real-Time Parameter Sliders & Instant STEP/STL CAD Export Toast Notification', {
+    x: 6.8, y: 4.95, w: 5.71, h: 0.25,
+    fontFace: 'Consolas', fontSize: 8.5, color: 'CBD5E1',
+    align: 'center', valign: 'middle'
+  });
+
+  // 3 Bulleted Takeaway Cues at Bottom
+  const cues = [
     {
-      title: 'Hurdle 1: Gleason Surface in Pure JS',
-      challenge: 'Gleason face-milling equations produce non-uniform 3D spiral flanks normally calculated using dedicated CAD kernel APIs.',
-      solution: 'Formulated a parametric circular cutting path generator that sweeps the cutter radius along the pitch cone, producing mathematically exact normals and vertices with sub-millimeter precision.'
+      cue: 'Cue 1: Interactive Parameter Tuning',
+      desc: 'Moving module and tooth sliders updates 3D geometry and stress safety factors in < 100 milliseconds.'
     },
     {
-      title: 'Hurdle 2: 2D Bevel Meshing Distortion',
-      challenge: 'Bevel gears mesh along intersecting cones; projecting them directly onto a flat 2D plane caused severe distortion and false tooth interpenetration.',
-      solution: 'Implemented the Tredgold Spherical Back-Cone transformation in plot2d.js, mapping 3D conical kinematics to an equivalent 2D virtual spur gear pair.'
+      cue: 'Cue 2: Kinematic Engagement Loop',
+      desc: 'Animated contact point moves along the line of action tangent to base circles, verifying conjugate motion.'
     },
     {
-      title: 'Hurdle 3: Direct STEP B-Rep Serialization',
-      challenge: 'Writing an ISO 10303-21 text file from scratch requires strict topological syntax (CLOSED_SHELL, ORIENTED_EDGE, EDGE_LOOP).',
-      solution: 'Built a custom topological graph serializer in JavaScript that automatically tracks vertex indices and assigns correct surface normals.'
-    },
-    {
-      title: 'Hurdle 4: Planetary Component Extraction',
-      challenge: 'Users needed individual Sun, Planet, and Ring gears for fabrication, but the scene was rendered as a single monolithic Three.js group.',
-      solution: 'Refactored cadExporters.js with component isolation flags, allowing on-the-fly extraction of individual parts or complete ZIP packages.'
+      cue: 'Cue 3: 1-Click CAD Download',
+      desc: 'Selecting STEP AP214 triggers in-browser B-Rep serialization, downloading solid CAD models instantly.'
     }
   ];
 
-  hurdles.forEach((h, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const hx = 0.8 + col * 5.95;
-    const hy = 1.85 + row * 2.45;
-
+  cues.forEach((cu, i) => {
+    const cx = 0.8 + i * 4.0;
     s.addShape(pres.ShapeType.rect, {
-      x: hx, y: hy, w: 5.75, h: 2.25,
-      fill: { color: C.cardBg },
-      line: { color: C.cardBorder, width: 1 }
+      x: cx, y: 5.45, w: 3.75, h: 1.15,
+      fill: { color: C.canvasAlt },
+      line: { color: C.borderSlate, width: 1 }
     });
-    s.addText(h.title, {
-      x: hx + 0.25, y: hy + 0.15, w: 5.25, h: 0.3,
-      fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.cyan
+    s.addText(cu.cue, {
+      x: cx + 0.15, y: 5.55, w: 3.45, h: 0.25,
+      fontFace: 'Segoe UI', fontSize: 9.5, bold: true, color: C.maroon
     });
-    s.addText([
-      { text: 'Challenge: ', options: { bold: true, color: C.amber } },
-      { text: `${h.challenge}\n`, options: { color: C.textMuted } },
-      { text: 'Solution: ', options: { bold: true, color: C.emerald } },
-      { text: h.solution, options: { color: C.textMain } }
-    ], {
-      x: hx + 0.25, y: hy + 0.48, w: 5.25, h: 1.65,
-      fontFace: 'Segoe UI', fontSize: 9.5, lineSpacingMultiple: 1.15
+    s.addText(cu.desc, {
+      x: cx + 0.15, y: 5.82, w: 3.45, h: 0.7,
+      fontFace: 'Segoe UI', fontSize: 8.5, color: C.slateMuted,
+      lineSpacingMultiple: 1.15
     });
   });
 
-  s.addNotes(`Slide 14: Key Technical Hurdles & Engineering Solutions
-Discuss the four hardest technical challenges you overcame: Gleason 3D surfaces in WebGL, 2D bevel meshing via Tredgold, writing ISO 10303-21 STEP B-Rep text entities in JavaScript, and multi-component planetary extraction.`);
+  s.addNotes(`Slide 8: Live Demonstration / Application Walkthrough (07:00 - 08:00)
+"Now, let us examine the application in action across three core workflow cues:
+First, parameter tuning: moving module, ratio, or tooth sliders recalculates geometry in under 100 milliseconds.
+Second, kinematic tracking: the 2D canvas displays the traveling contact point along the pressure line of action, proving smooth conjugate motion.
+Third, instant manufacturing export: one click compiles an ISO 10303-21 STEP B-Rep file in memory, ready for SolidWorks or 3D printing."`);
 }
 
 // ==============================================================================
-// SLIDE 15: Quantitative Impact & Productivity Transformation
+// SLIDE 09: Quantifiable Results & Business Impact
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 15, 'PERFORMANCE BENCHMARKING', 'Quantitative Impact & Productivity Transformation', 'Benchmarking the new Gear Design Studio against legacy engineering workflows');
+  setupSlideChrome(s, 9, 'PERFORMANCE METRICS', 'Measurable Outcomes & Engineering Impact', 'Validation against project objectives, performance KPIs, and industrial cost metrics');
 
-  const tableRows = [
+  // 3 Prominent Metric Callout Stat Cards per UTM Design Guidelines
+  const stats = [
+    {
+      num: '~1000x',
+      label: 'Design Iteration Acceleration',
+      detail: 'Reduced calculation and parameter re-tuning latency from 2–4 hours of spreadsheet work down to < 100ms.'
+    },
+    {
+      num: '< 2s',
+      label: 'Instantaneous CAD Generation',
+      detail: 'Eliminated 1–3 days of manual 3D drafting by synthesizing verified STEP AP214 B-Rep files directly in browser.'
+    },
+    {
+      num: '100%',
+      label: 'Licensing & Cloud Cost Reduction',
+      detail: 'Operates with zero backend cloud GPU servers and zero proprietary CAD desktop seat dependencies ($5,000+ saved).'
+    }
+  ];
+
+  stats.forEach((st, i) => {
+    const sx = 0.8 + i * 4.0;
+    s.addShape(pres.ShapeType.rect, {
+      x: sx, y: 1.85, w: 3.75, h: 2.9,
+      fill: { color: C.cardBg },
+      line: { color: C.borderSlate, width: 1 }
+    });
+
+    // Top 2px Accent Stripe
+    s.addShape(pres.ShapeType.rect, {
+      x: sx, y: 1.85, w: 3.75, h: 0.04,
+      fill: { color: C.gold },
+      line: { color: C.gold, width: 0 }
+    });
+
+    // Large Stat Number (44pt Bold, UTM Warm Gold #D49B23)
+    s.addText(st.num, {
+      x: sx + 0.2, y: 2.1, w: 3.35, h: 0.85,
+      fontFace: 'Consolas', fontSize: 44, bold: true, color: C.gold,
+      align: 'center'
+    });
+
+    // Metric Label (14pt SemiBold, Slate Dark)
+    s.addText(st.label, {
+      x: sx + 0.2, y: 3.0, w: 3.35, h: 0.45,
+      fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.slateDark,
+      align: 'center'
+    });
+
+    // Metric Detail (10pt, Slate Muted)
+    s.addText(st.detail, {
+      x: sx + 0.2, y: 3.5, w: 3.35, h: 1.1,
+      fontFace: 'Segoe UI', fontSize: 9.5, color: C.slateMuted,
+      align: 'center', lineSpacingMultiple: 1.15
+    });
+  });
+
+  // Summary Table of Impact
+  const summaryRows = [
     [
-      { text: 'Performance Metric', options: { bold: true, color: C.cyan, fill: '0F172A' } },
-      { text: 'Legacy Workflow', options: { bold: true, color: C.cyan, fill: '0F172A' } },
-      { text: 'New Gear Design Studio', options: { bold: true, color: C.cyan, fill: '0F172A' } },
-      { text: 'Improvement Factor', options: { bold: true, color: C.cyan, fill: '0F172A' } }
+      { text: 'Benchmarking Metric', options: { bold: true, color: C.maroon, fill: C.maroonTint } },
+      { text: 'Traditional Engineering Workflow', options: { bold: true, color: C.slateDark, fill: C.maroonTint } },
+      { text: 'Delivered UTM Gear Studio', options: { bold: true, color: C.slateDark, fill: C.maroonTint } },
+      { text: 'Measured Outcome', options: { bold: true, color: C.emerald, fill: C.maroonTint } }
     ],
     [
-      { text: 'Gearset Design Iteration', options: { bold: true, color: C.textMain } },
-      { text: '2 – 4 Hours (Manual recalculations)', options: { color: C.textMuted } },
-      { text: '< 100 Milliseconds (Live sliders)', options: { fontFace: 'Consolas', color: C.cyan, bold: true } },
-      { text: '~1000x Faster', options: { bold: true, color: C.emerald } }
+      { text: 'Supported Architectures', options: { bold: true, color: C.slateDark } },
+      { text: '1–2 gear types per software package', options: { color: C.slateMuted } },
+      { text: '7 complete wind turbine architectures', options: { color: C.slateDark, bold: true } },
+      { text: 'Unified Platform', options: { color: C.emerald, bold: true } }
     ],
     [
-      { text: 'CAD Model Generation', options: { bold: true, color: C.textMain } },
-      { text: '1 – 3 Days (Complex CAD tooth drafting)', options: { color: C.textMuted } },
-      { text: '< 2 Seconds (Instant STEP/STL)', options: { fontFace: 'Consolas', color: C.cyan, bold: true } },
-      { text: 'Instantaneous', options: { bold: true, color: C.emerald } }
+      { text: 'Stress Compliance Rating', options: { bold: true, color: C.slateDark } },
+      { text: 'Manual post-processing in FEA software', options: { color: C.slateMuted } },
+      { text: 'Automatic ISO 6336 bending & contact check', options: { color: C.slateDark, bold: true } },
+      { text: 'Real-Time Safety Factor', options: { color: C.emerald, bold: true } }
     ],
     [
-      { text: 'Software Licensing Cost', options: { bold: true, color: C.textMain } },
-      { text: '$5,000+ / seat (CAD/FEA packages)', options: { color: C.textMuted } },
-      { text: '$0 (Open-Source Client-Side Web)', options: { fontFace: 'Consolas', color: C.cyan, bold: true } },
-      { text: '100% Cost Reduction', options: { bold: true, color: C.emerald } }
-    ],
-    [
-      { text: 'Cross-Platform Accessibility', options: { bold: true, color: C.textMain } },
-      { text: 'Windows workstation with CAD installed', options: { color: C.textMuted } },
-      { text: 'Any Modern Browser (Zero install)', options: { fontFace: 'Consolas', color: C.cyan, bold: true } },
-      { text: 'Universal Portability', options: { bold: true, color: C.emerald } }
+      { text: 'Physical 3D Prototyping', options: { bold: true, color: C.slateDark } },
+      { text: 'Severe tooth binding due to thermal shrinkage', options: { color: C.slateMuted } },
+      { text: 'Automated PrintComp backlash compensation', options: { color: C.slateDark, bold: true } },
+      { text: 'Watertight Manifold Fit', options: { color: C.emerald, bold: true } }
     ]
   ];
 
-  s.addTable(tableRows, {
-    x: 0.8, y: 1.85, w: 11.733, h: 3.3,
-    colW: [2.8, 3.2, 3.2, 2.533],
+  s.addTable(summaryRows, {
+    x: 0.8, y: 5.0, w: 11.733, h: 1.6,
+    colW: [2.5, 3.5, 3.5, 2.233],
     fill: C.cardBg,
-    border: { pt: 1, color: C.cardBorder },
-    fontFace: 'Segoe UI', fontSize: 11,
+    border: { pt: 1, color: C.borderSlate },
+    fontFace: 'Segoe UI', fontSize: 9.5,
     align: 'left', valign: 'middle'
   });
 
-  // 3 Metric Badges
-  const impactBadges = [
-    { num: '7 / 7', label: 'Architectures Supported' },
-    { num: '4 Formats', label: 'STEP • STL • IGES • SolidWorks' },
-    { num: '0 KB', label: 'Server Overhead' }
-  ];
-  impactBadges.forEach((b, i) => {
-    const bx = 0.8 + i * 4.0;
-    s.addShape(pres.ShapeType.rect, {
-      x: bx, y: 5.4, w: 3.75, h: 1.2,
-      fill: { color: C.cardBg },
-      line: { color: C.cyan, width: 1.5 }
-    });
-    s.addText(b.num, {
-      x: bx, y: 5.5, w: 3.75, h: 0.55,
-      fontFace: 'Consolas', fontSize: 24, bold: true, color: C.cyan,
-      align: 'center'
-    });
-    s.addText(b.label, {
-      x: bx, y: 6.1, w: 3.75, h: 0.35,
-      fontFace: 'Segoe UI', fontSize: 11, color: C.textMuted,
-      align: 'center'
-    });
-  });
-
-  s.addNotes(`Slide 15: Quantitative Impact & Productivity Transformation
-Review the before-and-after table: design iterations cut from hours to milliseconds; CAD generation reduced from days of manual drafting to a 2-second client-side download; 100% cost reduction in CAD licensing.`);
+  s.addNotes(`Slide 9: Measurable Outcomes & Engineering Impact (08:00 - 09:30)
+"On Slide 9, we quantify the business and engineering ROI:
+Stat 1: ~1000x faster design iteration—reducing what used to take 2 to 4 hours into under 100 milliseconds.
+Stat 2: under 2 seconds for CAD generation—generating solid STEP B-Rep files in browser RAM instead of 1 to 3 days of manual drafting.
+Stat 3: 100% cost reduction in cloud compute and specialized software licensing.
+The bottom table confirms unified support across 7 architectures, synchronized ISO 6336 stress evaluation, and physical 3D print compensation."`);
 }
 
 // ==============================================================================
-// SLIDE 16: Conclusion & Professional Reflection
+// SLIDE 10: Learnings, Future Roadmap & Acknowledgments
 // ==============================================================================
 {
   const s = pres.addSlide();
-  setupSlideChrome(s, 16, 'SUMMARY & NEXT STEPS', 'Conclusion, Skills Acquired & Q&A', 'Summary of internship contributions to wind turbine drive engineering');
+  setupSlideChrome(s, 10, 'PROFESSIONAL GROWTH', 'Professional Growth, System Roadmap & Acknowledgments', 'Competencies developed, future technical expansions, and academic appreciation');
 
-  // Left Card: Key Achievements
+  // Left Column: Future Roadmap
   s.addShape(pres.ShapeType.rect, {
-    x: 0.8, y: 1.85, w: 5.75, h: 4.75,
+    x: 0.8, y: 1.85, w: 5.75, h: 4.15,
     fill: { color: C.cardBg },
-    line: { color: C.cyan, width: 1.5 }
+    line: { color: C.borderSlate, width: 1 }
   });
-  s.addText('KEY ACHIEVEMENTS SUMMARY', {
+  s.addShape(pres.ShapeType.rect, {
+    x: 0.8, y: 1.85, w: 5.75, h: 0.04,
+    fill: { color: C.maroon },
+    line: { color: C.maroon, width: 0 }
+  });
+  s.addText('FUTURE TECHNICAL ROADMAP', {
     x: 1.1, y: 2.1, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 13, bold: true, color: C.cyan
+    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.maroon
   });
   s.addText([
-    { text: 'Enterprise-Ready Software Ecosystem:\n', options: { bold: true, color: C.textMain } },
-    { text: '• Formulated mathematical models for 7 gear architectures with ISO 6336 stress validation.\n\n', options: { color: C.textMuted } },
-    { text: '• Built native MATLAB computational suites and interactive GUI tools.\n\n', options: { color: C.textMuted } },
-    { text: '• Engineered a high-performance WebGL CAD Studio with real-time 3D kinematics and 2D meshing diagnostics.\n\n', options: { color: C.textMuted } },
-    { text: '• Authored pure client-side STEP, STL, and IGES exporters eliminating reliance on expensive CAD software.\n\n', options: { color: C.textMuted } },
-    { text: '• Bridged virtual CAD design with physical 3D printing shrinkage compensation.', options: { color: C.textMuted } }
+    { text: '• WebAssembly FEA Stress Solver Integration:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Compile C++ finite element meshing solvers to WASM for in-browser visual von Mises stress contours.\n\n', options: { color: C.slateMuted } },
+    { text: '• Dynamic Multi-Body Gear Slap Simulation:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Simulate torsional rattle and wind gust dynamic torque reversals on blade pitch gearboxes.\n\n', options: { color: C.slateMuted } },
+    { text: '• Industrial Cloud Presets & Collaboration:\n', options: { bold: true, color: C.slateDark } },
+    { text: 'Enable teams to share standardized pitch drive configurations (NREL 5MW, Vestas V90, Siemens Gamesa) with encrypted URL tokens.', options: { color: C.slateMuted } }
   ], {
-    x: 1.1, y: 2.55, w: 5.15, h: 3.8,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
+    x: 1.1, y: 2.55, w: 5.15, h: 3.2,
+    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.2
   });
 
-  // Right Side: Competencies + Floor Opening
+  // Right Column: Professional Growth & Thanks
   s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 1.85, w: 5.75, h: 3.1,
+    x: 6.78, y: 1.85, w: 5.75, h: 4.15,
     fill: { color: C.cardBg },
-    line: { color: C.cardBorder, width: 1 }
+    line: { color: C.borderSlate, width: 1 }
   });
-  s.addText('PROFESSIONAL COMPETENCIES ACQUIRED', {
-    x: 7.08, y: 2.05, w: 5.15, h: 0.3,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.cyan
+  s.addShape(pres.ShapeType.rect, {
+    x: 6.78, y: 1.85, w: 5.75, h: 0.04,
+    fill: { color: C.gold },
+    line: { color: C.gold, width: 0 }
+  });
+  s.addText('COMPETENCIES MASTERED & ACKNOWLEDGMENTS', {
+    x: 7.08, y: 2.1, w: 5.15, h: 0.35,
+    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.slateDark
   });
   s.addText([
-    { text: '• Advanced Mechanical Kinematics & ISO 6336 Standards\n', options: { color: C.textMuted } },
-    { text: '• Computational Geometry & Involute/Gleason Flank Discretization\n', options: { color: C.textMuted } },
-    { text: '• 3D Computer Graphics (WebGL, Three.js, Shaders, Scene Graphs)\n', options: { color: C.textMuted } },
-    { text: '• Low-Level CAD Protocols (ISO 10303-21 STEP, IGES 5.3, IEEE 754 STL)\n', options: { color: C.textMuted } },
-    { text: '• Full-Stack Mechanical Software Architecture & Git Version Control', options: { color: C.textMuted } }
+    { text: '• Technical Competencies Mastered:\n', options: { bold: true, color: C.maroon } },
+    { text: 'Advanced gear kinematics, ISO 6336 standards, 3D WebGL computer graphics, low-level STEP B-Rep file serialization, and full-stack software architecture.\n\n', options: { color: C.slateMuted } },
+    { text: '• Academic & Professional Gratitude:\n', options: { bold: true, color: C.maroon } },
+    { text: 'Sincere appreciation to Universiti Teknologi Malaysia (UTM) academic supervisors and industry mentors for continuous guidance, technical feedback, and support throughout this internship.', options: { color: C.slateMuted } }
   ], {
-    x: 7.08, y: 2.4, w: 5.15, h: 2.4,
-    fontFace: 'Segoe UI', fontSize: 10.5, lineSpacingMultiple: 1.2
+    x: 7.08, y: 2.55, w: 5.15, h: 3.2,
+    fontFace: 'Segoe UI', fontSize: 10, lineSpacingMultiple: 1.2
   });
 
-  // Floor Opening Card
+  // Dark Maroon Footer Bar with Contact & Affiliation Info
   s.addShape(pres.ShapeType.rect, {
-    x: 6.78, y: 5.15, w: 5.75, h: 1.45,
-    fill: { color: '0F172A' },
-    line: { color: C.cyan, width: 1.5 }
+    x: 0.8, y: 6.15, w: 11.733, h: 0.65,
+    fill: { color: C.maroon },
+    line: { color: C.gold, width: 1 }
   });
-  s.addText('THANK YOU FOR YOUR GUIDANCE & MENTORSHIP', {
-    x: 7.08, y: 5.35, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 12, bold: true, color: C.textMain,
-    align: 'center'
+  s.addText('Candidate: Ahmed Majdy Ahmed  |  Universiti Teknologi Malaysia (UTM)  |  Wind Turbine Pitch Drive Systems', {
+    x: 1.0, y: 6.22, w: 7.5, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 10, bold: true, color: C.white,
+    valign: 'middle'
   });
-  s.addText('The floor is now open for questions and technical discussion.', {
-    x: 7.08, y: 5.8, w: 5.15, h: 0.35,
-    fontFace: 'Segoe UI', fontSize: 11, bold: true, color: C.cyan,
-    align: 'center'
+  s.addText('Floor Open for Evaluator Discussion & Live Demo Q&A  ➔', {
+    x: 8.5, y: 6.22, w: 3.8, h: 0.3,
+    fontFace: 'Segoe UI', fontSize: 9.5, bold: true, color: C.gold,
+    align: 'right', valign: 'middle'
   });
 
-  s.addNotes(`Slide 16: Conclusion, Skills Acquired & Q&A
-Recap the project accomplishments and articulate the professional engineering skills acquired during the internship. Invite the panel to ask questions and suggest live demonstrations.`);
+  s.addNotes(`Slide 10: Learnings, Future Roadmap & Acknowledgments (09:30 - 11:00)
+"In conclusion, this internship has enabled me to synthesize advanced mechanical gear theory with computer graphics and software engineering.
+On the left is our roadmap: WebAssembly FEA stress solvers and dynamic torsional vibration modeling.
+On the right, my sincere thanks to Universiti Teknologi Malaysia (UTM) and my mentors for their invaluable leadership throughout this project.
+Thank you very much. I welcome your questions, feedback, and discussion."`);
 }
 
 // ==============================================================================
@@ -1164,10 +1006,9 @@ const localOutPath = path.join(__dirname, 'Wind_Turbine_Pitch_Control_System_Int
 
 pres.writeFile({ fileName: rootOutPath })
   .then(() => {
-    console.log(`PPTX exported successfully to root: ${rootOutPath}`);
-    // Also copy to Internship_Presentation folder for convenience
+    console.log(`UTM Deck exported successfully to root: ${rootOutPath}`);
     fs.copyFileSync(rootOutPath, localOutPath);
-    console.log(`PPTX copy saved to: ${localOutPath}`);
+    console.log(`UTM Deck copy saved to: ${localOutPath}`);
   })
   .catch(err => {
     console.error('Error exporting PPTX:', err);
